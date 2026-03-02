@@ -242,13 +242,12 @@ function deduplicateByScope(
 ): Array<{ skill: SkillMeta; score: number }> {
   const userSkillNames = new Set(
     skills
-      .filter((s) => (s.skill as Record<string, unknown>).scope === 'user')
+      .filter((s) => s.skill.scope === 'user')
       .map((s) => s.skill.name.toLowerCase())
   )
 
   return skills.filter((s) => {
-    const scope = (s.skill as Record<string, unknown>).scope as string | undefined
-    if (scope !== 'user' && userSkillNames.has(s.skill.name.toLowerCase())) {
+    if (s.skill.scope !== 'user' && userSkillNames.has(s.skill.name.toLowerCase())) {
       return false
     }
     return true
