@@ -1,6 +1,6 @@
 import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
-import { INDEXES, ROLE, TABLES, TIER } from './constants'
+import { CREDIT_ACTION, CREDIT_TX_TYPE, INDEXES, ROLE, TABLES, TIER, TIER_CREDITS, TRIAL } from './constants'
 
 export const getUserByClerkUserId = query({
   args: { clerkUserId: v.string() },
@@ -84,21 +84,51 @@ export const ensureUser = mutation({
       .unique()
 
     const isNewTenant = !existingTenant
+    const isOrgAccount = !!orgId
+    const now = Date.now()
+
     const tenantId =
       existingTenant?._id ??
       (await ctx.db.insert(TABLES.TENANTS, {
         clerkOrgId: tenantKey,
         name: name || email,
-        tier: TIER.PRO,
-        createdAt: Date.now(),
+        tier: isOrgAccount ? TIER.PRO : TIER.FREE,
+        createdAt: now,
       }))
+
+    if (isNewTenant) {
+      const initialCredits = isOrgAccount
+        ? TRIAL.INITIAL_CREDITS
+        : TIER_CREDITS[TIER.FREE]
+
+      await ctx.db.insert(TABLES.TENANT_BILLING, {
+        tenantId,
+        creditBalance: initialCredits,
+        trialStartedAt: isOrgAccount ? now : undefined,
+        trialEndsAt: isOrgAccount ? now + TRIAL.DURATION_MS : undefined,
+        createdAt: now,
+        updatedAt: now,
+      })
+
+      await ctx.db.insert(TABLES.CREDIT_TRANSACTIONS, {
+        tenantId,
+        type: CREDIT_TX_TYPE.CREDIT,
+        amount: initialCredits,
+        action: isOrgAccount ? CREDIT_ACTION.TRIAL_GRANT : CREDIT_ACTION.ADMIN_GRANT,
+        description: isOrgAccount
+          ? `7-day business trial started — ${initialCredits} credits granted`
+          : `Free tier initialized with ${initialCredits} credits`,
+        balanceAfter: initialCredits,
+        createdAt: now,
+      })
+    }
 
     const userId = await ctx.db.insert(TABLES.USERS, {
       clerkUserId,
       tenantId,
       email,
       role: isNewTenant ? ROLE.OWNER : ROLE.MEMBER,
-      createdAt: Date.now(),
+      createdAt: now,
     })
 
     return { userId, tenantId }

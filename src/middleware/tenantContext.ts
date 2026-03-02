@@ -1,11 +1,40 @@
 import { auth } from '@clerk/nextjs/server'
-import type { TenantContext } from '@/types'
+import { ConvexHttpClient } from 'convex/browser'
+import { api } from '@convex/_generated/api'
+import type { TenantContext, PlanTier } from '@/types'
+
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
 
 /** Default personal-use context (no Clerk required for Telegram personal mode). */
 export const PERSONAL_CONTEXT: TenantContext = {
   tenantId: 'personal',
   userId: process.env.TELEGRAM_OWNER_ID ?? 'owner',
   tier: 'pro',
+}
+
+/**
+ * Resolve the effective tier for a tenant from the DB.
+ * If on an active trial, returns 'pro'. If trial expired, returns 'free'.
+ */
+async function resolveTier(clerkOrgOrUserId: string): Promise<PlanTier> {
+  try {
+    const tenant = await convex.query(api.tenants.getTenantByClerkOrgId, {
+      clerkOrgId: clerkOrgOrUserId,
+    })
+    if (!tenant) return 'free'
+
+    const billing = await convex.query(api.billing.getBillingByTenantId, {
+      tenantId: tenant._id,
+    })
+
+    if (billing?.trialEndsAt && billing.trialEndsAt > Date.now()) {
+      return 'pro'
+    }
+
+    return tenant.tier as PlanTier
+  } catch {
+    return 'free'
+  }
 }
 
 /**
@@ -18,10 +47,13 @@ export async function getTenantContext(): Promise<TenantContext> {
 
     if (!userId) return PERSONAL_CONTEXT
 
+    const tenantKey = orgId ?? userId
+    const tier = await resolveTier(tenantKey)
+
     return {
-      tenantId: orgId ?? userId,
+      tenantId: tenantKey,
       userId,
-      tier: 'pro',
+      tier,
     }
   } catch {
     return PERSONAL_CONTEXT
