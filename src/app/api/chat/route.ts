@@ -6,6 +6,7 @@ import { retrieveRelevantContext, buildContextBlock } from '@/services/contextSe
 import { getTenantContext } from '@/middleware/tenantContext'
 import { api } from '@convex/_generated/api'
 import type { ChatRequest } from '@/types'
+import type { Id } from '@convex/_generated/dataModel'
 
 export const maxDuration = 60
 
@@ -34,6 +35,23 @@ export async function POST(req: NextRequest) {
         console.warn('[Chat API] DB user lookup failed:', (err as Error)?.message ?? err)
         return null
       })
+
+    // ── Credit check ────────────────────────────────────────────────────────
+    if (dbUser) {
+      const hasCredits = await convex
+        .query(api.credits.hasEnoughCredits, {
+          tenantId: dbUser.tenantId,
+          action: 'chat_message',
+        })
+        .catch(() => true)
+
+      if (!hasCredits) {
+        return NextResponse.json(
+          { error: 'Insufficient credits. Please upgrade your plan or purchase more credits.' },
+          { status: 402 }
+        )
+      }
+    }
 
     const dbUserId = dbUser?._id ? String(dbUser._id) : undefined
 
@@ -111,6 +129,19 @@ export async function POST(req: NextRequest) {
     }
 
     messages.push({ role: 'user', content: message })
+
+    // ── Deduct credit for this chat message ──────────────────────────────
+    if (dbUser) {
+      convex
+        .mutation(api.credits.deductCredits, {
+          tenantId: dbUser.tenantId,
+          userId: dbUser._id as Id<'users'>,
+          action: 'chat_message',
+        })
+        .catch((err) => {
+          console.warn('[Chat API] Credit deduction failed:', (err as Error)?.message ?? err)
+        })
+    }
 
     const result = await agent.stream(messages as Parameters<typeof agent.stream>[0])
 

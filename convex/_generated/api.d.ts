@@ -8,8 +8,10 @@
  * @module
  */
 
+import type * as billing from "../billing.js";
 import type * as constants from "../constants.js";
 import type * as contextDocs from "../contextDocs.js";
+import type * as credits from "../credits.js";
 import type * as integrations from "../integrations.js";
 import type * as messages from "../messages.js";
 import type * as migrations from "../migrations.js";
@@ -25,8 +27,10 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  billing: typeof billing;
   constants: typeof constants;
   contextDocs: typeof contextDocs;
+  credits: typeof credits;
   integrations: typeof integrations;
   messages: typeof messages;
   migrations: typeof migrations;

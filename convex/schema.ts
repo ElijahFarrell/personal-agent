@@ -1,6 +1,6 @@
 import { defineSchema, defineTable } from 'convex/server'
 import { v } from 'convex/values'
-import { CONTEXT_DOC_CATEGORY, INDEXES, INTEGRATION_STATUS, MESSAGE_ROLE, MESSAGE_SOURCE, ROLE, SCOPE, TABLES, TIER } from './constants'
+import { CONTEXT_DOC_CATEGORY, CREDIT_ACTION, CREDIT_TX_TYPE, INDEXES, INTEGRATION_STATUS, MESSAGE_ROLE, MESSAGE_SOURCE, ROLE, SCOPE, TABLES, TIER } from './constants'
 
 export default defineSchema({
   [TABLES.TENANTS]: defineTable({
@@ -107,4 +107,36 @@ export default defineSchema({
     .index(INDEXES.BY_TENANT_ID, ['tenantId'])
     .index(INDEXES.BY_USER_ID, ['userId'])
     .index(INDEXES.BY_TENANT_SCOPE, ['tenantId', 'scope']),
+
+  [TABLES.TENANT_BILLING]: defineTable({
+    tenantId: v.id(TABLES.TENANTS),
+    creditBalance: v.number(),
+    trialStartedAt: v.optional(v.number()),
+    trialEndsAt: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index(INDEXES.BY_TENANT_ID, ['tenantId']),
+
+  [TABLES.CREDIT_TRANSACTIONS]: defineTable({
+    tenantId: v.id(TABLES.TENANTS),
+    userId: v.optional(v.id(TABLES.USERS)),
+    type: v.union(
+      v.literal(CREDIT_TX_TYPE.DEBIT),
+      v.literal(CREDIT_TX_TYPE.CREDIT)
+    ),
+    amount: v.number(),
+    action: v.union(
+      v.literal(CREDIT_ACTION.CHAT_MESSAGE),
+      v.literal(CREDIT_ACTION.TOOL_EXECUTION),
+      v.literal(CREDIT_ACTION.TRIAL_GRANT),
+      v.literal(CREDIT_ACTION.PURCHASE),
+      v.literal(CREDIT_ACTION.ADMIN_GRANT),
+      v.literal(CREDIT_ACTION.TRIAL_EXPIRED)
+    ),
+    description: v.string(),
+    balanceAfter: v.number(),
+    createdAt: v.number(),
+  })
+    .index(INDEXES.BY_TENANT_ID, ['tenantId'])
+    .index(INDEXES.BY_TENANT_CREATED, ['tenantId', 'createdAt']),
 })

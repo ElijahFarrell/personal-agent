@@ -221,6 +221,53 @@ export interface ContextSearchResult {
   score: number
 }
 
+// ─── Billing & Credits ───────────────────────────────────────────────────────
+
+export type CreditTxType = 'debit' | 'credit'
+
+export type CreditAction =
+  | 'chat_message'
+  | 'tool_execution'
+  | 'trial_grant'
+  | 'purchase'
+  | 'admin_grant'
+  | 'trial_expired'
+
+export interface TenantBillingRecord {
+  id: string
+  tenantId: string
+  creditBalance: number
+  trialStartedAt?: number
+  trialEndsAt?: number
+  createdAt: number
+  updatedAt: number
+}
+
+export interface CreditTransactionRecord {
+  id: string
+  tenantId: string
+  userId?: string
+  type: CreditTxType
+  amount: number
+  action: CreditAction
+  description: string
+  balanceAfter: number
+  createdAt: number
+}
+
+export interface TrialStatus {
+  isOnTrial: boolean
+  daysRemaining: number
+  trialExpired: boolean
+}
+
+export interface CreditCheckResult {
+  hasCredits: boolean
+  balance: number
+  isOnTrial: boolean
+  daysRemaining: number
+}
+
 // ─── DB Schema types ──────────────────────────────────────────────────────────
 
 export interface TenantRecord {
