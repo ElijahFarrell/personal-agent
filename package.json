@@ -1,0 +1,64 @@
+{
+  "name": "ai-os",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.6.4",
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=10"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "convex": "convex dev"
+  },
+  "dependencies": {
+    "@clerk/nextjs": "^6.38.3",
+    "@mastra/core": "^1.8.0",
+    "@mastra/libsql": "^1.6.2",
+    "@mastra/mem0": "^0.1.12",
+    "@mastra/memory": "^1.5.2",
+    "@mem0/vercel-ai-provider": "^2.0.5",
+    "@nangohq/frontend": "^0.69.38",
+    "@nangohq/node": "^0.69.38",
+    "@qdrant/js-client-rest": "^1.17.0",
+    "@radix-ui/react-avatar": "^1.1.11",
+    "@radix-ui/react-collapsible": "^1.1.12",
+    "@radix-ui/react-scroll-area": "^1.2.10",
+    "@radix-ui/react-separator": "^1.1.8",
+    "@radix-ui/react-slot": "^1.2.4",
+    "@radix-ui/react-tooltip": "^1.2.8",
+    "@tavily/core": "^0.7.2",
+    "ai": "^6.0.103",
+    "chokidar": "^5.0.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "convex": "^1.32.0",
+    "exa-js": "^2.5.0",
+    "google-auth-library": "^10.6.1",
+    "googleapis": "^171.4.0",
+    "gray-matter": "^4.0.3",
+    "inngest": "^3.52.4",
+    "lucide-react": "^0.575.0",
+    "mem0ai": "^2.2.3",
+    "next": "^15.5.12",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-markdown": "^10.1.0",
+    "tailwind-merge": "^3.5.0",
+    "tailwindcss-animate": "^1.0.7",
+    "telegraf": "^4.16.3",
+    "zod": "^3.25.76"
+  },
+  "optionalDependencies": {
+    "playwright": "^1.49.0"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.14",
+    "autoprefixer": "^10.4.27",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.17"
+  }
+}
