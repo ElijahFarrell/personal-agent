@@ -4,6 +4,7 @@ import { createMem0MemorizeTool } from '../tools/mem0Memorize'
 import { createMem0RecallTool } from '../tools/mem0Recall'
 import { createAgentTools } from '../tools/agentTools'
 import { buildOrchestratorPrompt } from '../prompts'
+import { createVoice } from '../voice'
 
 /**
  * Factory creates an orchestrator agent scoped to a specific user.
@@ -28,6 +29,7 @@ export function createOrchestratorAgent(
     name: 'orchestrator',
     instructions,
     model: AgentModels.orchestrator(),
+    voice: createVoice(),
     tools: {
       ...agentTools,
       mem0Recall: createMem0RecallTool(userId),
