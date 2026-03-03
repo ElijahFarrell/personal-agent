@@ -66,6 +66,7 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [streamingContent, setStreamingContent] = useState('')
+  const [creditError, setCreditError] = useState(false)
   const abortControllerRef = useRef<AbortController | null>(null)
   // Bridges the gap between streaming ending and Convex confirming the save,
   // preventing a flash where the completed message briefly disappears.
@@ -127,6 +128,7 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
       setIsLoading(true)
       setStreamingContent('')
       setPendingAssistant(null)
+      setCreditError(false)
       completedTextRef.current = ''
 
       const abortController = new AbortController()
@@ -189,6 +191,10 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
         })
 
         if (!response.ok) {
+          if (response.status === 402) {
+            setCreditError(true)
+            return
+          }
           const err = await response.json().catch(() => ({ error: 'Request failed' }))
           throw new Error(err.error ?? 'Request failed')
         }
@@ -285,13 +291,25 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
         onQuestionAnswer={handleQuestionAnswer}
       />
 
+      {creditError && (
+        <div className="mx-4 mb-2 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/20 dark:text-amber-300">
+          <span className="mt-0.5 text-base leading-none">✦</span>
+          <div>
+            <p className="font-medium">You&apos;ve run out of credits</p>
+            <p className="mt-0.5 text-amber-700 dark:text-amber-400">
+              Upgrade your plan or contact your admin to get more credits and keep chatting.
+            </p>
+          </div>
+        </div>
+      )}
+
       <ChatInput
         value={input}
         onChange={setInput}
         onSubmit={handleSend}
         onStop={handleStop}
         isLoading={isLoading}
-        disabled={!dbUser}
+        disabled={!dbUser || creditError}
         extraControls={
           <SkillPicker
             skills={tenantSkills}
