@@ -1,29 +1,19 @@
 'use client'
 
-import { Zap } from 'lucide-react'
+import { Zap, Loader2 } from 'lucide-react'
 
 export function TypingIndicator() {
   return (
-    <div className="flex w-full items-end gap-3 px-4 py-1">
-      {/* Agent avatar */}
-      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-600/20 border border-brand-600/30">
+    <div className="flex w-full items-end gap-3 px-4 py-1.5">
+      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-600/15 border border-brand-500/25">
         <Zap className="h-3.5 w-3.5 text-brand-400" aria-hidden />
       </div>
 
-      {/* Dots bubble */}
-      <div className="flex items-center gap-1.5 rounded-2xl rounded-tl-sm bg-gray-900/80 border border-gray-800 px-4 py-3">
-        <span
-          className="h-1.5 w-1.5 rounded-full bg-gray-500 animate-bounce"
-          style={{ animationDelay: '0ms', animationDuration: '1.2s' }}
-        />
-        <span
-          className="h-1.5 w-1.5 rounded-full bg-gray-500 animate-bounce"
-          style={{ animationDelay: '200ms', animationDuration: '1.2s' }}
-        />
-        <span
-          className="h-1.5 w-1.5 rounded-full bg-gray-500 animate-bounce"
-          style={{ animationDelay: '400ms', animationDuration: '1.2s' }}
-        />
+      <div className="flex items-center gap-2 rounded-2xl rounded-tl-sm bg-gray-900/70 backdrop-blur-sm border border-gray-800/80 px-4 py-2.5">
+        <Loader2 className="h-3.5 w-3.5 animate-spin text-brand-400" />
+        <span className="text-sm text-gray-400 animate-pulse">
+          Understanding your request…
+        </span>
       </div>
     </div>
   )

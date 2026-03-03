@@ -30,14 +30,16 @@ export const AgentModels = {
   /** Central orchestrator — needs strong reasoning and tool use */
   orchestrator: Models.CLAUDE_SONNET,
 
-  /** Sub-agents that produce content or take complex actions */
+  /** Sub-agents that need strong writing / reasoning */
   content:      Models.CLAUDE_SONNET,
   email:        Models.CLAUDE_SONNET,
-  calendar:     Models.CLAUDE_SONNET,
   linkedin:     Models.CLAUDE_SONNET,
-  instagram:    Models.CLAUDE_SONNET,
   browser:      Models.CLAUDE_SONNET,
 
-  /** Research agent — speed-optimised, haiku is sufficient for web synthesis */
+  /** Sub-agents where speed matters more than nuance */
+  calendar:     Models.CLAUDE_HAIKU,
+  instagram:    Models.CLAUDE_HAIKU,
+  slack:        Models.CLAUDE_HAIKU,
+  notion:       Models.CLAUDE_HAIKU,
   research:     Models.CLAUDE_HAIKU,
 } as const

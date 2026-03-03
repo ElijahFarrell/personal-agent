@@ -38,6 +38,9 @@ function getConvexClient(): ConvexHttpClient {
 export async function POST(req: NextRequest) {
   try {
     const rawBody = await req.text()
+
+    console.log('[Nango Webhook] Received request, body length:', rawBody.length)
+
     const signature =
       req.headers.get('x-nango-hmac-sha256') ??
       req.headers.get('X-Nango-Hmac-Sha256')
@@ -47,10 +50,15 @@ export async function POST(req: NextRequest) {
       !webhookSecret ||
       !verifyWebhookSignature(rawBody, signature, webhookSecret)
     ) {
+      console.warn('[Nango Webhook] Signature verification failed')
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
     }
 
     const body = JSON.parse(rawBody) as NangoAuthWebhookBody
+
+    console.log(
+      `[Nango Webhook] type=${body.type} | operation=${body.operation} | success=${body.success} | provider=${body.providerConfigKey} | endUserId=${body.endUser?.endUserId ?? 'none'}`,
+    )
 
     if (body.type !== 'auth') {
       return NextResponse.json({ ok: true })

@@ -10,7 +10,7 @@ export function createSlackAgent(userId: string) {
     id: `slack-${userId}`,
     name: 'slack',
     instructions: SLACK_PROMPT,
-    model: AgentModels.email(),
+    model: AgentModels.slack(),
     tools: {
       slackListChannels: createSlackListChannelsTool(userId),
       slackListUsers: createSlackListUsersTool(userId),

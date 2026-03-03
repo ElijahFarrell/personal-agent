@@ -9,4 +9,16 @@ export interface ChatMessage {
   route?: string
   /** Whether this message is still streaming */
   isStreaming?: boolean
+  /** AI SDK message parts for rich rendering (tool calls, etc.) */
+  parts?: Array<{
+    type: string
+    text?: string
+    toolInvocation?: {
+      toolName: string
+      state: string
+      args?: Record<string, unknown>
+      result?: unknown
+    }
+    [key: string]: unknown
+  }>
 }

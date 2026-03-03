@@ -10,7 +10,7 @@ export function createNotionAgent(userId: string) {
     id: `notion-${userId}`,
     name: 'notion',
     instructions: NOTION_PROMPT,
-    model: AgentModels.email(),
+    model: AgentModels.notion(),
     tools: {
       notionSearch: createNotionSearchTool(userId),
       notionReadPage: createNotionReadPageTool(userId),

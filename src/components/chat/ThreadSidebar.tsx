@@ -86,15 +86,15 @@ export function ThreadSidebar({ activeThreadId, onSelectThread, onNewThread }: T
   )
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col bg-gray-950/40 backdrop-blur-sm">
       <div className="px-3 pt-3 pb-2">
         <Button
           onClick={onNewThread}
           variant="ghost"
-          className="w-full justify-start gap-2 text-sm font-medium text-gray-300 hover:bg-gray-800/60 hover:text-white"
+          className="w-full justify-start gap-2 rounded-xl text-sm font-semibold text-gray-200 hover:bg-brand-600/10 hover:text-white border border-transparent hover:border-brand-600/20 transition-all"
         >
           <Plus className="h-4 w-4" />
-          New chat
+          New Chat
         </Button>
       </div>
 
