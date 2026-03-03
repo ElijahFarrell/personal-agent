@@ -54,8 +54,8 @@ export const config = {
   cron: {
     secret: optionalEnv('CRON_SECRET'),
   },
-  wisprFlow: {
-    apiKey: optionalEnv('WISPR_FLOW_API_KEY'),
+  openai: {
+    apiKey: optionalEnv('OPENAI_API_KEY'),
   },
   app: {
     url: optionalEnv('NEXT_PUBLIC_APP_URL', 'http://localhost:3000'),

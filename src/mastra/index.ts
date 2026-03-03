@@ -17,6 +17,7 @@ export {
   createBrowserAgent,
   createAllAgents,
 } from './agents'
+export { createVoice } from './voice'
 export { executeMorningBrief, morningBriefWorkflow } from './workflows/morningBrief'
 export {
   executeOutreachCampaign,
