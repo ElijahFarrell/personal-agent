@@ -31,6 +31,7 @@ export const hasEnoughCredits = query({
       .unique()
 
     if (!billing) return false
+    if (billing.unlimitedCredits) return true
 
     const cost = CREDIT_COSTS[action]
     return billing.creditBalance >= cost
@@ -74,6 +75,10 @@ export const deductCredits = mutation({
 
     if (!billing) {
       return { success: false, balanceAfter: 0, error: 'No billing record found' }
+    }
+
+    if (billing.unlimitedCredits) {
+      return { success: true, balanceAfter: billing.creditBalance }
     }
 
     const cost = CREDIT_COSTS[action]
@@ -144,5 +149,28 @@ export const addCredits = mutation({
     })
 
     return { success: true, balanceAfter: newBalance }
+  },
+})
+
+/** Toggle unlimited credits for a tenant (owner/admin use only). */
+export const setUnlimitedCredits = mutation({
+  args: {
+    tenantId: v.id(TABLES.TENANTS),
+    unlimited: v.boolean(),
+  },
+  handler: async (ctx, { tenantId, unlimited }) => {
+    const billing = await ctx.db
+      .query(TABLES.TENANT_BILLING)
+      .withIndex(INDEXES.BY_TENANT_ID, (q) => q.eq('tenantId', tenantId))
+      .unique()
+
+    if (!billing) throw new Error('No billing record found for tenant')
+
+    await ctx.db.patch(billing._id, {
+      unlimitedCredits: unlimited,
+      updatedAt: Date.now(),
+    })
+
+    return { success: true, unlimitedCredits: unlimited }
   },
 })

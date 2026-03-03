@@ -111,6 +111,7 @@ export default defineSchema({
   [TABLES.TENANT_BILLING]: defineTable({
     tenantId: v.id(TABLES.TENANTS),
     creditBalance: v.number(),
+    unlimitedCredits: v.optional(v.boolean()),
     trialStartedAt: v.optional(v.number()),
     trialEndsAt: v.optional(v.number()),
     createdAt: v.number(),
