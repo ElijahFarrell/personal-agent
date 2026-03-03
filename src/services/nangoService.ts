@@ -21,12 +21,56 @@ const nango = new Nango({
 })
 
 /**
+ * Finds the real Nango connectionId for an end user + provider combo.
+ * Nango Connect sessions auto-assign connectionIds that may differ from
+ * the end_user.id we pass in createConnectSession.
+ */
+export async function findConnectionId(
+  provider: IntegrationProvider,
+  endUserId: string
+): Promise<string | null> {
+  if (!config.nango.secretKey) return null
+
+  try {
+    const response = await nango.listConnections({
+      userId: endUserId,
+      integrationId: provider,
+    })
+    const match = response.connections.find(
+      (c) => c.provider_config_key === provider,
+    )
+    return match?.connection_id ?? null
+  } catch {
+    return null
+  }
+}
+
+function extractCredentials(
+  connection: { credentials?: unknown },
+): NangoConnectionCredentials | null {
+  if (!connection?.credentials) return null
+
+  const creds = connection.credentials as {
+    type?: string
+    access_token?: string
+    refresh_token?: string
+    expires_at?: Date
+  }
+
+  const accessToken = creds.access_token
+  if (!accessToken || typeof accessToken !== 'string') return null
+
+  return {
+    accessToken,
+    refreshToken: creds.refresh_token,
+    expiresAt: creds.expires_at,
+  }
+}
+
+/**
  * Fetches a fresh access token for a user+provider connection.
- * Nango handles token refresh transparently when the token is expired.
- *
- * @param provider - Nango integration key (e.g. 'gmail', 'google-calendar')
- * @param userId - Connection ID (typically the user's ID in your system)
- * @returns Credentials with access token, or null if connection not found
+ * Tries direct connectionId lookup first (userId as connectionId),
+ * then falls back to discovering the real connectionId via listConnections.
  */
 export async function getConnection(
   provider: IntegrationProvider,
@@ -36,25 +80,22 @@ export async function getConnection(
     throw new Error('Nango secret key is not configured')
   }
 
+  // Try direct lookup (works when connectionId === userId)
   try {
     const connection = await nango.getConnection(provider, userId)
-    if (!connection?.credentials) return null
+    const creds = extractCredentials(connection)
+    if (creds) return creds
+  } catch {
+    // fall through to discovery
+  }
 
-    const creds = connection.credentials as {
-      type?: string
-      access_token?: string
-      refresh_token?: string
-      expires_at?: Date
-    }
+  // Discover the real connectionId via end_user_id
+  const realConnectionId = await findConnectionId(provider, userId)
+  if (!realConnectionId) return null
 
-    const accessToken = creds.access_token
-    if (!accessToken || typeof accessToken !== 'string') return null
-
-    return {
-      accessToken,
-      refreshToken: creds.refresh_token,
-      expiresAt: creds.expires_at,
-    }
+  try {
+    const connection = await nango.getConnection(provider, realConnectionId)
+    return extractCredentials(connection)
   } catch {
     return null
   }
@@ -107,10 +148,7 @@ export async function createConnectSession(
 
 /**
  * Removes a user's connection for a given provider.
- * Use when the user explicitly disconnects an integration.
- *
- * @param provider - Integration key to disconnect
- * @param userId - Connection ID (user ID)
+ * Resolves the real connectionId if needed before deleting.
  */
 export async function deleteConnection(
   provider: IntegrationProvider,
@@ -120,5 +158,15 @@ export async function deleteConnection(
     throw new Error('Nango secret key is not configured')
   }
 
-  await nango.deleteConnection(provider, userId)
+  try {
+    await nango.deleteConnection(provider, userId)
+    return
+  } catch {
+    // connectionId might not be userId — discover it
+  }
+
+  const realConnectionId = await findConnectionId(provider, userId)
+  if (realConnectionId) {
+    await nango.deleteConnection(provider, realConnectionId)
+  }
 }

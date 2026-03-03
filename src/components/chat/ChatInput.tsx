@@ -16,7 +16,6 @@ interface ChatInputProps {
   onStop?: () => void
   isLoading: boolean
   disabled?: boolean
-  /** Slot for extra controls (e.g. SkillPicker) rendered before the mic button */
   extraControls?: ReactNode
 }
 
@@ -132,25 +131,25 @@ export function ChatInput({ value, onChange, onSubmit, onStop, isLoading, disabl
   const showCharCount = charsLeft < 500
 
   return (
-    <div className="border-t border-gray-800/60 bg-gray-950/80 backdrop-blur-sm px-4 py-3">
-      <div className="relative flex items-end gap-2 rounded-xl border border-gray-700 bg-gray-900/60 px-3 py-2 transition-colors focus-within:border-gray-600">
+    <div className="border-t border-gray-800/40 bg-gray-950/60 backdrop-blur-md px-4 py-3">
+      <div className="mx-auto max-w-3xl relative flex items-end gap-2 rounded-2xl border border-gray-700/60 bg-gray-900/50 backdrop-blur-sm px-3 py-2 transition-all focus-within:border-brand-600/40 focus-within:ring-1 focus-within:ring-brand-600/20">
         <Textarea
           ref={textareaRef}
           value={value}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
-          placeholder="Message your AI OS… (Enter to send, Shift+Enter for newline)"
+          placeholder="Send a message…"
           disabled={disabled}
           rows={1}
           className={cn(
-            'flex-1 resize-none border-0 bg-transparent p-0 text-sm text-gray-100 placeholder:text-gray-600',
+            'flex-1 resize-none border-0 bg-transparent p-0 text-sm text-gray-100 placeholder:text-gray-500',
             'focus-visible:ring-0 focus-visible:ring-offset-0',
             'min-h-[1.5rem] leading-relaxed'
           )}
           aria-label="Message input"
         />
 
-        <div className="flex shrink-0 items-center gap-2 pb-0.5">
+        <div className="flex shrink-0 items-center gap-1.5 pb-0.5">
           {extraControls}
 
           {showCharCount && (
@@ -164,7 +163,6 @@ export function ChatInput({ value, onChange, onSubmit, onStop, isLoading, disabl
             </span>
           )}
 
-          {/* Mic button */}
           <Button
             size="icon"
             variant="ghost"
@@ -192,7 +190,7 @@ export function ChatInput({ value, onChange, onSubmit, onStop, isLoading, disabl
               size="icon"
               variant="ghost"
               onClick={onStop}
-              className="h-7 w-7 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-gray-200"
+              className="h-8 w-8 rounded-xl text-gray-400 hover:bg-gray-800 hover:text-gray-200"
               aria-label="Stop generation"
             >
               <Square className="h-3.5 w-3.5 fill-current" />
@@ -203,14 +201,14 @@ export function ChatInput({ value, onChange, onSubmit, onStop, isLoading, disabl
               onClick={handleSubmit}
               disabled={!value.trim() || isLoading || disabled}
               className={cn(
-                'h-7 w-7 rounded-lg transition-all',
+                'h-8 w-8 rounded-xl transition-all',
                 value.trim() && !isLoading
-                  ? 'bg-brand-600 hover:bg-brand-700 text-white'
+                  ? 'bg-brand-600 hover:bg-brand-500 text-white shadow-lg shadow-brand-600/25'
                   : 'bg-gray-800 text-gray-600 cursor-not-allowed'
               )}
               aria-label="Send message"
             >
-              <ArrowUp className="h-3.5 w-3.5" />
+              <ArrowUp className="h-4 w-4" />
             </Button>
           )}
         </div>

@@ -37,6 +37,13 @@ export function ConnectButton({
       const nango = new Nango({ connectSessionToken: sessionToken })
 
       await nango.auth(integrationId)
+
+      await fetch('/api/nango/confirm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ provider }),
+      })
+
       router.refresh()
       onSuccess?.()
     } catch (err) {

@@ -1,37 +1,21 @@
 'use client'
 
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import { useUser } from '@clerk/nextjs'
 import { useQuery, useMutation } from 'convex/react'
+import { useChat } from '@ai-sdk/react'
+import { DefaultChatTransport } from 'ai'
+import type { UIMessage } from 'ai'
 import { api } from '@convex/_generated/api'
 import type { Id } from '@convex/_generated/dataModel'
 import { MessageList } from './MessageList'
 import { ChatInput } from './ChatInput'
 import { SkillPicker } from './SkillPicker'
-import type { ChatMessage } from './types'
 
 function getInitials(firstName?: string | null, lastName?: string | null): string {
   const f = firstName?.[0] ?? ''
   const l = lastName?.[0] ?? ''
   return (f + l).toUpperCase() || 'U'
-}
-
-function toLocal(doc: {
-  _id: string
-  role: 'user' | 'assistant'
-  source: 'web' | 'telegram'
-  content: string
-  createdAt: number
-  metadata?: { route?: string }
-}): ChatMessage {
-  return {
-    id: doc._id,
-    role: doc.role,
-    source: doc.source,
-    content: doc.content,
-    createdAt: doc.createdAt,
-    route: doc.metadata?.route,
-  }
 }
 
 interface ChatWindowProps {
@@ -42,7 +26,6 @@ interface ChatWindowProps {
 export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
   const { user } = useUser()
 
-  // ── Convex ───────────────────────────────────────────────────────────────
   const dbUser = useQuery(
     api.users.getUserByClerkUserId,
     user ? { clerkUserId: user.id } : 'skip'
@@ -61,82 +44,179 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
     dbUser ? { tenantId: dbUser.tenantId, userId: dbUser._id } : 'skip'
   )
 
-  // ── Local streaming state ─────────────────────────────────────────────────
   const [pinnedSkillIds, setPinnedSkillIds] = useState<Set<string>>(new Set())
   const [input, setInput] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [streamingContent, setStreamingContent] = useState('')
   const [creditError, setCreditError] = useState(false)
-  const abortControllerRef = useRef<AbortController | null>(null)
-  // Bridges the gap between streaming ending and Convex confirming the save,
-  // preventing a flash where the completed message briefly disappears.
-  const [pendingAssistant, setPendingAssistant] = useState<string | null>(null)
-  const completedTextRef = useRef('')
+  const [chatError, setChatError] = useState<string | null>(null)
+  const activeThreadRef = useRef<Id<'threads'> | null>(threadId)
+  activeThreadRef.current = threadId
 
-  // ── Derived ───────────────────────────────────────────────────────────────
   const historyLoaded = threadId ? convexMessages !== undefined : true
-  const isStreaming = isLoading && streamingContent.length > 0
-
-  const persistedMessages: ChatMessage[] = (convexMessages ?? []).map(toLocal)
-
-  // Clear pendingAssistant once Convex has confirmed the saved message
-  useEffect(() => {
-    if (!pendingAssistant) return
-    if (persistedMessages.some((m) => m.role === 'assistant' && m.content === pendingAssistant)) {
-      setPendingAssistant(null)
-    }
-  }, [persistedMessages, pendingAssistant])
-
-  // While streaming: show persisted messages + live streaming bubble.
-  // After streaming: show pendingAssistant (if Convex hasn't confirmed yet) to avoid
-  // a flash between the streaming bubble disappearing and Convex pushing the saved message.
-  // Once Convex confirms: show persisted messages only.
-  const displayMessages: ChatMessage[] = isLoading
-    ? [
-        ...persistedMessages,
-        {
-          id: '__streaming__',
-          role: 'assistant' as const,
-          source: 'web' as const,
-          content: streamingContent,
-          createdAt: Date.now(),
-          isStreaming: true,
-        },
-      ]
-    : pendingAssistant &&
-        !persistedMessages.some((m) => m.role === 'assistant' && m.content === pendingAssistant)
-      ? [
-          ...persistedMessages,
-          {
-            id: '__pending__',
-            role: 'assistant' as const,
-            source: 'web' as const,
-            content: pendingAssistant,
-            createdAt: Date.now(),
-          },
-        ]
-      : persistedMessages
-
   const userInitials = getInitials(user?.firstName, user?.lastName)
 
-  // ── Send handler ──────────────────────────────────────────────────────────
+  const agentInstructionsRef = useRef<Record<string, string> | undefined>(undefined)
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('agent-custom-instructions')
+      if (stored) {
+        const parsed = JSON.parse(stored) as Record<string, string>
+        const filtered = Object.fromEntries(
+          Object.entries(parsed).filter(([, v]) => v?.trim())
+        )
+        if (Object.keys(filtered).length > 0) agentInstructionsRef.current = filtered
+      }
+    } catch {
+      // ignore
+    }
+  }, [])
+
+  const pinnedSkillIdsRef = useRef(pinnedSkillIds)
+  pinnedSkillIdsRef.current = pinnedSkillIds
+
+  const transport = useMemo(
+    () =>
+      new DefaultChatTransport<UIMessage>({
+        api: '/api/chat',
+        body: () => ({
+          threadId: activeThreadRef.current,
+          agentInstructions: agentInstructionsRef.current,
+          pinnedSkillIds:
+            pinnedSkillIdsRef.current.size > 0
+              ? [...pinnedSkillIdsRef.current]
+              : undefined,
+        }),
+      }),
+    [],
+  )
+
+  const {
+    messages: chatMessages,
+    sendMessage,
+    status,
+    error: useChatError,
+    setMessages,
+    stop,
+  } = useChat({
+    transport,
+    id: threadId ?? 'new',
+  })
+
+  const isLoading = status === 'submitted' || status === 'streaming'
+  const isStreaming = status === 'streaming'
+
+  useEffect(() => {
+    if (useChatError) {
+      const msg = useChatError.message || 'Something went wrong'
+      if (msg.includes('402') || msg.includes('credits')) {
+        setCreditError(true)
+      } else {
+        setChatError(msg)
+      }
+    }
+  }, [useChatError])
+
+  useEffect(() => {
+    if (chatError) {
+      const timer = setTimeout(() => setChatError(null), 10000)
+      return () => clearTimeout(timer)
+    }
+  }, [chatError])
+
+  useEffect(() => {
+    setMessages([])
+    setCreditError(false)
+    setChatError(null)
+  }, [threadId, setMessages])
+
+  /** Convert useChat messages to the format our MessageList/MessageBubble expect */
+  const displayMessages = useMemo(() => {
+    const persisted = (convexMessages ?? []).map((doc) => ({
+      id: doc._id,
+      role: doc.role as 'user' | 'assistant',
+      source: doc.source as 'web' | 'telegram',
+      content: doc.content,
+      createdAt: doc.createdAt,
+      route: doc.metadata?.route,
+      parts: doc.metadata?.toolCalls?.map((tc) => ({
+        type: tc.toolName,
+        toolInvocation: {
+          toolName: tc.toolName,
+          state: tc.state,
+          args: tc.args as Record<string, unknown> | undefined,
+          result: tc.result,
+        },
+      })),
+    }))
+
+    if (!isLoading && chatMessages.length === 0) {
+      return persisted
+    }
+
+    const lastAssistant = chatMessages.findLast((m) => m.role === 'assistant')
+    const lastUser = chatMessages.findLast((m) => m.role === 'user')
+
+    const streamingMessages: Array<{
+      id: string
+      role: 'user' | 'assistant'
+      source: 'web' | 'telegram'
+      content: string
+      createdAt: number
+      route?: string
+      isStreaming?: boolean
+      parts?: typeof lastAssistant extends undefined ? never : NonNullable<typeof lastAssistant>['parts']
+    }> = []
+
+    if (lastUser) {
+      const textPart = lastUser.parts.find((p) => p.type === 'text')
+      const userText = textPart && 'text' in textPart ? textPart.text : ''
+      const alreadyPersisted = persisted.some(
+        (m) => m.role === 'user' && m.content === userText
+      )
+      if (!alreadyPersisted && userText) {
+        streamingMessages.push({
+          id: lastUser.id,
+          role: 'user',
+          source: 'web',
+          content: userText,
+          createdAt: Date.now(),
+        })
+      }
+    }
+
+    if (lastAssistant) {
+      const textParts = lastAssistant.parts.filter((p) => p.type === 'text')
+      const assistantText = textParts
+        .map((p) => ('text' in p ? p.text : ''))
+        .join('')
+      const alreadyPersisted = persisted.some(
+        (m) => m.role === 'assistant' && m.content === assistantText
+      )
+      if (!alreadyPersisted) {
+        streamingMessages.push({
+          id: lastAssistant.id,
+          role: 'assistant',
+          source: 'web',
+          content: assistantText,
+          createdAt: Date.now(),
+          isStreaming,
+          parts: lastAssistant.parts,
+        })
+      }
+    }
+
+    return [...persisted, ...streamingMessages]
+  }, [convexMessages, chatMessages, isLoading, isStreaming])
+
   const handleSend = useCallback(
     async (text: string) => {
       if (!dbUser || isLoading) return
 
       setInput('')
-      setIsLoading(true)
-      setStreamingContent('')
-      setPendingAssistant(null)
       setCreditError(false)
-      completedTextRef.current = ''
+      setChatError(null)
 
-      const abortController = new AbortController()
-      abortControllerRef.current = abortController
+      let activeThreadId = activeThreadRef.current
 
-      let activeThreadId = threadId
-
-      // Auto-create thread on first message if none exists
       if (!activeThreadId) {
         const title = text.length > 50 ? text.slice(0, 50) + '…' : text
         activeThreadId = await createThread({
@@ -144,6 +224,7 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
           tenantId: dbUser.tenantId,
           title,
         })
+        activeThreadRef.current = activeThreadId
         onThreadCreated?.(activeThreadId)
       }
 
@@ -156,108 +237,65 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
         threadId: activeThreadId,
       })
 
-      // Auto-title: update thread title from first user message
-      if (persistedMessages.length === 0) {
+      const persistedCount = convexMessages?.length ?? 0
+      if (persistedCount === 0) {
         const title = text.length > 50 ? text.slice(0, 50) + '…' : text
         await updateThreadTitle({ threadId: activeThreadId, title })
       }
 
-      try {
-        // Read user-configured per-agent instructions saved from the Agents dashboard
-        let agentInstructions: Record<string, string> | undefined
-        try {
-          const stored = localStorage.getItem('agent-custom-instructions')
-          if (stored) {
-            const parsed = JSON.parse(stored) as Record<string, string>
-            const filtered = Object.fromEntries(
-              Object.entries(parsed).filter(([, v]) => v?.trim())
-            )
-            if (Object.keys(filtered).length > 0) agentInstructions = filtered
-          }
-        } catch {
-          // Silently ignore localStorage errors
-        }
-
-        const response = await fetch('/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            message: text,
-            threadId: activeThreadId,
-            agentInstructions,
-            pinnedSkillIds: pinnedSkillIds.size > 0 ? [...pinnedSkillIds] : undefined,
-          }),
-          signal: abortController.signal,
-        })
-
-        if (!response.ok) {
-          if (response.status === 402) {
-            setCreditError(true)
-            return
-          }
-          const err = await response.json().catch(() => ({ error: 'Request failed' }))
-          throw new Error(err.error ?? 'Request failed')
-        }
-
-        const reader = response.body!.getReader()
-        const decoder = new TextDecoder()
-        let fullText = ''
-
-        while (true) {
-          const { done, value } = await reader.read()
-          if (done) break
-          fullText += decoder.decode(value, { stream: true })
-          setStreamingContent(fullText)
-        }
-
-        if (fullText) {
-          // Store completed text in a ref so finally can batch-set it with the loading reset.
-          // Fire-and-forget the Convex saves so they don't hold up the state reset —
-          // this prevents Convex reacting and adding to persistedMessages while isLoading
-          // is still true, which would cause a double-bubble.
-          completedTextRef.current = fullText
-          void saveMessage({
-            userId: dbUser._id,
-            tenantId: dbUser.tenantId,
-            role: 'assistant',
-            source: 'web',
-            content: fullText,
-            threadId: activeThreadId,
-          })
-          void touchThread({ threadId: activeThreadId })
-        }
-      } catch (err) {
-        if ((err as Error).name === 'AbortError') return
-        console.error('[ChatWindow] Stream error:', err)
-
-        const partial = streamingContent
-        if (partial) {
-          void saveMessage({
-            userId: dbUser._id,
-            tenantId: dbUser.tenantId,
-            role: 'assistant',
-            source: 'web',
-            content: partial + '\n\n*(Response interrupted)*',
-            threadId: activeThreadId,
-          })
-        }
-      } finally {
-        // Batch all state resets in one render. Setting pendingAssistant here (from the ref)
-        // ensures there's no flash between the streaming bubble disappearing and Convex confirming.
-        const completed = completedTextRef.current
-        completedTextRef.current = ''
-        if (completed) setPendingAssistant(completed)
-        setIsLoading(false)
-        setStreamingContent('')
-        abortControllerRef.current = null
-      }
+      sendMessage({ text })
     },
-    [dbUser, isLoading, threadId, saveMessage, createThread, updateThreadTitle, touchThread, onThreadCreated, persistedMessages.length, streamingContent]
+    [dbUser, isLoading, createThread, saveMessage, updateThreadTitle, onThreadCreated, convexMessages?.length, sendMessage]
   )
 
+  const prevStatusRef = useRef(status)
+  useEffect(() => {
+    const wasActive = prevStatusRef.current === 'streaming' || prevStatusRef.current === 'submitted'
+    const nowReady = status === 'ready'
+    prevStatusRef.current = status
+
+    if (!wasActive || !nowReady) return
+    if (!dbUser || !activeThreadRef.current) return
+
+    const lastAssistant = chatMessages.findLast((m) => m.role === 'assistant')
+    if (!lastAssistant) return
+
+    const textParts = lastAssistant.parts.filter((p) => p.type === 'text')
+    const fullText = textParts.map((p) => ('text' in p ? p.text : '')).join('')
+    if (!fullText) return
+
+    const toolCallParts = lastAssistant.parts
+      .filter((p) => p.type.startsWith('tool-') || p.type === 'tool-invocation')
+      .map((p) => {
+        const inv = (p as { toolInvocation?: Record<string, unknown> }).toolInvocation ?? p
+        return {
+          toolName:
+            p.type.startsWith('tool-')
+              ? p.type
+              : (inv as { toolName?: string }).toolName ?? 'unknown',
+          state: (inv as { state?: string }).state ?? p.type,
+          args: (inv as { args?: unknown }).args as Record<string, unknown> | undefined,
+          result: (inv as { result?: unknown }).result ?? (inv as { output?: unknown }).output,
+        }
+      })
+
+    void saveMessage({
+      userId: dbUser._id,
+      tenantId: dbUser.tenantId,
+      role: 'assistant',
+      source: 'web',
+      content: fullText,
+      threadId: activeThreadRef.current,
+      metadata: toolCallParts.length > 0 ? { toolCalls: toolCallParts } : undefined,
+    })
+    void touchThread({ threadId: activeThreadRef.current })
+
+    setMessages([])
+  }, [status, chatMessages, dbUser, saveMessage, touchThread, setMessages])
+
   const handleStop = useCallback(() => {
-    abortControllerRef.current?.abort()
-  }, [])
+    stop()
+  }, [stop])
 
   const handleToggleSkill = useCallback((skillId: string) => {
     setPinnedSkillIds((prev) => {
@@ -279,7 +317,13 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
     [handleSend]
   )
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  const handlePromptClick = useCallback(
+    (prompt: string) => {
+      handleSend(prompt)
+    },
+    [handleSend]
+  )
+
   return (
     <div className="flex h-full flex-col">
       <MessageList
@@ -289,11 +333,28 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
         userInitials={userInitials}
         historyLoaded={historyLoaded}
         onQuestionAnswer={handleQuestionAnswer}
+        onPromptClick={handlePromptClick}
       />
+
+      {chatError && (
+        <div className="mx-4 mb-2 flex items-start gap-3 rounded-xl border border-red-800/40 bg-red-900/20 px-4 py-3 text-sm text-red-300">
+          <span className="mt-0.5 text-base leading-none">!</span>
+          <div className="flex-1">
+            <p className="font-medium">Something went wrong</p>
+            <p className="mt-0.5 text-red-400/80">{chatError}</p>
+          </div>
+          <button
+            onClick={() => setChatError(null)}
+            className="shrink-0 rounded-lg px-2 py-1 text-xs text-red-400 hover:bg-red-900/30 hover:text-red-300"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       {creditError && (
         <div className="mx-4 mb-2 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/20 dark:text-amber-300">
-          <span className="mt-0.5 text-base leading-none">✦</span>
+          <span className="mt-0.5 text-base leading-none">&#10022;</span>
           <div>
             <p className="font-medium">You&apos;ve run out of credits</p>
             <p className="mt-0.5 text-amber-700 dark:text-amber-400">

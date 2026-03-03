@@ -15,6 +15,16 @@ export const saveMessage = mutation({
     metadata: v.optional(
       v.object({
         route: v.optional(v.string()),
+        toolCalls: v.optional(
+          v.array(
+            v.object({
+              toolName: v.string(),
+              state: v.string(),
+              args: v.optional(v.any()),
+              result: v.optional(v.any()),
+            })
+          )
+        ),
       })
     ),
   },

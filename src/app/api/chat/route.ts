@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { ConvexHttpClient } from 'convex/browser'
+import { toAISdkStream } from '@mastra/ai-sdk'
+import { createUIMessageStream, createUIMessageStreamResponse } from 'ai'
 import { createOrchestratorAgent } from '@/mastra'
 import { retrieveRelevantSkills, buildSkillsContext, buildPinnedSkillsContext } from '@/skills/skillRetriever'
 import { retrieveRelevantContext, buildContextBlock } from '@/services/contextService'
 import { getTenantContext } from '@/middleware/tenantContext'
 import { api } from '@convex/_generated/api'
-import type { ChatRequest } from '@/types'
 import type { Id } from '@convex/_generated/dataModel'
 
 export const maxDuration = 60
@@ -14,21 +15,63 @@ const HISTORY_LIMIT = 20
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
 
+/**
+ * Extract the latest user message text from the request body.
+ * Supports AI SDK v6 UIMessage[] format (parts-based) and plain `message` string for
+ * backward compatibility (Telegram webhook, etc.).
+ */
+function extractUserMessage(body: Record<string, unknown>): string | null {
+  if (typeof body.message === 'string' && body.message.trim()) {
+    return body.message.trim()
+  }
+
+  const messages = body.messages as Array<{
+    role: string
+    parts?: Array<{ type: string; text?: string }>
+    content?: string
+  }> | undefined
+
+  if (!messages?.length) return null
+
+  const lastUser = [...messages].reverse().find((m) => m.role === 'user')
+  if (!lastUser) return null
+
+  if (lastUser.parts) {
+    const texts = lastUser.parts
+      .filter((p) => p.type === 'text' && p.text?.trim())
+      .map((p) => p.text!.trim())
+    return texts.join(' ') || null
+  }
+
+  return typeof lastUser.content === 'string' ? lastUser.content.trim() || null : null
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const body = (await req.json()) as Partial<ChatRequest>
-    const { message, threadId, agentInstructions, pinnedSkillIds } = body
+    const body = await req.json()
 
-    if (!message?.trim()) {
+    const { threadId, agentInstructions, pinnedSkillIds, messages: uiMessages } = body as {
+      threadId?: string
+      agentInstructions?: Record<string, string>
+      pinnedSkillIds?: string[]
+      messages?: unknown[]
+    }
+
+    console.log('[Chat API] Body keys:', Object.keys(body), '| messages count:', uiMessages?.length ?? 0)
+
+    const message = extractUserMessage(body)
+    if (!message) {
+      console.warn('[Chat API] Could not extract message. Body sample:', JSON.stringify(body).slice(0, 500))
       return NextResponse.json({ error: 'message is required' }, { status: 400 })
     }
+
+    console.log('[Chat API] Extracted message:', message.slice(0, 100))
 
     const tenantCtx = await getTenantContext()
     const { userId, tenantId } = tenantCtx
 
     console.log(`[Chat API] tenantId=${tenantId} | userId=${userId} | threadId=${threadId ?? 'none'}`)
 
-    // Resolve Convex user early so we can use the DB user ID for scoped queries
     const dbUser = await convex
       .query(api.users.getUserByClerkUserId, { clerkUserId: userId })
       .catch((err) => {
@@ -36,7 +79,6 @@ export async function POST(req: NextRequest) {
         return null
       })
 
-    // ── Credit check ────────────────────────────────────────────────────────
     if (dbUser) {
       const hasCredits = await convex
         .query(api.credits.hasEnoughCredits, {
@@ -75,7 +117,6 @@ export async function POST(req: NextRequest) {
         : Promise.resolve([]),
     ])
 
-    // Merge pinned skills (user-forced) with auto-retrieved skills, deduplicating
     let allSkills = [...relevantSkills]
     if (pinnedSkillIds && pinnedSkillIds.length > 0 && dbUser) {
       try {
@@ -112,25 +153,26 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    console.log(`[Chat API] connectedProviders=${connectedProviders.join(', ') || 'none'}`)
+
     const skillsContext = buildSkillsContext(allSkills)
     const contextBlock = buildContextBlock(relevantContext)
     const agent = createOrchestratorAgent(userId, tenantId, agentInstructions, connectedProviders)
 
-    const messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }> = []
+    const agentMessages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }> = []
 
     const systemParts = [skillsContext, contextBlock].filter(Boolean)
     if (systemParts.length > 0) {
-      messages.push({ role: 'system', content: systemParts.join('\n\n---\n\n') })
+      agentMessages.push({ role: 'system', content: systemParts.join('\n\n---\n\n') })
     }
 
     for (const doc of historyDocs) {
       if (doc.content === message && doc.role === 'user') continue
-      messages.push({ role: doc.role as 'user' | 'assistant', content: doc.content })
+      agentMessages.push({ role: doc.role as 'user' | 'assistant', content: doc.content })
     }
 
-    messages.push({ role: 'user', content: message })
+    agentMessages.push({ role: 'user', content: message })
 
-    // ── Deduct credit for this chat message ──────────────────────────────
     if (dbUser) {
       convex
         .mutation(api.credits.deductCredits, {
@@ -143,18 +185,20 @@ export async function POST(req: NextRequest) {
         })
     }
 
-    const result = await agent.stream(messages as Parameters<typeof agent.stream>[0])
+    const result = await agent.stream(agentMessages as Parameters<typeof agent.stream>[0])
 
-    return new Response(result.textStream as unknown as ReadableStream, {
-      headers: {
-        'Content-Type': 'text/plain; charset=utf-8',
-        'X-Accel-Buffering': 'no',
-        'Cache-Control': 'no-cache',
+    const uiStream = createUIMessageStream({
+      execute: async ({ writer }) => {
+        for await (const part of toAISdkStream(result, { from: 'agent' })) {
+          await writer.write(part)
+        }
       },
     })
+
+    return createUIMessageStreamResponse({ stream: uiStream })
   } catch (error) {
     console.error('[Chat API] Error:', error)
-    const message = error instanceof Error ? error.message : 'Internal server error'
-    return NextResponse.json({ error: message }, { status: 500 })
+    const msg = error instanceof Error ? error.message : 'Internal server error'
+    return NextResponse.json({ error: msg }, { status: 500 })
   }
 }

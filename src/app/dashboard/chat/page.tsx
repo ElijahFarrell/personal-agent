@@ -43,7 +43,7 @@ export default function ChatPage() {
 
       <aside
         className={cn(
-          'shrink-0 border-l border-gray-800/60 bg-gray-900/20 transition-[width] duration-200 ease-in-out overflow-hidden',
+          'shrink-0 border-l border-gray-800/40 bg-gray-950/30 backdrop-blur-sm transition-[width] duration-200 ease-in-out overflow-hidden',
           sidebarOpen ? 'w-[240px]' : 'w-0 border-l-0'
         )}
       >
