@@ -50,6 +50,7 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
   const [chatError, setChatError] = useState<string | null>(null)
   const activeThreadRef = useRef<Id<'threads'> | null>(threadId)
   activeThreadRef.current = threadId
+  const justCreatedThreadRef = useRef(false)
 
   const historyLoaded = threadId ? convexMessages !== undefined : true
   const userInitials = getInitials(user?.firstName, user?.lastName)
@@ -123,6 +124,10 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
   }, [chatError])
 
   useEffect(() => {
+    if (justCreatedThreadRef.current) {
+      justCreatedThreadRef.current = false
+      return
+    }
     setMessages([])
     setCreditError(false)
     setChatError(null)
@@ -216,8 +221,9 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
       setChatError(null)
 
       let activeThreadId = activeThreadRef.current
+      const isNewThread = !activeThreadId
 
-      if (!activeThreadId) {
+      if (isNewThread) {
         const title = text.length > 50 ? text.slice(0, 50) + '…' : text
         activeThreadId = await createThread({
           userId: dbUser._id,
@@ -225,7 +231,6 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
           title,
         })
         activeThreadRef.current = activeThreadId
-        onThreadCreated?.(activeThreadId)
       }
 
       await saveMessage({
@@ -234,16 +239,21 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
         role: 'user',
         source: 'web',
         content: text,
-        threadId: activeThreadId,
+        threadId: activeThreadId!,
       })
 
       const persistedCount = convexMessages?.length ?? 0
       if (persistedCount === 0) {
         const title = text.length > 50 ? text.slice(0, 50) + '…' : text
-        await updateThreadTitle({ threadId: activeThreadId, title })
+        await updateThreadTitle({ threadId: activeThreadId!, title })
       }
 
       sendMessage({ text })
+
+      if (isNewThread) {
+        justCreatedThreadRef.current = true
+        onThreadCreated?.(activeThreadId!)
+      }
     },
     [dbUser, isLoading, createThread, saveMessage, updateThreadTitle, onThreadCreated, convexMessages?.length, sendMessage]
   )
