@@ -38,28 +38,41 @@ function parseSourceJson(raw: string): Partial<ParsedSource> {
 }
 
 /**
+ * Strip incomplete :::sources block that's still being streamed.
+ * Matches from the last `:::sources` that has no closing `:::`.
+ */
+const INCOMPLETE_SOURCES_RE = /:::sources\s*\n(?:(?!:::)[\s\S])*$/
+
+function extractSourcesFromBlock(inner: string, sources: ParsedSource[]) {
+  let lineMatch: RegExpExecArray | null
+  const lineRe = new RegExp(SOURCE_LINE_RE.source, 'g')
+  while ((lineMatch = lineRe.exec(inner)) !== null) {
+    const parsed = parseSourceJson(lineMatch[1])
+    if (parsed.url) {
+      sources.push({
+        title: parsed.title || extractDomain(parsed.url),
+        url: parsed.url,
+        domain: extractDomain(parsed.url),
+        favicon: buildFavicon(parsed.url),
+      })
+    }
+  }
+}
+
+/**
  * Extracts all :::sources blocks from content.
  * Returns the cleaned content (blocks removed) and an array of parsed sources.
+ * Also hides incomplete source blocks that are still being streamed.
  */
 export function parseSources(content: string): SourceParseResult {
   const sources: ParsedSource[] = []
 
-  const cleaned = content.replace(SOURCES_BLOCK_RE, (_match, inner: string) => {
-    let lineMatch: RegExpExecArray | null
-    const lineRe = new RegExp(SOURCE_LINE_RE.source, 'g')
-    while ((lineMatch = lineRe.exec(inner)) !== null) {
-      const parsed = parseSourceJson(lineMatch[1])
-      if (parsed.url) {
-        sources.push({
-          title: parsed.title || extractDomain(parsed.url),
-          url: parsed.url,
-          domain: extractDomain(parsed.url),
-          favicon: buildFavicon(parsed.url),
-        })
-      }
-    }
+  let cleaned = content.replace(SOURCES_BLOCK_RE, (_match, inner: string) => {
+    extractSourcesFromBlock(inner, sources)
     return ''
   })
+
+  cleaned = cleaned.replace(INCOMPLETE_SOURCES_RE, '')
 
   return { content: cleaned.trim(), sources }
 }
