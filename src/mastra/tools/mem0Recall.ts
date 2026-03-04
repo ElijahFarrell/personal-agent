@@ -20,7 +20,7 @@ export function createMem0RecallTool(userId: string) {
     execute: async (input) => {
       try {
         const results = await client.search(input.query, {
-          filters: { user_id: userId },
+          user_id: userId,
           limit: 8,
         })
         const memories = results.map((r: { memory?: string }) => r.memory ?? '')
