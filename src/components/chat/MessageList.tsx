@@ -90,9 +90,7 @@ function EmptyState({ onPromptClick }: { onPromptClick?: (prompt: string) => voi
             onClick={() => onPromptClick?.(prompt)}
             className="group rounded-xl border border-gray-800/80 bg-gray-900/40 backdrop-blur-sm px-4 py-3 text-left text-sm text-gray-400 transition-all hover:border-brand-600/40 hover:bg-gray-900/60 hover:text-gray-200"
           >
-            <span className="text-gray-600 group-hover:text-brand-400 mr-2">&quot;</span>
-            {prompt}
-            <span className="text-gray-600 group-hover:text-brand-400 ml-0.5">&quot;</span>
+            <span className="text-gray-600 group-hover:text-brand-400">&quot;</span>{prompt}<span className="text-gray-600 group-hover:text-brand-400">&quot;</span>
           </button>
         ))}
       </div>
