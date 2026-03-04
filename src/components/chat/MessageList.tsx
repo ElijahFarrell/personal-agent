@@ -143,7 +143,7 @@ export function MessageList({
 
   return (
     <ScrollArea className="flex-1">
-      <div className="mx-auto max-w-3xl flex flex-col py-6 px-2">
+      <div className="mx-auto max-w-4xl flex flex-col py-6 px-2">
         {items.map((item) => {
           if (item.type === 'separator') {
             return (

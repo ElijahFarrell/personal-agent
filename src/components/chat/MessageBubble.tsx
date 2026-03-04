@@ -124,7 +124,7 @@ export function MessageBubble({ message, userInitials, onQuestionAnswer }: Messa
           <div className="flex max-w-[75%] flex-col gap-1 items-end">
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="rounded-2xl rounded-tr-sm bg-brand-600 text-white shadow-lg shadow-brand-600/10 px-4 py-2.5 text-[15px] leading-relaxed">
+                <div className="rounded-2xl rounded-tr-sm bg-brand-600/70 backdrop-blur-sm text-white shadow-lg shadow-brand-600/10 px-4 py-2.5 text-[15px] leading-relaxed">
                   <p className="whitespace-pre-wrap break-words">{message.content}</p>
                 </div>
               </TooltipTrigger>

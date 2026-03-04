@@ -133,12 +133,12 @@ export function ChatInput({ value, onChange, onSubmit, onStop, isLoading, disabl
   return (
     <div className="border-t border-gray-800/40 bg-gray-950/60 backdrop-blur-md px-4 py-3">
       {isTranscribing && (
-        <div className="mx-auto max-w-3xl mb-2 flex items-center justify-center gap-2 rounded-xl bg-brand-600/10 border border-brand-600/20 px-3 py-1.5 text-xs text-brand-400">
+        <div className="mx-auto max-w-4xl mb-2 flex items-center justify-center gap-2 rounded-xl bg-brand-600/10 border border-brand-600/20 px-3 py-1.5 text-xs text-brand-400">
           <Loader2 className="h-3 w-3 animate-spin" />
           Transcribing your voice…
         </div>
       )}
-      <div className="mx-auto max-w-3xl relative flex items-end gap-2 rounded-2xl border border-gray-700/60 bg-gray-900/50 backdrop-blur-sm px-3 py-2 transition-all focus-within:border-brand-600/40 focus-within:ring-1 focus-within:ring-brand-600/20">
+      <div className="mx-auto max-w-4xl relative flex items-end gap-2 rounded-2xl border border-gray-700/60 bg-gray-900/50 backdrop-blur-sm px-3 py-2 transition-all focus-within:border-brand-600/40 focus-within:ring-1 focus-within:ring-brand-600/20">
         <Textarea
           ref={textareaRef}
           value={value}
@@ -146,11 +146,11 @@ export function ChatInput({ value, onChange, onSubmit, onStop, isLoading, disabl
           onKeyDown={handleKeyDown}
           placeholder="Send a message…"
           disabled={disabled}
-          rows={2}
+          rows={3}
           className={cn(
-            'flex-1 resize-none border-0 bg-transparent p-0 text-sm text-gray-100 placeholder:text-gray-500',
+            'flex-1 resize-none border-0 bg-transparent p-0 text-[15px] text-gray-100 placeholder:text-gray-500',
             'focus-visible:ring-0 focus-visible:ring-offset-0',
-            'min-h-[3rem] leading-relaxed'
+            'min-h-[3.5rem] leading-relaxed'
           )}
           aria-label="Message input"
         />
