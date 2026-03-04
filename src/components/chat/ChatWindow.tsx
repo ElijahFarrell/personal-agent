@@ -49,8 +49,11 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
   const [creditError, setCreditError] = useState(false)
   const [chatError, setChatError] = useState<string | null>(null)
   const activeThreadRef = useRef<Id<'threads'> | null>(threadId)
-  activeThreadRef.current = threadId
-  const justCreatedThreadRef = useRef(false)
+  const pendingThreadIdRef = useRef<Id<'threads'> | null>(null)
+  const flushedThreadRef = useRef(false)
+  if (!pendingThreadIdRef.current) {
+    activeThreadRef.current = threadId
+  }
 
   const historyLoaded = threadId ? convexMessages !== undefined : true
   const userInitials = getInitials(user?.firstName, user?.lastName)
@@ -124,8 +127,8 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
   }, [chatError])
 
   useEffect(() => {
-    if (justCreatedThreadRef.current) {
-      justCreatedThreadRef.current = false
+    if (flushedThreadRef.current) {
+      flushedThreadRef.current = false
       return
     }
     setMessages([])
@@ -251,11 +254,10 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
       sendMessage({ text })
 
       if (isNewThread) {
-        justCreatedThreadRef.current = true
-        onThreadCreated?.(activeThreadId!)
+        pendingThreadIdRef.current = activeThreadId!
       }
     },
-    [dbUser, isLoading, createThread, saveMessage, updateThreadTitle, onThreadCreated, convexMessages?.length, sendMessage]
+    [dbUser, isLoading, createThread, saveMessage, updateThreadTitle, convexMessages?.length, sendMessage]
   )
 
   const prevStatusRef = useRef(status)
@@ -300,8 +302,19 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
     })
     void touchThread({ threadId: activeThreadRef.current })
 
-    setMessages([])
-  }, [status, chatMessages, dbUser, saveMessage, touchThread, setMessages])
+    const hasPending = !!pendingThreadIdRef.current
+
+    if (!hasPending) {
+      setMessages([])
+    }
+
+    if (hasPending) {
+      const pending = pendingThreadIdRef.current!
+      pendingThreadIdRef.current = null
+      flushedThreadRef.current = true
+      onThreadCreated?.(pending)
+    }
+  }, [status, chatMessages, dbUser, saveMessage, touchThread, setMessages, onThreadCreated])
 
   const handleStop = useCallback(() => {
     stop()
