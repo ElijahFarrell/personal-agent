@@ -144,7 +144,7 @@ export function ThreadSidebar({ activeThreadId, onSelectThread, onNewThread }: T
                       }
                     }}
                     className={cn(
-                      'flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs transition-colors cursor-pointer',
+                      'flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm transition-colors cursor-pointer',
                       isActive
                         ? 'bg-brand-600/15 text-brand-300'
                         : 'text-gray-400 hover:bg-gray-800/60 hover:text-gray-200'
@@ -152,7 +152,7 @@ export function ThreadSidebar({ activeThreadId, onSelectThread, onNewThread }: T
                   >
                     <MessageSquare className="h-3.5 w-3.5 shrink-0 opacity-50" />
                     <span className="flex-1 truncate">{thread.title}</span>
-                    <span className="shrink-0 text-[10px] text-gray-600">
+                    <span className="shrink-0 text-xs text-gray-600">
                       {formatRelativeTime(thread.updatedAt)}
                     </span>
                     <button

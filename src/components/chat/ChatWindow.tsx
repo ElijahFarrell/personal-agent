@@ -234,6 +234,20 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
           title,
         })
         activeThreadRef.current = activeThreadId
+
+        // Fire-and-forget: replace truncated title with AI summary when ready
+        fetch('/api/thread/summarize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text }),
+        })
+          .then((r) => r.json())
+          .then(({ title: summary }) => {
+            if (summary) {
+              updateThreadTitle({ threadId: activeThreadId!, title: summary })
+            }
+          })
+          .catch(() => {})
       }
 
       await saveMessage({
@@ -246,7 +260,7 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
       })
 
       const persistedCount = convexMessages?.length ?? 0
-      if (persistedCount === 0) {
+      if (persistedCount === 0 && !isNewThread) {
         const title = text.length > 50 ? text.slice(0, 50) + '…' : text
         await updateThreadTitle({ threadId: activeThreadId!, title })
       }

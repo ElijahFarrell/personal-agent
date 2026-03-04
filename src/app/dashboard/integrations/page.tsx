@@ -127,41 +127,37 @@ export default function IntegrationsPage() {
 
       <section
         aria-label="Available integrations"
-        className="rounded-xl border border-gray-800/80 bg-gray-900/50"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
       >
-        <ul
-          className="divide-y divide-gray-800/60"
-          role="list"
-          aria-label="Integrations list"
-        >
-          {INTEGRATIONS.map(({ id, name, description, provider, Icon, iconBg, iconColor }) => {
-            const isConnected = connectedProviders.has(provider)
-            return (
-              <li
-                key={id}
-                className="flex items-center justify-between gap-4 px-5 py-4"
-              >
-                <div className="flex min-w-0 items-center gap-4">
-                  <span
-                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${iconBg}`}
-                    aria-hidden="true"
-                  >
-                    <Icon className={`h-4 w-4 ${iconColor}`} />
-                  </span>
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-white">{name}</p>
-                    <p className="truncate text-xs text-gray-500">{description}</p>
-                  </div>
+        {INTEGRATIONS.map(({ id, name, description, provider, Icon, iconBg, iconColor }) => {
+          const isConnected = connectedProviders.has(provider)
+          return (
+            <div
+              key={id}
+              className="flex flex-col rounded-xl border border-gray-800/60 bg-gray-900/40 p-5 transition-colors hover:border-gray-700/60"
+            >
+              <div className="flex min-w-0 items-start gap-4">
+                <span
+                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${iconBg}`}
+                  aria-hidden="true"
+                >
+                  <Icon className={`h-5 w-5 ${iconColor}`} />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-white">{name}</p>
+                  <p className="mt-0.5 text-xs text-gray-500 line-clamp-2">{description}</p>
                 </div>
+              </div>
+              <div className="mt-4">
                 <ConnectButton
                   integrationId={id}
                   provider={provider}
                   isConnected={isConnected}
                 />
-              </li>
-            )
-          })}
-        </ul>
+              </div>
+            </div>
+          )
+        })}
       </section>
     </div>
     </div>
