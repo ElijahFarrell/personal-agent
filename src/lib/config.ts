@@ -29,6 +29,7 @@ export const config = {
   },
   telegram: {
     botToken: optionalEnv('TELEGRAM_BOT_TOKEN'),
+    botUsername: optionalEnv('TELEGRAM_BOT_USERNAME'),
     ownerId: optionalEnv('TELEGRAM_OWNER_ID'),
   },
   qdrant: {

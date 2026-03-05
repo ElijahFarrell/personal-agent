@@ -4,6 +4,7 @@ import { useUser } from '@clerk/nextjs'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { ConnectButton } from '@/components/ConnectButton'
+import { TelegramConnectButton } from '@/components/TelegramConnectButton'
 import type { IntegrationProvider } from '@/types'
 import {
   Mail,
@@ -13,6 +14,7 @@ import {
   Camera,
   FileText,
   BarChart2,
+  Send,
 } from 'lucide-react'
 
 const INTEGRATIONS: Array<{
@@ -89,6 +91,15 @@ const INTEGRATIONS: Array<{
   },
 ]
 
+const TELEGRAM_ENTRY = {
+  id: 'telegram',
+  name: 'Telegram',
+  description: 'Chat with your AI assistant from Telegram',
+  Icon: Send,
+  iconBg: 'bg-sky-500/10',
+  iconColor: 'text-sky-400',
+}
+
 export default function IntegrationsPage() {
   const { user } = useUser()
 
@@ -108,7 +119,8 @@ export default function IntegrationsPage() {
       .map((c) => c.provider)
   )
 
-  const connectedCount = connectedProviders.size
+  const telegramConnected = !!dbUser?.telegramId
+  const connectedCount = connectedProviders.size + (telegramConnected ? 1 : 0)
 
   return (
     <div className="flex-1 overflow-y-auto p-8">
@@ -120,7 +132,7 @@ export default function IntegrationsPage() {
         <p className="mt-1 text-[15px] text-gray-400">
           Connect your accounts to power your AI assistant.{' '}
           <span className="tabular-nums text-gray-500">
-            {connectedCount} of {INTEGRATIONS.length} connected
+            {connectedCount} of {INTEGRATIONS.length + 1} connected
           </span>
         </p>
       </div>
@@ -158,6 +170,26 @@ export default function IntegrationsPage() {
             </div>
           )
         })}
+        <div
+          key={TELEGRAM_ENTRY.id}
+          className="flex flex-col rounded-xl border border-gray-800/60 bg-gray-900/40 p-5 transition-colors hover:border-gray-700/60"
+        >
+          <div className="flex min-w-0 items-start gap-4">
+            <span
+              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${TELEGRAM_ENTRY.iconBg}`}
+              aria-hidden="true"
+            >
+              <TELEGRAM_ENTRY.Icon className={`h-5 w-5 ${TELEGRAM_ENTRY.iconColor}`} />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-white">{TELEGRAM_ENTRY.name}</p>
+              <p className="mt-0.5 text-xs text-gray-500 line-clamp-2">{TELEGRAM_ENTRY.description}</p>
+            </div>
+          </div>
+          <div className="mt-4">
+            <TelegramConnectButton isConnected={telegramConnected} />
+          </div>
+        </div>
       </section>
     </div>
     </div>

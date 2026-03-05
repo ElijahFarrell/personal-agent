@@ -60,17 +60,3 @@ export async function getTenantContext(): Promise<TenantContext> {
   }
 }
 
-/**
- * Build a tenant context for Telegram messages based on the sender's Telegram user ID.
- * Maps Telegram IDs to internal user IDs — in production, look this up in the DB.
- */
-export function getTelegramContext(telegramUserId: string): TenantContext {
-  const ownerId = process.env.TELEGRAM_OWNER_ID
-  if (telegramUserId === ownerId) return PERSONAL_CONTEXT
-
-  return {
-    tenantId: `telegram-${telegramUserId}`,
-    userId: telegramUserId,
-    tier: 'free',
-  }
-}

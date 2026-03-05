@@ -2,6 +2,13 @@ import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import { INDEXES, TABLES, TIER } from './constants'
 
+export const getTenantById = query({
+  args: { tenantId: v.id(TABLES.TENANTS) },
+  handler: async (ctx, { tenantId }) => {
+    return await ctx.db.get(tenantId)
+  },
+})
+
 export const getTenantByClerkOrgId = query({
   args: { clerkOrgId: v.string() },
   handler: async (ctx, { clerkOrgId }) => {

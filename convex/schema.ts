@@ -23,7 +23,8 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index(INDEXES.BY_CLERK_USER_ID, ['clerkUserId'])
-    .index(INDEXES.BY_TENANT_ID, ['tenantId']),
+    .index(INDEXES.BY_TENANT_ID, ['tenantId'])
+    .index(INDEXES.BY_TELEGRAM_ID, ['telegramId']),
 
   [TABLES.USER_INTEGRATIONS]: defineTable({
     userId: v.id(TABLES.USERS),
@@ -127,6 +128,15 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index(INDEXES.BY_TENANT_ID, ['tenantId']),
+
+  [TABLES.TELEGRAM_LINK_TOKENS]: defineTable({
+    token: v.string(),
+    clerkUserId: v.string(),
+    expiresAt: v.number(),
+    createdAt: v.number(),
+  })
+    .index(INDEXES.BY_TOKEN, ['token'])
+    .index(INDEXES.BY_CLERK_USER_ID, ['clerkUserId']),
 
   [TABLES.CREDIT_TRANSACTIONS]: defineTable({
     tenantId: v.id(TABLES.TENANTS),

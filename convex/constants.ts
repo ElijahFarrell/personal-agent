@@ -10,6 +10,7 @@ export const TABLES = {
   CONTEXT_DOCS: 'contextDocs',
   TENANT_BILLING: 'tenantBilling',
   CREDIT_TRANSACTIONS: 'creditTransactions',
+  TELEGRAM_LINK_TOKENS: 'telegramLinkTokens',
 } as const
 
 // ─── Index Names ─────────────────────────────────────────────────────────────
@@ -25,6 +26,8 @@ export const INDEXES = {
   BY_THREAD_CREATED: 'by_threadId_createdAt',
   BY_TENANT_SCOPE: 'by_tenantId_scope',
   BY_TENANT_CREATED: 'by_tenantId_createdAt',
+  BY_TOKEN: 'by_token',
+  BY_TELEGRAM_ID: 'by_telegramId',
 } as const
 
 // ─── Enum Values ─────────────────────────────────────────────────────────────

@@ -16,6 +16,7 @@ import type * as integrations from "../integrations.js";
 import type * as messages from "../messages.js";
 import type * as migrations from "../migrations.js";
 import type * as skills from "../skills.js";
+import type * as telegram from "../telegram.js";
 import type * as tenants from "../tenants.js";
 import type * as threads from "../threads.js";
 import type * as users from "../users.js";
@@ -35,6 +36,7 @@ declare const fullApi: ApiFromModules<{
   messages: typeof messages;
   migrations: typeof migrations;
   skills: typeof skills;
+  telegram: typeof telegram;
   tenants: typeof tenants;
   threads: typeof threads;
   users: typeof users;
