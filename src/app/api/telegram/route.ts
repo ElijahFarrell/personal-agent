@@ -5,7 +5,7 @@ import type { Message, Update } from 'telegraf/types'
 import { ConvexHttpClient } from 'convex/browser'
 import { createOrchestratorAgent } from '@/mastra'
 import { retrieveRelevantSkills, buildSkillsContext } from '@/skills/skillRetriever'
-import { getTelegramContext } from '@/middleware/tenantContext'
+import { retrieveRelevantContext, buildContextBlock } from '@/services/contextService'
 import { config } from '@/lib/config'
 import { api } from '@convex/_generated/api'
 
@@ -14,10 +14,29 @@ type TextContext = NarrowedContext<Context<Update>, Update.MessageUpdate<Message
 const bot = new Telegraf(config.telegram.botToken)
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
+const appUrl = config.app.url || process.env.NEXT_PUBLIC_APP_URL || 'https://app.example.com'
 
 bot.command('start', async (ctx) => {
+  const payload = ctx.message.text?.replace(/^\/start\s*/, '').trim()
+  if (payload) {
+    const telegramUserId = ctx.from?.id?.toString()
+    if (!telegramUserId) return
+
+    const result = await convex.mutation(api.telegram.consumeLinkToken, {
+      token: payload,
+      telegramId: telegramUserId,
+    })
+
+    if (result.success) {
+      await ctx.reply("You're connected! Send me a message and I'll get to work.")
+    } else {
+      await ctx.reply(result.error || 'Link expired or invalid. Please try again from the dashboard.')
+    }
+    return
+  }
+
   await ctx.reply(
-    `Hey! I'm your Personal AI OS.\n\nSend me a message and I'll get to work. Try:\n• "Check my email"\n• "Draft a LinkedIn post about AI"\n• "What's on my calendar today?"\n• "Brief me on my day"`
+    `Hey! I'm your Personal AI OS.\n\nTo connect your account, open the Integrations page in the app and click Connect Telegram.\n\nIf you're already connected, send me a message and I'll get to work. Try:\n• "Check my email"\n• "Draft a LinkedIn post about AI"\n• "What's on my calendar today?"\n• "Brief me on my day"`
   )
 })
 
@@ -33,29 +52,52 @@ async function processMessage(ctx: TextContext, messageText: string): Promise<vo
   const telegramUserId = ctx.from?.id?.toString()
   if (!telegramUserId || !messageText?.trim()) return
 
-  const tenantCtx = getTelegramContext(telegramUserId)
-  const { userId, tenantId } = tenantCtx
+  const convexUser = await convex
+    .query(api.users.getUserByTelegramId, { telegramId: telegramUserId })
+    .catch(() => null)
+
+  if (!convexUser) {
+    await ctx.reply(
+      `Please link your Telegram account first. Go to ${appUrl}/dashboard/integrations and click Connect Telegram.`
+    )
+    return
+  }
+
+  const tenant = await convex
+    .query(api.tenants.getTenantById, { tenantId: convexUser.tenantId })
+    .catch(() => null)
+  if (!tenant) {
+    await ctx.reply('Something went wrong. Please try again.')
+    return
+  }
+
+  const userId = convexUser.clerkUserId
+  const tenantId = tenant.clerkOrgId
+  const dbUserId = String(convexUser._id)
 
   try {
     await ctx.sendChatAction('typing')
 
-    // Resolve Convex user for scope-aware skill retrieval
-    const convexUser = await convex
-      .query(api.users.getUserByTelegramId, { telegramId: telegramUserId })
-      .catch(() => null)
-    const dbUserId = convexUser?._id ? String(convexUser._id) : undefined
-
-    const relevantSkills = await retrieveRelevantSkills(messageText, tenantId, dbUserId).catch((err) => {
-      console.warn('[Telegram] Skill retrieval failed (continuing without context):', err?.message ?? err)
-      return []
-    })
+    const [relevantSkills, relevantContext] = await Promise.all([
+      retrieveRelevantSkills(messageText, tenantId, dbUserId).catch((err) => {
+        console.warn('[Telegram] Skill retrieval failed (continuing without context):', err?.message ?? err)
+        return []
+      }),
+      retrieveRelevantContext(messageText, tenantId, dbUserId).catch((err) => {
+        console.warn('[Telegram] Context retrieval failed (continuing without):', err?.message ?? err)
+        return []
+      }),
+    ])
 
     const skillsContext = buildSkillsContext(relevantSkills)
+    const contextBlock = buildContextBlock(relevantContext)
     const agent = createOrchestratorAgent(userId, tenantId)
 
-    const fullMessage = skillsContext
-      ? `${skillsContext}\n\n---\n\nUser: ${messageText}`
-      : messageText
+    const systemParts = [skillsContext, contextBlock].filter(Boolean)
+    const fullMessage =
+      systemParts.length > 0
+        ? `${systemParts.join('\n\n---\n\n')}\n\nUser: ${messageText}`
+        : messageText
 
     const result = await agent.generate(fullMessage)
     const text = result.text
@@ -69,7 +111,6 @@ async function processMessage(ctx: TextContext, messageText: string): Promise<vo
       }
     }
 
-    // Persist messages to Convex for cross-source sync (best effort)
     void persistTelegramMessages(telegramUserId, messageText, text)
   } catch (error) {
     console.error('[Telegram] Error:', error)

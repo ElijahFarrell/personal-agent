@@ -17,8 +17,47 @@ export const getUserByTelegramId = query({
   handler: async (ctx, { telegramId }) => {
     return await ctx.db
       .query(TABLES.USERS)
-      .filter((q) => q.eq(q.field('telegramId'), telegramId))
+      .withIndex(INDEXES.BY_TELEGRAM_ID, (q) => q.eq('telegramId', telegramId))
       .first()
+  },
+})
+
+export const linkTelegramId = mutation({
+  args: {
+    clerkUserId: v.string(),
+    telegramId: v.string(),
+  },
+  handler: async (ctx, { clerkUserId, telegramId }) => {
+    const existingWithTelegram = await ctx.db
+      .query(TABLES.USERS)
+      .withIndex(INDEXES.BY_TELEGRAM_ID, (q) => q.eq('telegramId', telegramId))
+      .first()
+    if (existingWithTelegram && existingWithTelegram.clerkUserId !== clerkUserId) {
+      throw new Error('This Telegram account is already linked to another user')
+    }
+
+    const user = await ctx.db
+      .query(TABLES.USERS)
+      .withIndex(INDEXES.BY_CLERK_USER_ID, (q) => q.eq('clerkUserId', clerkUserId))
+      .unique()
+    if (!user) throw new Error('User not found')
+
+    await ctx.db.patch(user._id, { telegramId })
+    return { success: true }
+  },
+})
+
+export const unlinkTelegramId = mutation({
+  args: { clerkUserId: v.string() },
+  handler: async (ctx, { clerkUserId }) => {
+    const user = await ctx.db
+      .query(TABLES.USERS)
+      .withIndex(INDEXES.BY_CLERK_USER_ID, (q) => q.eq('clerkUserId', clerkUserId))
+      .unique()
+    if (!user) throw new Error('User not found')
+
+    await ctx.db.patch(user._id, { telegramId: undefined })
+    return { success: true }
   },
 })
 
