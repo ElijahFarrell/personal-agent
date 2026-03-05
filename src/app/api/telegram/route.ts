@@ -110,17 +110,34 @@ async function persistTelegramMessages(
   }
 }
 
+export const maxDuration = 60
+
+const processedUpdates = new Set<number>()
+
 /**
  * Webhook handler — Telegram sends POST requests to this endpoint.
  * Register webhook: https://api.telegram.org/bot{TOKEN}/setWebhook?url={YOUR_URL}/api/telegram
+ *
+ * Responds to Telegram immediately and processes the update in the background
+ * to prevent Telegram's retry loop from firing duplicate requests.
  */
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    await bot.handleUpdate(body)
+
+    const updateId = body.update_id as number | undefined
+    if (updateId !== undefined) {
+      if (processedUpdates.has(updateId)) {
+        return NextResponse.json({ ok: true })
+      }
+      processedUpdates.add(updateId)
+      if (processedUpdates.size > 1000) processedUpdates.clear()
+    }
+
+    void bot.handleUpdate(body)
     return NextResponse.json({ ok: true })
   } catch (error) {
     console.error('[Telegram Webhook] Error:', error)
-    return NextResponse.json({ error: 'Failed to process update' }, { status: 500 })
+    return NextResponse.json({ ok: true })
   }
 }
