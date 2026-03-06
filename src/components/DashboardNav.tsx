@@ -73,6 +73,17 @@ function loadGroupState(): Record<string, boolean> {
   }
 }
 
+/** Default open state when no localStorage; matches common path-based behavior */
+function getDefaultGroupState(pathname: string): Record<string, boolean> {
+  return {
+    ai: pathname.startsWith('/dashboard/chat') || pathname.startsWith('/dashboard/agents'),
+    workspace:
+      pathname.startsWith('/dashboard/context') ||
+      pathname.startsWith('/dashboard/skills') ||
+      pathname.startsWith('/dashboard/integrations'),
+  }
+}
+
 function saveGroupState(state: Record<string, boolean>) {
   if (typeof window === 'undefined') return
   try {
@@ -90,11 +101,20 @@ function isChildActive(pathname: string, items: NavItem[]): boolean {
 
 export function DashboardNav() {
   const pathname = usePathname()
-  const [groupOpen, setGroupOpen] = useState<Record<string, boolean>>({})
+  const [mounted, setMounted] = useState(false)
+  const [groupOpen, setGroupOpen] = useState<Record<string, boolean>>(() =>
+    getDefaultGroupState(pathname)
+  )
 
   useEffect(() => {
-    setGroupOpen(loadGroupState())
+    setMounted(true)
   }, [])
+
+  useEffect(() => {
+    if (mounted) {
+      setGroupOpen(loadGroupState())
+    }
+  }, [mounted])
 
   const toggleGroup = useCallback((key: string) => {
     setGroupOpen((prev) => {
@@ -234,13 +254,20 @@ export function DashboardNav() {
       </nav>
 
       <div className="border-t border-gray-800/60 px-4 py-4">
-        <UserButton
-          appearance={{
-            elements: {
-              avatarBox: 'h-7 w-7',
-            },
-          }}
-        />
+        {mounted ? (
+          <UserButton
+            appearance={{
+              elements: {
+                avatarBox: 'h-7 w-7',
+              },
+            }}
+          />
+        ) : (
+          <div
+            className="h-7 w-7 rounded-full bg-gray-700 animate-pulse"
+            aria-hidden="true"
+          />
+        )}
       </div>
     </div>
   )
