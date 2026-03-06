@@ -8,16 +8,57 @@ import { DefaultChatTransport } from 'ai'
 import type { UIMessage } from 'ai'
 import { api } from '@convex/_generated/api'
 import type { Id } from '@convex/_generated/dataModel'
-import { MessageList } from './MessageList'
-import { ChatInput } from './ChatInput'
+import {
+  Conversation,
+  ConversationContent,
+  ConversationEmptyState,
+  ConversationScrollButton,
+} from '@/components/ai-elements/conversation'
+import { Message, MessageContent, MessageResponse } from '@/components/ai-elements/message'
+import { AssistantMessageContent } from './AssistantMessageContent'
+import {
+  Tool,
+  ToolHeader,
+  ToolContent,
+  ToolInput,
+  ToolOutput,
+} from '@/components/ai-elements/tool'
+import {
+  PromptInput,
+  PromptInputProvider,
+  PromptInputTextarea,
+  PromptInputFooter,
+  PromptInputSubmit,
+  PromptInputTools,
+} from '@/components/ai-elements/prompt-input'
 import { SkillPicker } from './SkillPicker'
+import { ActiveSkillsCard } from './ActiveSkillsCard'
+import {
+  Context,
+  ContextContent,
+  ContextContentBody,
+  ContextContentHeader,
+  ContextInputUsage,
+  ContextOutputUsage,
+  ContextTrigger,
+} from '@/components/ai-elements/context'
 import { API_ROUTES } from '@/constants/api'
+import { DEFAULT_CONTEXT_WINDOW } from '@/constants/models'
 import { CHAT_LIMITS, CHAT_ROLES, CHAT_SOURCES } from '@/constants/chat'
+import { Sparkles } from 'lucide-react'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Skeleton } from '@/components/ui/skeleton'
+import { cn } from '@/lib/utils'
 
-function getInitials(firstName?: string | null, lastName?: string | null): string {
-  const f = firstName?.[0] ?? ''
-  const l = lastName?.[0] ?? ''
-  return (f + l).toUpperCase() || 'U'
+function isToolPart(part: { type: string }): boolean {
+  return part.type.startsWith('tool-') || part.type === 'tool-invocation'
+}
+
+function mapToolState(state: string): 'input-available' | 'input-streaming' | 'output-available' | 'output-error' {
+  if (state === 'output-error' || state === 'error') return 'output-error'
+  if (state === 'result' || state === 'output-available') return 'output-available'
+  if (state === 'call' || state === 'partial-call') return 'input-streaming'
+  return 'input-available'
 }
 
 interface ChatWindowProps {
@@ -48,7 +89,13 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
 
   const [pinnedSkillIds, setPinnedSkillIds] = useState<Set<string>>(new Set())
   const [targetAgent, setTargetAgent] = useState<string | null>(null)
-  const [input, setInput] = useState('')
+  const [cumulativeUsage, setCumulativeUsage] = useState({
+    inputTokens: 0,
+    outputTokens: 0,
+  })
+  const [activeSkills, setActiveSkills] = useState<
+    Array<{ id: string; name: string; score: number }>
+  >([])
   const [creditError, setCreditError] = useState(false)
   const [chatError, setChatError] = useState<string | null>(null)
   const activeThreadRef = useRef<Id<'threads'> | null>(threadId)
@@ -59,7 +106,6 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
   }
 
   const historyLoaded = threadId ? convexMessages !== undefined : true
-  const userInitials = getInitials(user?.firstName, user?.lastName)
 
   const agentInstructionsRef = useRef<Record<string, string> | undefined>(undefined)
   useEffect(() => {
@@ -140,9 +186,39 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
     setMessages([])
     setCreditError(false)
     setChatError(null)
+    setCumulativeUsage({ inputTokens: 0, outputTokens: 0 })
+    setActiveSkills([])
   }, [threadId, setMessages])
 
-  /** Convert useChat messages to the format our MessageList/MessageBubble expect */
+  useEffect(() => {
+    let totalInput = 0
+    let totalOutput = 0
+    let latestSkills: Array<{ id: string; name: string; score: number }> = []
+    for (const msg of chatMessages) {
+      if (msg.role !== CHAT_ROLES.ASSISTANT || !msg.parts) continue
+      for (const part of msg.parts) {
+        const p = part as { type?: string; data?: Record<string, unknown> }
+        if (p.type === 'data-usage' && p.data) {
+          const d = p.data as { inputTokens?: number; outputTokens?: number }
+          totalInput += d.inputTokens ?? 0
+          totalOutput += d.outputTokens ?? 0
+        }
+        if (p.type === 'data-skills' && Array.isArray((p.data as { items?: unknown })?.items)) {
+          const items = (p.data as { items: Array<{ id: string; name: string; score: number }> }).items
+          latestSkills = items
+            .filter((item) => item?.id && item?.name)
+            .map((item) => ({
+              id: item.id,
+              name: item.name,
+              score: typeof item.score === 'number' ? item.score : 0,
+            }))
+        }
+      }
+    }
+    setCumulativeUsage({ inputTokens: totalInput, outputTokens: totalOutput })
+    if (latestSkills.length > 0) setActiveSkills(latestSkills)
+  }, [chatMessages])
+
   const displayMessages = useMemo(() => {
     const persisted = (convexMessages ?? []).map((doc) => ({
       id: doc._id,
@@ -177,11 +253,11 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
       createdAt: number
       route?: string
       isStreaming?: boolean
-      parts?: typeof lastAssistant extends undefined ? never : NonNullable<typeof lastAssistant>['parts']
+      parts?: NonNullable<typeof lastAssistant>['parts']
     }> = []
 
     if (lastUser) {
-      const textPart = lastUser.parts.find((p) => p.type === 'text')
+      const textPart = lastUser.parts?.find((p) => p.type === 'text')
       const userText = textPart && 'text' in textPart ? textPart.text : ''
       const alreadyPersisted = persisted.some(
         (m) => m.role === CHAT_ROLES.USER && m.content === userText
@@ -198,7 +274,7 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
     }
 
     if (lastAssistant) {
-      const textParts = lastAssistant.parts.filter((p) => p.type === 'text')
+      const textParts = lastAssistant.parts?.filter((p) => p.type === 'text') ?? []
       const assistantText = textParts
         .map((p) => ('text' in p ? p.text : ''))
         .join('')
@@ -225,7 +301,6 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
     async (text: string) => {
       if (!dbUser || isLoading) return
 
-      setInput('')
       setCreditError(false)
       setChatError(null)
 
@@ -241,7 +316,6 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
         })
         activeThreadRef.current = activeThreadId
 
-        // Fire-and-forget: replace truncated title with AI summary when ready
         fetch(API_ROUTES.threadSummarize, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -293,12 +367,12 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
     const lastAssistant = chatMessages.findLast((m) => m.role === CHAT_ROLES.ASSISTANT)
     if (!lastAssistant) return
 
-    const textParts = lastAssistant.parts.filter((p) => p.type === 'text')
+    const textParts = lastAssistant.parts?.filter((p) => p.type === 'text') ?? []
     const fullText = textParts.map((p) => ('text' in p ? p.text : '')).join('')
     if (!fullText) return
 
     const toolCallParts = lastAssistant.parts
-      .filter((p) => p.type.startsWith('tool-') || p.type === 'tool-invocation')
+      ?.filter((p) => p.type.startsWith('tool-') || p.type === 'tool-invocation')
       .map((p) => {
         const inv = (p as { toolInvocation?: Record<string, unknown> }).toolInvocation ?? p
         return {
@@ -310,7 +384,7 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
           args: (inv as { args?: unknown }).args as Record<string, unknown> | undefined,
           result: (inv as { result?: unknown }).result ?? (inv as { output?: unknown }).output,
         }
-      })
+      }) ?? []
 
     void saveMessage({
       userId: dbUser._id,
@@ -337,10 +411,6 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
     }
   }, [status, chatMessages, dbUser, saveMessage, touchThread, setMessages, onThreadCreated])
 
-  const handleStop = useCallback(() => {
-    stop()
-  }, [stop])
-
   const handleToggleSkill = useCallback((skillId: string) => {
     setPinnedSkillIds((prev) => {
       const next = new Set(prev)
@@ -361,69 +431,212 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
     [handleSend]
   )
 
-  const handlePromptClick = useCallback(
-    (prompt: string) => {
-      handleSend(prompt)
-    },
-    [handleSend]
-  )
+  const SUGGESTED_PROMPTS = [
+    'Check my email',
+    "What's on my calendar today?",
+    'Brief me on my day',
+    'Draft a LinkedIn post',
+  ]
+
+  if (!historyLoaded) {
+    return (
+      <div className="flex h-full flex-col">
+        <div className="flex-1 overflow-hidden p-4">
+          <div className="mx-auto max-w-4xl space-y-4">
+            {[...Array(4)].map((_, i) => (
+              <div
+                key={i}
+                className={cn(
+                  'flex gap-3',
+                  i % 2 === 0 ? 'flex-row' : 'flex-row-reverse'
+                )}
+              >
+                <Skeleton className="h-8 w-8 shrink-0 rounded-full" />
+                <Skeleton
+                  className={cn(
+                    'h-12 rounded-lg',
+                    i % 2 === 0 ? 'w-48' : 'w-36'
+                  )}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex h-full flex-col">
-      <MessageList
-        messages={displayMessages}
-        isLoading={isLoading}
-        isStreaming={isStreaming}
-        userInitials={userInitials}
-        historyLoaded={historyLoaded}
-        onQuestionAnswer={handleQuestionAnswer}
-        onPromptClick={handlePromptClick}
-      />
+      <Conversation className="flex-1">
+        <ConversationContent className="mx-auto max-w-4xl gap-6 px-4 py-6">
+          {displayMessages.length === 0 && !isStreaming && !isLoading ? (
+            <ConversationEmptyState
+              title="Your AI Operating System"
+              description="Tell me what you need. I'll coordinate AI agents to scout, analyze, and get things done."
+              icon={
+                <div className="flex h-16 w-16 items-center justify-center rounded-xl border border-primary/20 bg-primary/10">
+                  <Sparkles className="h-7 w-7 text-primary" />
+                </div>
+              }
+            >
+              <div className="mt-4 flex w-full justify-center">
+                <div className="flex max-w-md flex-col gap-2 w-full">
+                {SUGGESTED_PROMPTS.map((prompt) => (
+                  <button
+                    key={prompt}
+                    type="button"
+                    onClick={() => handleSend(prompt)}
+                    disabled={!dbUser || creditError}
+                    className="rounded-lg border border-border bg-card px-4 py-3 text-left text-base text-muted-foreground transition-colors hover:border-primary/40 hover:bg-accent hover:text-foreground"
+                  >
+                    &quot;{prompt}&quot;
+                  </button>
+                ))}
+                </div>
+              </div>
+            </ConversationEmptyState>
+          ) : (
+            <>
+              {displayMessages.map((msg) => (
+                <Message key={msg.id} from={msg.role}>
+                  <MessageContent className="text-base">
+                    {msg.role === 'user' ? (
+                      <MessageResponse>{msg.content}</MessageResponse>
+                    ) : (
+                      <>
+                        {msg.parts && msg.parts.filter(isToolPart).length > 0 && (
+                          <div className="mb-4 space-y-2">
+                            {msg.parts
+                              .filter(isToolPart)
+                              .map((part, i) => {
+                                const inv = (part as { toolInvocation?: Record<string, unknown> }).toolInvocation ?? part
+                                const toolName = part.type.startsWith('tool-')
+                                  ? part.type.slice(5)
+                                  : (inv as { toolName?: string }).toolName ?? 'unknown'
+                                const state = (inv as { state?: string }).state ?? 'output-available'
+                                const args = (inv as { args?: Record<string, unknown> }).args
+                                const result = (inv as { result?: unknown }).result
+                                const mappedState = mapToolState(state)
+                                return (
+                                  <Tool key={`${toolName}-${i}`}>
+                                    <ToolHeader
+                                      type="dynamic-tool"
+                                      state={mappedState}
+                                      toolName={toolName}
+                                      title={toolName.replace(/([A-Z])/g, ' $1').trim()}
+                                    />
+                                    <ToolContent>
+                                      {args && Object.keys(args).length > 0 && (
+                                        <ToolInput input={args} />
+                                      )}
+                                      {(result !== undefined || state === 'output-error') && (
+                                        <ToolOutput
+                                          output={result}
+                                          errorText={state === 'output-error' ? String(result ?? 'Error') : undefined}
+                                        />
+                                      )}
+                                    </ToolContent>
+                                  </Tool>
+                                )
+                              })}
+                          </div>
+                        )}
+                        <AssistantMessageContent
+                          content={msg.content}
+                          isStreaming={'isStreaming' in msg && msg.isStreaming}
+                          onQuestionAnswer={handleQuestionAnswer}
+                        />
+                      </>
+                    )}
+                  </MessageContent>
+                </Message>
+              ))}
+              {isLoading && !isStreaming && (
+                <Message from="assistant">
+                  <MessageContent>
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-primary" />
+                      Thinking…
+                    </div>
+                  </MessageContent>
+                </Message>
+              )}
+            </>
+          )}
+        </ConversationContent>
+        <ConversationScrollButton />
+      </Conversation>
 
       {chatError && (
-        <div className="mx-4 mb-2 flex items-start gap-3 rounded-xl border border-red-800/40 bg-red-900/20 px-4 py-3 text-sm text-red-300">
-          <span className="mt-0.5 text-base leading-none">!</span>
-          <div className="flex-1">
-            <p className="font-medium">Something went wrong</p>
-            <p className="mt-0.5 text-red-400/80">{chatError}</p>
-          </div>
-          <button
-            onClick={() => setChatError(null)}
-            className="shrink-0 rounded-lg px-2 py-1 text-xs text-red-400 hover:bg-red-900/30 hover:text-red-300"
-          >
-            Dismiss
-          </button>
+        <div className="mx-4 mb-2">
+          <Alert variant="destructive">
+            <AlertTitle>Something went wrong</AlertTitle>
+            <AlertDescription>{chatError}</AlertDescription>
+          </Alert>
         </div>
       )}
 
       {creditError && (
-        <div className="mx-4 mb-2 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/20 dark:text-amber-300">
-          <span className="mt-0.5 text-base leading-none">&#10022;</span>
-          <div>
-            <p className="font-medium">You&apos;ve run out of credits</p>
-            <p className="mt-0.5 text-amber-700 dark:text-amber-400">
+        <div className="mx-4 mb-2">
+          <Alert className="border-amber-500/50 bg-amber-500/10 text-amber-600 dark:text-amber-400">
+            <AlertTitle>You&apos;ve run out of credits</AlertTitle>
+            <AlertDescription>
               Upgrade your plan or contact your admin to get more credits and keep chatting.
-            </p>
-          </div>
+            </AlertDescription>
+          </Alert>
         </div>
       )}
 
-      <ChatInput
-        value={input}
-        onChange={setInput}
-        onSubmit={handleSend}
-        onStop={handleStop}
-        isLoading={isLoading}
-        disabled={!dbUser || creditError}
-        onAgentSelect={setTargetAgent}
-        extraControls={
-          <SkillPicker
-            skills={tenantSkills}
-            pinnedIds={pinnedSkillIds}
-            onToggle={handleToggleSkill}
-          />
-        }
-      />
+      <div className="border-t border-border bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <PromptInputProvider>
+          <PromptInput
+            onSubmit={async ({ text }) => {
+              if (text.trim()) await handleSend(text.trim())
+            }}
+            className="mx-auto max-w-4xl"
+          >
+            <PromptInputTextarea placeholder="Send a message…" />
+            <PromptInputFooter>
+              <PromptInputTools>
+                <SkillPicker
+                  skills={tenantSkills}
+                  pinnedIds={pinnedSkillIds}
+                  onToggle={handleToggleSkill}
+                />
+                <Context
+                  usedTokens={cumulativeUsage.inputTokens + cumulativeUsage.outputTokens}
+                  maxTokens={DEFAULT_CONTEXT_WINDOW}
+                  modelId="anthropic/claude-sonnet-4-5"
+                >
+                  <ContextTrigger className="h-7 px-2 text-xs" />
+                  <ContextContent>
+                    <ContextContentHeader />
+                    <ContextContentBody>
+                      <ContextInputUsage />
+                      <ContextOutputUsage />
+                    </ContextContentBody>
+                  </ContextContent>
+                </Context>
+                <ActiveSkillsCard
+                  skills={activeSkills}
+                  pinnedIds={pinnedSkillIds}
+                  className="shrink-0"
+                />
+              </PromptInputTools>
+              <PromptInputSubmit
+                status={status}
+                onStop={stop}
+                disabled={!dbUser || creditError}
+              />
+            </PromptInputFooter>
+          </PromptInput>
+        </PromptInputProvider>
+      </div>
+
+      <p className="pb-2 text-center text-[10px] text-muted-foreground">
+        AI can make mistakes. Destructive actions always require confirmation.
+      </p>
     </div>
   )
 }

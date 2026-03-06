@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { ClerkProvider } from '@clerk/nextjs'
 import { GeistSans } from 'geist/font/sans'
+import { GeistMono } from 'geist/font/mono'
 import { ConvexClientProvider } from '@/components/ConvexClientProvider'
 import './globals.css'
 
@@ -16,8 +17,8 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-      <html lang="en" className="dark">
-        <body className={`${GeistSans.className} bg-gray-950 text-gray-100 antialiased`}>
+      <html lang="en" className={`dark ${GeistSans.variable} ${GeistMono.variable}`}>
+        <body className="font-sans bg-gray-950 text-gray-100 antialiased">
           <ConvexClientProvider>{children}</ConvexClientProvider>
         </body>
       </html>

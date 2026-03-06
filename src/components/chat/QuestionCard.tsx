@@ -1,114 +1,116 @@
 'use client'
 
-import { useState } from 'react'
-import { Check, CheckCircle2 } from 'lucide-react'
+import { useState, useCallback } from 'react'
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import type { QuestionBlock } from '@/lib/parseQuestions'
 
 interface QuestionCardProps {
   question: QuestionBlock
-  onAnswer: (selectedLabels: string[]) => void
+  onAnswer: (labels: string[]) => void
 }
 
 export function QuestionCard({ question, onAnswer }: QuestionCardProps) {
   const [selected, setSelected] = useState<Set<string>>(new Set())
-  const [submitted, setSubmitted] = useState(false)
 
-  function handleSelect(optionId: string) {
-    if (submitted) return
-
-    setSelected((prev) => {
-      const next = new Set(prev)
+  const handleSelect = useCallback(
+    (optId: string, label: string) => {
       if (question.multiple) {
-        if (next.has(optionId)) next.delete(optionId)
-        else next.add(optionId)
+        setSelected((prev) => {
+          const next = new Set(prev)
+          if (next.has(optId)) {
+            next.delete(optId)
+          } else {
+            next.add(optId)
+          }
+          return next
+        })
       } else {
-        next.clear()
-        next.add(optionId)
+        setSelected(new Set([optId]))
+        onAnswer([label])
       }
-      return next
-    })
-  }
+    },
+    [question.multiple, onAnswer]
+  )
 
-  function handleSubmit() {
-    if (selected.size === 0 || submitted) return
-    setSubmitted(true)
+  const handleSubmit = useCallback(() => {
     const labels = question.options
-      .filter((o) => selected.has(o.id))
-      .map((o) => o.label)
-    onAnswer(labels)
-  }
-
-  function handleSingleSelect(optionId: string) {
-    if (submitted) return
-    if (!question.multiple) {
-      setSelected(new Set([optionId]))
-      setSubmitted(true)
-      const label = question.options.find((o) => o.id === optionId)?.label
-      if (label) onAnswer([label])
-    } else {
-      handleSelect(optionId)
+      .filter((opt) => selected.has(opt.id))
+      .map((opt) => opt.label)
+    if (labels.length > 0) {
+      onAnswer(labels)
     }
-  }
+  }, [question.options, selected, onAnswer])
 
   return (
-    <div className="my-2 rounded-xl border border-gray-700/80 bg-gray-800/40 p-4">
-      <p className="mb-3 text-sm font-medium text-gray-200">{question.prompt}</p>
-
-      <div className="flex flex-col gap-1.5">
-        {question.options.map((option) => {
-          const isSelected = selected.has(option.id)
-          return (
-            <button
-              key={option.id}
-              type="button"
-              disabled={submitted}
-              onClick={() => handleSingleSelect(option.id)}
-              className={cn(
-                'flex items-center gap-2.5 rounded-lg border px-3 py-2.5 text-left text-sm transition-all',
-                submitted && isSelected
-                  ? 'border-brand-500/60 bg-brand-500/10 text-brand-300'
-                  : submitted
-                    ? 'border-gray-800 bg-gray-900/40 text-gray-600'
-                    : isSelected
-                      ? 'border-brand-500/60 bg-brand-500/10 text-white'
-                      : 'border-gray-700/60 bg-gray-900/60 text-gray-300 hover:border-gray-600 hover:bg-gray-800/60 hover:text-white'
-              )}
-            >
-              <span
+    <Card className="my-4 border-border bg-card">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base font-medium text-foreground">
+          {question.prompt}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-2 pt-0">
+        <div
+          role={question.multiple ? 'group' : 'radiogroup'}
+          aria-label={question.prompt}
+          className="flex flex-col gap-1.5"
+        >
+          {question.options.map((opt) => {
+            const isSelected = selected.has(opt.id)
+            return (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => handleSelect(opt.id, opt.label)}
                 className={cn(
-                  'flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-colors',
+                  'flex w-full items-start gap-3 rounded-lg border px-4 py-3 text-left text-sm transition-colors',
+                  'hover:border-primary/40 hover:bg-accent/50',
                   isSelected
-                    ? 'border-brand-500 bg-brand-500 text-white'
-                    : 'border-gray-600 bg-gray-900/80'
+                    ? 'border-primary/50 bg-accent text-foreground'
+                    : 'border-border bg-background/50 text-muted-foreground'
                 )}
               >
-                {isSelected && <Check className="h-3 w-3" />}
-              </span>
-              <span className="flex-1">{option.label}</span>
-            </button>
-          )
-        })}
-      </div>
-
-      {question.multiple && !submitted && (
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={selected.size === 0}
-          className="mt-3 flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-500 disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          <CheckCircle2 className="h-4 w-4" />
-          Submit
-        </button>
-      )}
-
-      {submitted && (
-        <p className="mt-2 flex items-center gap-1.5 text-xs text-gray-500">
-          <CheckCircle2 className="h-3 w-3 text-brand-400" />
-          Answered
-        </p>
-      )}
-    </div>
+                <span
+                  className={cn(
+                    'mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border',
+                    isSelected
+                      ? 'border-primary bg-primary text-primary-foreground'
+                      : 'border-muted-foreground'
+                  )}
+                >
+                  {question.multiple ? (
+                    isSelected ? (
+                      <span className="text-[10px] font-bold">✓</span>
+                    ) : null
+                  ) : (
+                    isSelected && (
+                      <span className="h-2 w-2 rounded-full bg-primary" />
+                    )
+                  )}
+                </span>
+                <span className="flex-1 leading-relaxed">{opt.label}</span>
+              </button>
+            )
+          })}
+        </div>
+        {question.multiple && (
+          <Button
+            type="button"
+            size="sm"
+            onClick={handleSubmit}
+            disabled={selected.size === 0}
+            className="mt-3"
+          >
+            Submit
+          </Button>
+        )}
+      </CardContent>
+    </Card>
   )
 }

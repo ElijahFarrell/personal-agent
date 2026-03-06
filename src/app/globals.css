@@ -4,37 +4,37 @@
 
 @layer base {
   :root {
-    /* shadcn CSS variables (dark-only app — values set for dark mode) */
-    --background: 222 47% 4%;
-    --foreground: 210 20% 95%;
-    --card: 222 30% 7%;
-    --card-foreground: 210 20% 95%;
-    --popover: 222 30% 7%;
-    --popover-foreground: 210 20% 95%;
+    /* Geist / Vercel design system — dark mode with brand purple accent */
+    --background: 0 0% 3%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 5%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 5%;
+    --popover-foreground: 0 0% 98%;
     --primary: 263 84% 58%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 222 20% 13%;
-    --secondary-foreground: 210 20% 85%;
-    --muted: 222 20% 13%;
-    --muted-foreground: 220 10% 50%;
-    --accent: 222 20% 15%;
-    --accent-foreground: 210 20% 90%;
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 0 0% 90%;
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 55%;
+    --accent: 0 0% 14%;
+    --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 50%;
     --destructive-foreground: 0 0% 100%;
-    --border: 222 20% 14%;
-    --input: 222 20% 14%;
+    --border: 0 0% 14%;
+    --input: 0 0% 14%;
     --ring: 263 84% 58%;
     --radius: 0.5rem;
 
     color-scheme: dark;
 
-    --sidebar-background: 222 47% 6%;
-    --sidebar-foreground: 210 20% 90%;
+    --sidebar-background: 0 0% 4%;
+    --sidebar-foreground: 0 0% 90%;
     --sidebar-primary: 263 84% 58%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 263 30% 18%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 222 20% 14%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 0 0% 14%;
     --sidebar-ring: 263 84% 58%;
   }
   .dark {

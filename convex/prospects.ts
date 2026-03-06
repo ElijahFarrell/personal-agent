@@ -65,6 +65,40 @@ const fieldTypeValidator = v.union(
 
 // ─── Prospect Mutations ──────────────────────────────────────────────────────
 
+const importRowValidator = v.object({
+  name: v.string(),
+  company: v.optional(v.string()),
+  email: v.optional(v.string()),
+  phone: v.optional(v.string()),
+  linkedinUrl: v.optional(v.string()),
+  websiteUrl: v.optional(v.string()),
+  notes: v.optional(v.string()),
+})
+
+export const importProspects = mutation({
+  args: {
+    tenantId: v.id(TABLES.TENANTS),
+    ownerId: v.optional(v.id(TABLES.USERS)),
+    rows: v.array(importRowValidator),
+  },
+  handler: async (ctx, { rows, tenantId, ownerId }) => {
+    const now = Date.now()
+    for (const row of rows) {
+      await ctx.db.insert(TABLES.PROSPECTS, {
+        tenantId,
+        ownerId,
+        ...row,
+        status: PROSPECT_STATUS.NEW,
+        stage: PROSPECT_STAGE.NEW,
+        source: PROSPECT_SOURCE.CSV_IMPORT,
+        createdAt: now,
+        updatedAt: now,
+      })
+    }
+    return rows.length
+  },
+})
+
 export const createProspect = mutation({
   args: {
     tenantId: v.id(TABLES.TENANTS),

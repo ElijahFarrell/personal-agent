@@ -24,6 +24,7 @@ import {
   Check,
   Copy,
   MessageSquare,
+  FileUp,
 } from 'lucide-react'
 import { api } from '@convex/_generated/api'
 import type { Id } from '@convex/_generated/dataModel'
@@ -31,6 +32,7 @@ import type { ProspectStatus, ProspectStage } from '@/types'
 import { API_ROUTES } from '@/constants/api'
 import { ALL_STATUSES, ALL_STAGES, STATUS_META, STAGE_META } from '@/constants/ui'
 import { ChatPanel } from '@/components/chat/ChatPanel'
+import { ImportProspectsModal } from '@/components/prospects/ImportProspectsModal'
 
 type SortField = 'name' | 'company' | 'stage' | 'status' | 'updatedAt'
 type SortDir = 'asc' | 'desc'
@@ -84,6 +86,7 @@ export default function ProspectsPage() {
   const [batchEnriching, setBatchEnriching] = useState(false)
   const [copiedDraftId, setCopiedDraftId] = useState<string | null>(null)
   const [chatPanelOpen, setChatPanelOpen] = useState(false)
+  const [importModalOpen, setImportModalOpen] = useState(false)
 
   // Queries
   const dbUser = useQuery(
@@ -419,14 +422,24 @@ export default function ProspectsPage() {
                 )}
               </p>
             </div>
-            <button
-              type="button"
-              onClick={openCreateForm}
-              className="flex shrink-0 items-center gap-2 rounded-lg bg-brand-600 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
-            >
-              <Plus className="h-3.5 w-3.5" aria-hidden="true" />
-              Add Prospect
-            </button>
+            <div className="flex shrink-0 items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setImportModalOpen(true)}
+                className="flex items-center gap-2 rounded-lg border border-gray-700 bg-gray-800/60 px-3 py-2 text-xs font-medium text-gray-300 transition-colors hover:border-gray-600 hover:bg-gray-800 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+              >
+                <FileUp className="h-3.5 w-3.5" aria-hidden="true" />
+                Import
+              </button>
+              <button
+                type="button"
+                onClick={openCreateForm}
+                className="flex items-center gap-2 rounded-lg bg-brand-600 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+              >
+                <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+                Add Prospect
+              </button>
+            </div>
           </div>
 
           {/* Search + Filters */}
@@ -1148,6 +1161,15 @@ export default function ProspectsPage() {
             : undefined
         }
       />
+
+      {dbUser && (
+        <ImportProspectsModal
+          open={importModalOpen}
+          onOpenChange={setImportModalOpen}
+          tenantId={dbUser.tenantId}
+          ownerId={dbUser._id}
+        />
+      )}
     </div>
   )
 }

@@ -36,15 +36,15 @@ export function ChatPanel({
       <SheetContent
         side="right"
         className={cn(
-          'flex flex-col w-full sm:max-w-lg p-0 gap-0 border-l border-gray-800/60 bg-gray-950',
+          'flex flex-col w-full sm:max-w-lg p-0 gap-0 border-l border-border bg-background',
           className
         )}
       >
-        <SheetHeader className="shrink-0 border-b border-gray-800/60 px-4 py-3">
-          <SheetTitle className="text-base font-semibold text-gray-100 flex items-center gap-2">
+        <SheetHeader className="shrink-0 border-b border-border px-4 py-3">
+          <SheetTitle className="text-base font-semibold text-foreground flex items-center gap-2">
             AI Assistant
             {contextHint ? (
-              <span className="text-xs font-normal text-gray-500 truncate max-w-[200px]">
+              <span className="text-xs font-normal text-muted-foreground truncate max-w-[200px]">
                 — {contextHint}
               </span>
             ) : null}
