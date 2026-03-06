@@ -60,6 +60,15 @@ export type RouteTarget =
   | 'calendar'
   | 'browser'
   | 'instagram'
+  | 'slack'
+  | 'notion'
+  | 'crm'
+  | 'project'
+  | 'messaging'
+  | 'docs'
+  | 'realEstate'
+  | 'finance'
+  | 'marketing'
 
 export interface RouteDecision {
   target: RouteTarget
@@ -109,6 +118,22 @@ export type IntegrationProvider =
   | 'instagram'
   | 'notion'
   | 'hubspot'
+  | 'salesforce'
+  | 'pipedrive'
+  | 'zoho-crm'
+  | 'jira'
+  | 'asana'
+  | 'monday'
+  | 'microsoft-teams'
+  | 'discord'
+  | 'google-docs'
+  | 'google-sheet'
+  | 'airtable'
+  | 'follow-up-boss'
+  | 'calendly'
+  | 'stripe'
+  | 'quickbooks'
+  | 'mailchimp'
 
 export interface UserIntegration {
   id: string
@@ -299,3 +324,133 @@ export interface TenantSkillRecord {
   isEnabled: boolean
   createdAt: Date
 }
+
+// ─── Prospects ───────────────────────────────────────────────────────────────
+
+export type ProspectStatus =
+  | 'new'
+  | 'researching'
+  | 'draft_ready'
+  | 'approved'
+  | 'sent'
+  | 'replied'
+  | 'archived'
+
+export type ProspectSource =
+  | 'manual'
+  | 'linkedin_search'
+  | 'crm_import'
+  | 'csv_import'
+
+export type OutreachChannel = 'linkedin' | 'email' | 'instagram'
+
+export type DraftStatus = 'pending_review' | 'approved' | 'rejected' | 'sent' | 'failed'
+
+export type CustomFieldType = 'text' | 'number' | 'select' | 'date' | 'url' | 'boolean'
+
+export interface ProspectRecord {
+  id: string
+  tenantId: string
+  ownerId?: string
+  name: string
+  company?: string
+  email?: string
+  phone?: string
+  linkedinUrl?: string
+  websiteUrl?: string
+  status: ProspectStatus
+  stage: ProspectStage
+  source: ProspectSource
+  notes?: string
+  customFields?: Record<string, unknown>
+  createdAt: number
+  updatedAt: number
+}
+
+export interface ProspectFieldDefinition {
+  id: string
+  tenantId: string
+  name: string
+  label: string
+  fieldType: CustomFieldType
+  options?: string[]
+  isRequired?: boolean
+  sortOrder: number
+  createdAt: number
+}
+
+export interface ResearchSnapshot {
+  id: string
+  prospectId: string
+  tenantId: string
+  linkedinProfile?: {
+    headline?: string
+    recentActivity?: string
+    connectionDegree?: string
+  }
+  companyInfo?: {
+    summary?: string
+    sourceUrl?: string
+  }
+  newsArticles?: Array<{
+    title: string
+    url: string
+    snippet: string
+  }>
+  personalizationAngles?: string[]
+  researchedAt: number
+}
+
+export interface OutreachDraft {
+  id: string
+  prospectId: string
+  tenantId: string
+  channel: OutreachChannel
+  subject?: string
+  body: string
+  status: DraftStatus
+  sentAt?: number
+  sendError?: string
+  crmSynced?: boolean
+  createdAt: number
+  updatedAt: number
+}
+
+// ─── Apify LinkedIn ──────────────────────────────────────────────────────────
+
+export interface ApifyLinkedInProfile {
+  name?: string
+  headline?: string
+  about?: string
+  location?: string
+  profileUrl: string
+  experience?: Array<{
+    title: string
+    company: string
+    duration: string
+  }>
+  education?: Array<{
+    school: string
+    degree: string
+  }>
+  skills?: string[]
+}
+
+export interface ApifyLinkedInPost {
+  text: string
+  date?: string
+  reactions: number
+  comments: number
+  url?: string
+}
+
+// ─── Prospect Stages ─────────────────────────────────────────────────────────
+
+export type ProspectStage =
+  | 'new'
+  | 'messaged'
+  | 'follow_up'
+  | 'meeting_booked'
+  | 'interested'
+  | 'dead'
+  | 'deal_open'

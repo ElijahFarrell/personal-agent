@@ -5,6 +5,7 @@ import { createUIMessageStream, createUIMessageStreamResponse } from 'ai'
 import { createOrchestratorAgent } from '@/mastra'
 import { retrieveRelevantSkills, buildSkillsContext, buildPinnedSkillsContext } from '@/skills/skillRetriever'
 import { retrieveRelevantContext, buildContextBlock } from '@/services/contextService'
+import { buildProspectsContext } from '@/services/prospectsContextService'
 import { getTenantContext } from '@/middleware/tenantContext'
 import { api } from '@convex/_generated/api'
 import type { Id } from '@convex/_generated/dataModel'
@@ -97,7 +98,7 @@ export async function POST(req: NextRequest) {
 
     const dbUserId = dbUser?._id ? String(dbUser._id) : undefined
 
-    const [relevantSkills, relevantContext, historyDocs] = await Promise.all([
+    const [relevantSkills, relevantContext, historyDocs, prospectsContext] = await Promise.all([
       retrieveRelevantSkills(message, tenantId, dbUserId).catch((err) => {
         console.warn('[Chat API] Skill retrieval failed (continuing without context):', err?.message ?? err)
         if (err?.data) console.warn('[Chat API] Qdrant error detail:', JSON.stringify(err.data))
@@ -115,6 +116,10 @@ export async function POST(req: NextRequest) {
               return []
             })
         : Promise.resolve([]),
+      buildProspectsContext(tenantId, dbUserId).catch((err) => {
+        console.warn('[Chat API] Prospects context failed (continuing without):', (err as Error)?.message ?? err)
+        return ''
+      }),
     ])
 
     let allSkills = [...relevantSkills]
@@ -161,7 +166,7 @@ export async function POST(req: NextRequest) {
 
     const agentMessages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }> = []
 
-    const systemParts = [skillsContext, contextBlock].filter(Boolean)
+    const systemParts = [skillsContext, contextBlock, prospectsContext].filter(Boolean)
     if (systemParts.length > 0) {
       agentMessages.push({ role: 'system', content: systemParts.join('\n\n---\n\n') })
     }

@@ -7,8 +7,13 @@ import { createLinkedInAgent } from '../agents/linkedinAgent'
 import { createContentAgent } from '../agents/contentAgent'
 import { createInstagramAgent } from '../agents/instagramAgent'
 import { createBrowserAgent } from '../agents/browserAgent'
-import { createSlackAgent } from '../agents/slackAgent'
-import { createNotionAgent } from '../agents/notionAgent'
+import { createMessagingAgent } from '../agents/messagingAgent'
+import { createDocsAgent } from '../agents/docsAgent'
+import { createCrmAgent } from '../agents/crmAgent'
+import { createProjectAgent } from '../agents/projectAgent'
+import { createRealEstateAgent } from '../agents/realEstateAgent'
+import { createFinanceAgent } from '../agents/financeAgent'
+import { createMarketingAgent } from '../agents/marketingAgent'
 
 const taskSchema = z.object({
   task: z.string().describe('Complete description of the task to perform, including all relevant context (names, URLs, tone, goals)'),
@@ -27,11 +32,13 @@ function withCustomInstructions(task: string, instructions: string | undefined):
  *
  * Custom instructions per agent are appended to each task when provided,
  * giving users control over individual agent behavior from the dashboard.
+ * connectedProviders is used by MCP-based agents to load tools for connected integrations.
  */
 export function createAgentTools(
   userId: string,
   tenantId: string,
-  agentInstructions?: Record<string, string>
+  agentInstructions?: Record<string, string>,
+  connectedProviders: string[] = []
 ) {
   return {
     emailAgent: createTool({
@@ -84,9 +91,11 @@ export function createAgentTools(
       inputSchema: taskSchema,
       execute: async (input) => {
         try {
-          const agent = createCalendarAgent(userId)
+          const { agent, toolsets } = await createCalendarAgent(userId, connectedProviders)
           const result = await agent.generate(
-            withCustomInstructions(input.task, agentInstructions?.calendar)
+            withCustomInstructions(input.task, agentInstructions?.calendar),
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            { toolsets } as any
           )
           return result.text
         } catch (error) {
@@ -179,43 +188,156 @@ export function createAgentTools(
       },
     }),
 
-    slackAgent: createTool({
-      id: 'slack-agent',
+    messagingAgent: createTool({
+      id: 'messaging-agent',
       description:
-        'Delegate Slack tasks to the Slack Agent. Use for: listing channels and users, ' +
-        'sending messages to channels, and workspace communication. ' +
-        'The agent always confirms before sending messages.',
+        'Delegate messaging tasks to the Messaging Agent. Use for: Slack, Microsoft Teams, Discord — ' +
+        'list channels/users, send messages. The agent always confirms before sending.',
       inputSchema: taskSchema,
       execute: async (input) => {
         try {
-          const agent = createSlackAgent(userId)
+          const { agent, toolsets } = await createMessagingAgent(userId, connectedProviders)
           const result = await agent.generate(
-            withCustomInstructions(input.task, agentInstructions?.slack)
+            withCustomInstructions(input.task, agentInstructions?.messaging),
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            { toolsets } as any
           )
           return result.text
         } catch (error) {
           const message = error instanceof Error ? error.message : 'Unknown error'
-          return `Slack agent error: ${message}`
+          return `Messaging agent error: ${message}`
         }
       },
     }),
 
-    notionAgent: createTool({
-      id: 'notion-agent',
+    docsAgent: createTool({
+      id: 'docs-agent',
       description:
-        'Delegate Notion tasks to the Notion Agent. Use for: searching pages, reading page content, ' +
-        'and creating new pages in Notion workspaces.',
+        'Delegate document tasks to the Docs Agent. Use for: Google Docs, Sheets, Airtable, Notion — ' +
+        'search, read, create documents and records.',
       inputSchema: taskSchema,
       execute: async (input) => {
         try {
-          const agent = createNotionAgent(userId)
+          const { agent, toolsets } = await createDocsAgent(userId, connectedProviders)
           const result = await agent.generate(
-            withCustomInstructions(input.task, agentInstructions?.notion)
+            withCustomInstructions(input.task, agentInstructions?.docs),
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            { toolsets } as any
           )
           return result.text
         } catch (error) {
           const message = error instanceof Error ? error.message : 'Unknown error'
-          return `Notion agent error: ${message}`
+          return `Docs agent error: ${message}`
+        }
+      },
+    }),
+
+    crmAgent: createTool({
+      id: 'crm-agent',
+      description:
+        'Delegate CRM tasks to the CRM Agent. Use for: HubSpot, Salesforce, Pipedrive, Zoho CRM — ' +
+        'contacts, deals, opportunities, companies, tasks, notes. Requires at least one CRM connected.',
+      inputSchema: taskSchema,
+      execute: async (input) => {
+        try {
+          const { agent, toolsets } = await createCrmAgent(userId, connectedProviders)
+          const result = await agent.generate(
+            withCustomInstructions(input.task, agentInstructions?.crm),
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            { toolsets } as any
+          )
+          return result.text
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Unknown error'
+          return `CRM agent error: ${message}`
+        }
+      },
+    }),
+
+    projectAgent: createTool({
+      id: 'project-agent',
+      description:
+        'Delegate project management tasks to the Project Agent. Use for: Jira, Asana, Monday.com — ' +
+        'issues, tasks, projects, boards, sprints, updates. Requires at least one connected.',
+      inputSchema: taskSchema,
+      execute: async (input) => {
+        try {
+          const { agent, toolsets } = await createProjectAgent(userId, connectedProviders)
+          const result = await agent.generate(
+            withCustomInstructions(input.task, agentInstructions?.project),
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            { toolsets } as any
+          )
+          return result.text
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Unknown error'
+          return `Project agent error: ${message}`
+        }
+      },
+    }),
+
+    realEstateAgent: createTool({
+      id: 'real-estate-agent',
+      description:
+        'Delegate real estate tasks to the Real Estate Agent. Use for: Follow Up Boss, Calendly — ' +
+        'contacts, deals, tasks, event types, scheduled events.',
+      inputSchema: taskSchema,
+      execute: async (input) => {
+        try {
+          const { agent, toolsets } = await createRealEstateAgent(userId, connectedProviders)
+          const result = await agent.generate(
+            withCustomInstructions(input.task, agentInstructions?.realEstate),
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            { toolsets } as any
+          )
+          return result.text
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Unknown error'
+          return `Real Estate agent error: ${message}`
+        }
+      },
+    }),
+
+    financeAgent: createTool({
+      id: 'finance-agent',
+      description:
+        'Delegate finance tasks to the Finance Agent. Use for: Stripe, QuickBooks — ' +
+        'customers, charges, invoices, payments.',
+      inputSchema: taskSchema,
+      execute: async (input) => {
+        try {
+          const { agent, toolsets } = await createFinanceAgent(userId, connectedProviders)
+          const result = await agent.generate(
+            withCustomInstructions(input.task, agentInstructions?.finance),
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            { toolsets } as any
+          )
+          return result.text
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Unknown error'
+          return `Finance agent error: ${message}`
+        }
+      },
+    }),
+
+    marketingAgent: createTool({
+      id: 'marketing-agent',
+      description:
+        'Delegate marketing tasks to the Marketing Agent. Use for: Mailchimp — ' +
+        'audiences, campaigns.',
+      inputSchema: taskSchema,
+      execute: async (input) => {
+        try {
+          const { agent, toolsets } = await createMarketingAgent(userId, connectedProviders)
+          const result = await agent.generate(
+            withCustomInstructions(input.task, agentInstructions?.marketing),
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            { toolsets } as any
+          )
+          return result.text
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Unknown error'
+          return `Marketing agent error: ${message}`
         }
       },
     }),

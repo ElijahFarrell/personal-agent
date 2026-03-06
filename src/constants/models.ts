@@ -42,4 +42,11 @@ export const AgentModels = {
   slack:        Models.CLAUDE_HAIKU,
   notion:       Models.CLAUDE_HAIKU,
   research:     Models.CLAUDE_HAIKU,
+  crm:          Models.CLAUDE_HAIKU,
+  project:      Models.CLAUDE_HAIKU,
+  messaging:    Models.CLAUDE_HAIKU,
+  docs:         Models.CLAUDE_HAIKU,
+  realEstate:   Models.CLAUDE_HAIKU,
+  finance:      Models.CLAUDE_HAIKU,
+  marketing:    Models.CLAUDE_HAIKU,
 } as const

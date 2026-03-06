@@ -12,6 +12,16 @@ export const getUserByClerkUserId = query({
   },
 })
 
+export const getUsersByTenantId = query({
+  args: { tenantId: v.id(TABLES.TENANTS) },
+  handler: async (ctx, { tenantId }) => {
+    return await ctx.db
+      .query(TABLES.USERS)
+      .withIndex(INDEXES.BY_TENANT_ID, (q) => q.eq('tenantId', tenantId))
+      .collect()
+  },
+})
+
 export const getUserByTelegramId = query({
   args: { telegramId: v.string() },
   handler: async (ctx, { telegramId }) => {

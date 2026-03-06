@@ -15,6 +15,13 @@ export {
   createContentAgent,
   createInstagramAgent,
   createBrowserAgent,
+  createCrmAgent,
+  createProjectAgent,
+  createMessagingAgent,
+  createDocsAgent,
+  createRealEstateAgent,
+  createFinanceAgent,
+  createMarketingAgent,
   createAllAgents,
 } from './agents'
 export { createVoice } from './voice'
@@ -25,3 +32,9 @@ export {
   type OutreachCampaignInput,
   type OutreachCampaignResult,
 } from './workflows/outreachCampaign'
+export {
+  executeProspectEnrichment,
+  prospectEnrichmentWorkflow,
+  type EnrichmentInput,
+  type EnrichmentOutput,
+} from './workflows/prospectEnrichment'
