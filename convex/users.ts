@@ -121,11 +121,33 @@ export const ensureUser = mutation({
       .withIndex(INDEXES.BY_CLERK_USER_ID, (q) => q.eq('clerkUserId', clerkUserId))
       .unique()
 
-    if (existingUser) {
-      return { userId: existingUser._id, tenantId: existingUser.tenantId }
-    }
-
     const tenantKey = orgId ?? clerkUserId
+    const isOrgAccount = !!orgId
+    const now = Date.now()
+
+    if (existingUser) {
+      // Detect stale data: old records may have stored a Clerk ID string
+      // (e.g. "org_..." or "user_...") instead of a Convex document ID.
+      const storedId = existingUser.tenantId as unknown as string
+      const isStale = storedId.startsWith('org_') || storedId.startsWith('user_')
+
+      if (!isStale) {
+        return { userId: existingUser._id, tenantId: existingUser.tenantId }
+      }
+
+      // Repair: resolve the correct Convex tenant ID and patch the user record.
+      const correctTenant = await ctx.db
+        .query(TABLES.TENANTS)
+        .withIndex(INDEXES.BY_CLERK_ORG_ID, (q) => q.eq('clerkOrgId', tenantKey))
+        .unique()
+
+      if (correctTenant) {
+        await ctx.db.patch(existingUser._id, { tenantId: correctTenant._id })
+        return { userId: existingUser._id, tenantId: correctTenant._id }
+      }
+
+      // Tenant doesn't exist yet — create it and patch the existing user below.
+    }
 
     const existingTenant = await ctx.db
       .query(TABLES.TENANTS)
@@ -133,8 +155,6 @@ export const ensureUser = mutation({
       .unique()
 
     const isNewTenant = !existingTenant
-    const isOrgAccount = !!orgId
-    const now = Date.now()
 
     const tenantId =
       existingTenant?._id ??
@@ -170,6 +190,13 @@ export const ensureUser = mutation({
         balanceAfter: initialCredits,
         createdAt: now,
       })
+    }
+
+    // If existingUser had a stale tenantId and no tenant was found above,
+    // patch them with the newly created tenant instead of inserting a duplicate.
+    if (existingUser) {
+      await ctx.db.patch(existingUser._id, { tenantId })
+      return { userId: existingUser._id, tenantId }
     }
 
     const userId = await ctx.db.insert(TABLES.USERS, {

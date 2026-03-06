@@ -3,11 +3,15 @@ import { embed, gateway } from 'ai'
 import { QdrantClient } from '@qdrant/js-client-rest'
 import { config } from '@/lib/config'
 import type { ResourceScope } from '@/types'
+import {
+  QDRANT_COLLECTIONS,
+  VECTOR_CONFIG,
+} from '@/constants/vector'
 
-const COLLECTION = 'context_docs'
-const VECTOR_SIZE = 1536
-const RELEVANCE_THRESHOLD = 0.4
-const TOP_K = 5
+const COLLECTION = QDRANT_COLLECTIONS.CONTEXT_DOCS
+const VECTOR_SIZE = VECTOR_CONFIG.DIMENSION
+const RELEVANCE_THRESHOLD = VECTOR_CONFIG.CONTEXT_THRESHOLD
+const TOP_K = VECTOR_CONFIG.CONTEXT_TOP_K
 
 const qdrant = new QdrantClient({
   url: config.qdrant.url,

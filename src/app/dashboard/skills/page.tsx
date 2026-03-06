@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import { api } from '@convex/_generated/api'
 import type { Id } from '@convex/_generated/dataModel'
+import { API_ROUTES } from '@/constants/api'
 
 type SeedStatus = 'idle' | 'seeding' | 'done' | 'error'
 type ScopeTab = 'org' | 'user'
@@ -84,7 +85,7 @@ export default function SkillsPage() {
   async function runSeed() {
     setSeedStatus('seeding')
     try {
-      const res = await fetch('/api/admin/seed', { method: 'POST' })
+      const res = await fetch(API_ROUTES.adminSeed, { method: 'POST' })
       if (!res.ok) {
         const { error } = await res.json().catch(() => ({ error: 'Seed failed' }))
         throw new Error(error)
@@ -99,7 +100,7 @@ export default function SkillsPage() {
   async function runReindex() {
     setReindexing(true)
     try {
-      const res = await fetch('/api/skills/reindex', { method: 'POST' })
+      const res = await fetch(API_ROUTES.skillsReindex, { method: 'POST' })
       if (!res.ok) {
         const { error } = await res.json().catch(() => ({ error: 'Reindex failed' }))
         throw new Error(error)

@@ -16,7 +16,7 @@ export default function DashboardLayout({
       </a>
 
       <aside
-        className="sticky top-0 h-screen w-[220px] shrink-0 border-r border-gray-800/60 bg-gray-900/40 backdrop-blur-sm"
+        className="sticky top-0 h-screen w-[220px] shrink-0 border-r border-gray-800/60 bg-gray-900/40 backdrop-blur-sm bg-gradient-to-b from-brand-900/5 to-transparent"
         aria-label="Sidebar"
       >
         <DashboardNav />

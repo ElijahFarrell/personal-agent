@@ -1,22 +1,108 @@
 'use client'
 
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { UserButton } from '@clerk/nextjs'
-import { LayoutDashboard, Plug, Zap, MessageSquare, FileText, Bot, Users } from 'lucide-react'
+import {
+  LayoutDashboard,
+  Plug,
+  Zap,
+  MessageSquare,
+  FileText,
+  Bot,
+  Users,
+  Sparkles,
+  FolderOpen,
+  ChevronRight,
+} from 'lucide-react'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import { cn } from '@/lib/utils'
 
-const NAV_ITEMS = [
-  { href: '/dashboard', label: 'Overview', icon: LayoutDashboard, exact: true },
-  { href: '/dashboard/chat', label: 'Chat', icon: MessageSquare, exact: false },
-  { href: '/dashboard/prospects', label: 'Prospects', icon: Users, exact: false },
-  { href: '/dashboard/agents', label: 'Agents', icon: Bot, exact: false },
-  { href: '/dashboard/context', label: 'Context', icon: FileText, exact: false },
-  { href: '/dashboard/integrations', label: 'Integrations', icon: Plug, exact: false },
-  { href: '/dashboard/skills', label: 'Skills', icon: Zap, exact: false },
+const NAV_GROUP_STORAGE_KEY = 'dashboard-nav-groups'
+
+interface NavItem {
+  type: 'item'
+  href: string
+  label: string
+  icon: React.ElementType
+  exact?: boolean
+}
+
+interface NavGroup {
+  type: 'group'
+  label: string
+  icon: React.ElementType
+  storageKey: string
+  children: NavItem[]
+}
+
+const NAV_CONFIG: (NavItem | NavGroup)[] = [
+  { type: 'item', href: '/dashboard', label: 'Overview', icon: LayoutDashboard, exact: true },
+  {
+    type: 'group',
+    label: 'AI',
+    icon: Sparkles,
+    storageKey: 'ai',
+    children: [
+      { type: 'item', href: '/dashboard/chat', label: 'Chat', icon: MessageSquare },
+      { type: 'item', href: '/dashboard/agents', label: 'Agents', icon: Bot },
+    ],
+  },
+  { type: 'item', href: '/dashboard/prospects', label: 'Prospects', icon: Users },
+  {
+    type: 'group',
+    label: 'Workspace',
+    icon: FolderOpen,
+    storageKey: 'workspace',
+    children: [
+      { type: 'item', href: '/dashboard/context', label: 'Context', icon: FileText },
+      { type: 'item', href: '/dashboard/skills', label: 'Skills', icon: Zap },
+      { type: 'item', href: '/dashboard/integrations', label: 'Integrations', icon: Plug },
+    ],
+  },
 ]
+
+function loadGroupState(): Record<string, boolean> {
+  if (typeof window === 'undefined') return {}
+  try {
+    const stored = localStorage.getItem(NAV_GROUP_STORAGE_KEY)
+    return stored ? (JSON.parse(stored) as Record<string, boolean>) : {}
+  } catch {
+    return {}
+  }
+}
+
+function saveGroupState(state: Record<string, boolean>) {
+  if (typeof window === 'undefined') return
+  try {
+    localStorage.setItem(NAV_GROUP_STORAGE_KEY, JSON.stringify(state))
+  } catch {
+    // ignore
+  }
+}
+
+function isChildActive(pathname: string, items: NavItem[]): boolean {
+  return items.some((item) =>
+    item.exact ? pathname === item.href : pathname.startsWith(item.href)
+  )
+}
 
 export function DashboardNav() {
   const pathname = usePathname()
+  const [groupOpen, setGroupOpen] = useState<Record<string, boolean>>({})
+
+  useEffect(() => {
+    setGroupOpen(loadGroupState())
+  }, [])
+
+  const toggleGroup = useCallback((key: string) => {
+    setGroupOpen((prev) => {
+      const next = { ...prev, [key]: !prev[key] }
+      saveGroupState(next)
+      return next
+    })
+  }, [])
 
   return (
     <div className="flex h-full flex-col">
@@ -26,7 +112,7 @@ export function DashboardNav() {
           className="flex items-center gap-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 rounded-lg"
           aria-label="AI OS home"
         >
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-600">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-600 shadow-md shadow-brand-600/30">
             <Zap className="h-4 w-4 text-white" aria-hidden="true" />
           </div>
           <span className="text-[15px] font-semibold tracking-tight text-white">AI OS</span>
@@ -35,31 +121,112 @@ export function DashboardNav() {
 
       <nav className="flex-1 px-3" aria-label="Main navigation">
         <ul className="flex flex-col gap-0.5" role="list">
-          {NAV_ITEMS.map(({ href, label, icon: Icon, exact }) => {
-            const isActive = exact ? pathname === href : pathname.startsWith(href)
+          {NAV_CONFIG.map((entry) => {
+            if (entry.type === 'item') {
+              const isActive = entry.exact
+                ? pathname === entry.href
+                : pathname.startsWith(entry.href)
+              const Icon = entry.icon
+              return (
+                <li key={entry.href}>
+                  <Link
+                    href={entry.href}
+                    aria-current={isActive ? 'page' : undefined}
+                    className={cn(
+                      'group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500',
+                      'touch-action-manipulation',
+                      isActive
+                        ? 'bg-brand-600/15 text-brand-400'
+                        : 'text-gray-400 hover:bg-gray-800/60 hover:text-gray-100'
+                    )}
+                  >
+                    <Icon
+                      className={cn(
+                        'h-4 w-4 shrink-0 transition-colors',
+                        isActive ? 'text-brand-400' : 'text-gray-500 group-hover:text-gray-300'
+                      )}
+                      aria-hidden="true"
+                    />
+                    {entry.label}
+                  </Link>
+                </li>
+              )
+            }
+
+            const group = entry as NavGroup
+            const GroupIcon = group.icon
+            const isOpen = groupOpen[group.storageKey] ?? isChildActive(pathname, group.children)
+            const hasActiveChild = isChildActive(pathname, group.children)
+
             return (
-              <li key={href}>
-                <Link
-                  href={href}
-                  aria-current={isActive ? 'page' : undefined}
-                  className={[
-                    'group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500',
-                    'touch-action-manipulation',
-                    isActive
-                      ? 'bg-brand-600/15 text-brand-400'
-                      : 'text-gray-400 hover:bg-gray-800/60 hover:text-gray-100',
-                  ].join(' ')}
+              <li key={group.storageKey}>
+                <Collapsible
+                  open={isOpen}
+                  onOpenChange={() => toggleGroup(group.storageKey)}
                 >
-                  <Icon
-                    className={[
-                      'h-4 w-4 shrink-0 transition-colors',
-                      isActive ? 'text-brand-400' : 'text-gray-500 group-hover:text-gray-300',
-                    ].join(' ')}
-                    aria-hidden="true"
-                  />
-                  {label}
-                </Link>
+                  <CollapsibleTrigger
+                    className={cn(
+                      'group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500',
+                      'touch-action-manipulation',
+                      hasActiveChild
+                        ? 'bg-brand-600/15 text-brand-400'
+                        : 'text-gray-400 hover:bg-gray-800/60 hover:text-gray-100'
+                    )}
+                  >
+                    <ChevronRight
+                      className={cn(
+                        'h-4 w-4 shrink-0 transition-transform',
+                        isOpen ? 'rotate-90' : ''
+                      )}
+                      aria-hidden="true"
+                    />
+                    <GroupIcon
+                      className={cn(
+                        'h-4 w-4 shrink-0 transition-colors',
+                        hasActiveChild ? 'text-brand-400' : 'text-gray-500 group-hover:text-gray-300'
+                      )}
+                      aria-hidden="true"
+                    />
+                    {group.label}
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <ul className="mt-0.5 flex flex-col gap-0.5 pl-9" role="list">
+                      {group.children.map((child) => {
+                        const isActive = child.exact
+                          ? pathname === child.href
+                          : pathname.startsWith(child.href)
+                        const ChildIcon = child.icon
+                        return (
+                          <li key={child.href}>
+                            <Link
+                              href={child.href}
+                              aria-current={isActive ? 'page' : undefined}
+                              className={cn(
+                                'group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500',
+                                'touch-action-manipulation',
+                                isActive
+                                  ? 'bg-brand-600/15 text-brand-400'
+                                  : 'text-gray-400 hover:bg-gray-800/60 hover:text-gray-100'
+                              )}
+                            >
+                              <ChildIcon
+                                className={cn(
+                                  'h-4 w-4 shrink-0 transition-colors',
+                                  isActive ? 'text-brand-400' : 'text-gray-500 group-hover:text-gray-300'
+                                )}
+                                aria-hidden="true"
+                              />
+                              {child.label}
+                            </Link>
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  </CollapsibleContent>
+                </Collapsible>
               </li>
             )
           })}

@@ -2,17 +2,34 @@ import { NextRequest, NextResponse } from 'next/server'
 import { ConvexHttpClient } from 'convex/browser'
 import { toAISdkStream } from '@mastra/ai-sdk'
 import { createUIMessageStream, createUIMessageStreamResponse } from 'ai'
-import { createOrchestratorAgent } from '@/mastra'
+import type { Agent } from '@mastra/core/agent'
+import {
+  createOrchestratorAgent,
+  createEmailAgent,
+  createResearchAgent,
+  createCalendarAgent,
+  createLinkedInAgent,
+  createContentAgent,
+  createInstagramAgent,
+  createBrowserAgent,
+  createMessagingAgent,
+  createDocsAgent,
+  createCrmAgent,
+  createProjectAgent,
+  createRealEstateAgent,
+  createFinanceAgent,
+  createMarketingAgent,
+} from '@/mastra'
 import { retrieveRelevantSkills, buildSkillsContext, buildPinnedSkillsContext } from '@/skills/skillRetriever'
 import { retrieveRelevantContext, buildContextBlock } from '@/services/contextService'
 import { buildProspectsContext } from '@/services/prospectsContextService'
 import { getTenantContext } from '@/middleware/tenantContext'
 import { api } from '@convex/_generated/api'
 import type { Id } from '@convex/_generated/dataModel'
+import { AGENT_BY_ID, type AgentId } from '@/constants/agents'
+import { CHAT_CREDIT_ACTION, CHAT_LIMITS, CHAT_ROLES } from '@/constants/chat'
 
 export const maxDuration = 60
-
-const HISTORY_LIMIT = 20
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
 
@@ -51,10 +68,11 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
 
-    const { threadId, agentInstructions, pinnedSkillIds, messages: uiMessages } = body as {
+    const { threadId, agentInstructions, pinnedSkillIds, targetAgent, messages: uiMessages } = body as {
       threadId?: string
       agentInstructions?: Record<string, string>
       pinnedSkillIds?: string[]
+      targetAgent?: string
       messages?: unknown[]
     }
 
@@ -84,7 +102,7 @@ export async function POST(req: NextRequest) {
       const hasCredits = await convex
         .query(api.credits.hasEnoughCredits, {
           tenantId: dbUser.tenantId,
-          action: 'chat_message',
+          action: CHAT_CREDIT_ACTION,
         })
         .catch(() => true)
 
@@ -110,7 +128,7 @@ export async function POST(req: NextRequest) {
       }),
       threadId
         ? convex
-            .query(api.messages.getMessagesByThreadId, { threadId, limit: HISTORY_LIMIT })
+            .query(api.messages.getMessagesByThreadId, { threadId, limit: CHAT_LIMITS.HISTORY_LIMIT })
             .catch((err) => {
               console.warn('[Chat API] History fetch failed:', err?.message ?? err)
               return []
@@ -162,39 +180,93 @@ export async function POST(req: NextRequest) {
 
     const skillsContext = buildSkillsContext(allSkills)
     const contextBlock = buildContextBlock(relevantContext)
-    const agent = createOrchestratorAgent(userId, tenantId, agentInstructions, connectedProviders)
 
     const agentMessages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }> = []
 
     const systemParts = [skillsContext, contextBlock, prospectsContext].filter(Boolean)
     if (systemParts.length > 0) {
-      agentMessages.push({ role: 'system', content: systemParts.join('\n\n---\n\n') })
+      agentMessages.push({ role: CHAT_ROLES.SYSTEM, content: systemParts.join('\n\n---\n\n') })
     }
 
     for (const doc of historyDocs) {
-      if (doc.content === message && doc.role === 'user') continue
+      if (doc.content === message && doc.role === CHAT_ROLES.USER) continue
       agentMessages.push({ role: doc.role as 'user' | 'assistant', content: doc.content })
     }
 
-    agentMessages.push({ role: 'user', content: message })
+    agentMessages.push({ role: CHAT_ROLES.USER, content: message })
 
     if (dbUser) {
       convex
         .mutation(api.credits.deductCredits, {
           tenantId: dbUser.tenantId,
           userId: dbUser._id as Id<'users'>,
-          action: 'chat_message',
+          action: CHAT_CREDIT_ACTION,
         })
         .catch((err) => {
           console.warn('[Chat API] Credit deduction failed:', (err as Error)?.message ?? err)
         })
     }
 
-    const result = await agent.stream(agentMessages as Parameters<typeof agent.stream>[0])
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let stream: any = null
+    const instructions = agentInstructions ?? {}
+    const meta = targetAgent ? AGENT_BY_ID.get(targetAgent as AgentId) : undefined
+
+    if (meta) {
+      const agentId = meta.id
+      const agentInstructionsForTarget = instructions[agentId] ?? instructions[meta.toolId] ?? undefined
+      const taskWithInstructions = agentInstructionsForTarget?.trim()
+        ? `[Custom instructions: ${agentInstructionsForTarget.trim()}]\n\n${message}`
+        : message
+
+      const mcpAgentIds = ['calendar', 'messaging', 'docs', 'crm', 'project', 'realEstate', 'finance', 'marketing'] as const
+      const simpleAgentIds = ['email', 'research', 'linkedin', 'content', 'instagram', 'browser'] as const
+
+      if (mcpAgentIds.includes(agentId as (typeof mcpAgentIds)[number])) {
+        const createFns = {
+          calendar: createCalendarAgent,
+          messaging: createMessagingAgent,
+          docs: createDocsAgent,
+          crm: createCrmAgent,
+          project: createProjectAgent,
+          realEstate: createRealEstateAgent,
+          finance: createFinanceAgent,
+          marketing: createMarketingAgent,
+        }
+        const createFn = createFns[agentId as (typeof mcpAgentIds)[number]]
+        if (createFn) {
+          const { agent, toolsets } = await createFn(userId, connectedProviders)
+          stream = await agent.stream(
+            [{ role: 'user' as const, content: taskWithInstructions }],
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            { toolsets } as any
+          )
+        }
+      } else if (simpleAgentIds.includes(agentId as (typeof simpleAgentIds)[number])) {
+        const createFns = {
+          email: createEmailAgent,
+          research: createResearchAgent,
+          linkedin: createLinkedInAgent,
+          content: createContentAgent,
+          instagram: createInstagramAgent,
+          browser: createBrowserAgent,
+        }
+        const createFn = createFns[agentId as (typeof simpleAgentIds)[number]]
+        if (createFn) {
+          const agent = createFn(userId) as Agent
+          stream = await agent.stream([{ role: 'user' as const, content: taskWithInstructions }])
+        }
+      }
+    }
+
+    if (stream === null) {
+      const agent = createOrchestratorAgent(userId, tenantId, agentInstructions, connectedProviders)
+      stream = await agent.stream(agentMessages as Parameters<typeof agent.stream>[0])
+    }
 
     const uiStream = createUIMessageStream({
       execute: async ({ writer }) => {
-        for await (const part of toAISdkStream(result, { from: 'agent' })) {
+        for await (const part of toAISdkStream(stream!, { from: 'agent' })) {
           await writer.write(part)
         }
       },

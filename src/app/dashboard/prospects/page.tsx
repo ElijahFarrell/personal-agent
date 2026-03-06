@@ -23,35 +23,14 @@ import {
   Pencil,
   Check,
   Copy,
+  MessageSquare,
 } from 'lucide-react'
 import { api } from '@convex/_generated/api'
 import type { Id } from '@convex/_generated/dataModel'
 import type { ProspectStatus, ProspectStage } from '@/types'
-
-// ─── Constants ───────────────────────────────────────────────────────────────
-
-const STATUS_META: Record<ProspectStatus, { label: string; color: string }> = {
-  new: { label: 'New', color: 'bg-gray-500/10 text-gray-400' },
-  researching: { label: 'Researching', color: 'bg-blue-500/10 text-blue-400' },
-  draft_ready: { label: 'Draft Ready', color: 'bg-amber-500/10 text-amber-400' },
-  approved: { label: 'Approved', color: 'bg-green-500/10 text-green-400' },
-  sent: { label: 'Sent', color: 'bg-purple-500/10 text-purple-400' },
-  replied: { label: 'Replied', color: 'bg-emerald-500/10 text-emerald-400' },
-  archived: { label: 'Archived', color: 'bg-gray-500/10 text-gray-500' },
-}
-
-const STAGE_META: Record<ProspectStage, { label: string; color: string }> = {
-  new: { label: 'New', color: 'bg-slate-500/10 text-slate-400 border-slate-500/20' },
-  messaged: { label: 'Messaged', color: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
-  follow_up: { label: 'Follow Up', color: 'bg-orange-500/10 text-orange-400 border-orange-500/20' },
-  meeting_booked: { label: 'Meeting', color: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' },
-  interested: { label: 'Interested', color: 'bg-green-500/10 text-green-400 border-green-500/20' },
-  dead: { label: 'Dead', color: 'bg-red-500/10 text-red-400 border-red-500/20' },
-  deal_open: { label: 'Deal Open', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
-}
-
-const ALL_STATUSES = Object.keys(STATUS_META) as ProspectStatus[]
-const ALL_STAGES = Object.keys(STAGE_META) as ProspectStage[]
+import { API_ROUTES } from '@/constants/api'
+import { ALL_STATUSES, ALL_STAGES, STATUS_META, STAGE_META } from '@/constants/ui'
+import { ChatPanel } from '@/components/chat/ChatPanel'
 
 type SortField = 'name' | 'company' | 'stage' | 'status' | 'updatedAt'
 type SortDir = 'asc' | 'desc'
@@ -104,6 +83,7 @@ export default function ProspectsPage() {
   const [draftAction, setDraftAction] = useState<string | null>(null)
   const [batchEnriching, setBatchEnriching] = useState(false)
   const [copiedDraftId, setCopiedDraftId] = useState<string | null>(null)
+  const [chatPanelOpen, setChatPanelOpen] = useState(false)
 
   // Queries
   const dbUser = useQuery(
@@ -287,7 +267,7 @@ export default function ProspectsPage() {
   async function handleEnrich(prospectId: Id<'prospects'>) {
     setEnriching((prev) => new Set(prev).add(prospectId))
     try {
-      const res = await fetch('/api/prospects/enrich', {
+      const res = await fetch(API_ROUTES.prospectsEnrich, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prospectId, channel: 'linkedin' }),
@@ -307,7 +287,7 @@ export default function ProspectsPage() {
     setBatchEnriching(true)
     try {
       const ids = Array.from(selectedIds)
-      const res = await fetch('/api/prospects/enrich', {
+      const res = await fetch(API_ROUTES.prospectsEnrich, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prospectIds: ids, channel: 'linkedin' }),
@@ -326,7 +306,7 @@ export default function ProspectsPage() {
   async function handleCrmSync(draftId: string) {
     setDraftAction(draftId)
     try {
-      const res = await fetch('/api/prospects/drafts/crm-sync', {
+      const res = await fetch(API_ROUTES.prospectsDraftsCrmSync, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ draftId }),
@@ -342,7 +322,7 @@ export default function ProspectsPage() {
   async function handleDraftAction(draftId: string, action: 'approve' | 'reject' | 'send') {
     setDraftAction(draftId)
     try {
-      const res = await fetch(`/api/prospects/drafts/${action}`, {
+      const res = await fetch(API_ROUTES.prospectsDraftsAction(action), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ draftId }),
@@ -1150,6 +1130,24 @@ export default function ProspectsPage() {
           </div>
         </div>
       )}
+
+      <button
+        onClick={() => setChatPanelOpen(true)}
+        className="fixed bottom-6 right-6 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-brand-600 text-white shadow-lg shadow-brand-600/30 transition-all hover:bg-brand-500 hover:shadow-brand-500/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950"
+        aria-label="Open AI chat"
+      >
+        <MessageSquare className="h-5 w-5" />
+      </button>
+
+      <ChatPanel
+        open={chatPanelOpen}
+        onOpenChange={setChatPanelOpen}
+        contextHint={
+          selectedProspect
+            ? `${selectedProspect.name}${selectedProspect.company ? ` @ ${selectedProspect.company}` : ''}`
+            : undefined
+        }
+      />
     </div>
   )
 }

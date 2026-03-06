@@ -4,16 +4,20 @@ import { QdrantClient } from '@qdrant/js-client-rest'
 import { config } from '@/lib/config'
 import { loadAllSkills } from './skillLoader'
 import type { SkillMeta, SkillSearchResult, ResourceScope } from '@/types'
+import {
+  QDRANT_COLLECTIONS,
+  VECTOR_CONFIG,
+} from '@/constants/vector'
 
 function toUUID(str: string): string {
   const h = createHash('md5').update(str).digest('hex')
   return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20, 32)}`
 }
 
-const COLLECTION = 'skills'
-const VECTOR_SIZE = 1536
-const RELEVANCE_THRESHOLD = 0.45
-const TOP_K = 5
+const COLLECTION = QDRANT_COLLECTIONS.SKILLS
+const VECTOR_SIZE = VECTOR_CONFIG.DIMENSION
+const RELEVANCE_THRESHOLD = VECTOR_CONFIG.SKILL_THRESHOLD
+const TOP_K = VECTOR_CONFIG.SKILL_TOP_K
 
 const qdrant = new QdrantClient({
   url: config.qdrant.url,

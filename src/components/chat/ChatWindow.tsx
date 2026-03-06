@@ -11,6 +11,8 @@ import type { Id } from '@convex/_generated/dataModel'
 import { MessageList } from './MessageList'
 import { ChatInput } from './ChatInput'
 import { SkillPicker } from './SkillPicker'
+import { API_ROUTES } from '@/constants/api'
+import { CHAT_LIMITS, CHAT_ROLES, CHAT_SOURCES } from '@/constants/chat'
 
 function getInitials(firstName?: string | null, lastName?: string | null): string {
   const f = firstName?.[0] ?? ''
@@ -45,6 +47,7 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
   )
 
   const [pinnedSkillIds, setPinnedSkillIds] = useState<Set<string>>(new Set())
+  const [targetAgent, setTargetAgent] = useState<string | null>(null)
   const [input, setInput] = useState('')
   const [creditError, setCreditError] = useState(false)
   const [chatError, setChatError] = useState<string | null>(null)
@@ -76,11 +79,13 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
 
   const pinnedSkillIdsRef = useRef(pinnedSkillIds)
   pinnedSkillIdsRef.current = pinnedSkillIds
+  const targetAgentRef = useRef(targetAgent)
+  targetAgentRef.current = targetAgent
 
   const transport = useMemo(
     () =>
       new DefaultChatTransport<UIMessage>({
-        api: '/api/chat',
+        api: API_ROUTES.chat,
         body: () => ({
           threadId: activeThreadRef.current,
           agentInstructions: agentInstructionsRef.current,
@@ -88,6 +93,7 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
             pinnedSkillIdsRef.current.size > 0
               ? [...pinnedSkillIdsRef.current]
               : undefined,
+          targetAgent: targetAgentRef.current ?? undefined,
         }),
       }),
     [],
@@ -121,7 +127,7 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
 
   useEffect(() => {
     if (chatError) {
-      const timer = setTimeout(() => setChatError(null), 10000)
+      const timer = setTimeout(() => setChatError(null), CHAT_LIMITS.ERROR_DISMISS_MS)
       return () => clearTimeout(timer)
     }
   }, [chatError])
@@ -160,8 +166,8 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
       return persisted
     }
 
-    const lastAssistant = chatMessages.findLast((m) => m.role === 'assistant')
-    const lastUser = chatMessages.findLast((m) => m.role === 'user')
+    const lastAssistant = chatMessages.findLast((m) => m.role === CHAT_ROLES.ASSISTANT)
+    const lastUser = chatMessages.findLast((m) => m.role === CHAT_ROLES.USER)
 
     const streamingMessages: Array<{
       id: string
@@ -178,13 +184,13 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
       const textPart = lastUser.parts.find((p) => p.type === 'text')
       const userText = textPart && 'text' in textPart ? textPart.text : ''
       const alreadyPersisted = persisted.some(
-        (m) => m.role === 'user' && m.content === userText
+        (m) => m.role === CHAT_ROLES.USER && m.content === userText
       )
       if (!alreadyPersisted && userText) {
         streamingMessages.push({
           id: lastUser.id,
-          role: 'user',
-          source: 'web',
+          role: CHAT_ROLES.USER,
+          source: CHAT_SOURCES.WEB,
           content: userText,
           createdAt: Date.now(),
         })
@@ -197,13 +203,13 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
         .map((p) => ('text' in p ? p.text : ''))
         .join('')
       const alreadyPersisted = persisted.some(
-        (m) => m.role === 'assistant' && m.content === assistantText
+        (m) => m.role === CHAT_ROLES.ASSISTANT && m.content === assistantText
       )
       if (!alreadyPersisted) {
         streamingMessages.push({
           id: lastAssistant.id,
-          role: 'assistant',
-          source: 'web',
+          role: CHAT_ROLES.ASSISTANT,
+          source: CHAT_SOURCES.WEB,
           content: assistantText,
           createdAt: Date.now(),
           isStreaming,
@@ -236,7 +242,7 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
         activeThreadRef.current = activeThreadId
 
         // Fire-and-forget: replace truncated title with AI summary when ready
-        fetch('/api/thread/summarize', {
+        fetch(API_ROUTES.threadSummarize, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ message: text }),
@@ -253,8 +259,8 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
       await saveMessage({
         userId: dbUser._id,
         tenantId: dbUser.tenantId,
-        role: 'user',
-        source: 'web',
+        role: CHAT_ROLES.USER,
+        source: CHAT_SOURCES.WEB,
         content: text,
         threadId: activeThreadId!,
       })
@@ -266,6 +272,7 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
       }
 
       sendMessage({ text })
+      setTargetAgent(null)
 
       if (isNewThread) {
         pendingThreadIdRef.current = activeThreadId!
@@ -283,7 +290,7 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
     if (!wasActive || !nowReady) return
     if (!dbUser || !activeThreadRef.current) return
 
-    const lastAssistant = chatMessages.findLast((m) => m.role === 'assistant')
+    const lastAssistant = chatMessages.findLast((m) => m.role === CHAT_ROLES.ASSISTANT)
     if (!lastAssistant) return
 
     const textParts = lastAssistant.parts.filter((p) => p.type === 'text')
@@ -308,8 +315,8 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
     void saveMessage({
       userId: dbUser._id,
       tenantId: dbUser.tenantId,
-      role: 'assistant',
-      source: 'web',
+      role: CHAT_ROLES.ASSISTANT,
+      source: CHAT_SOURCES.WEB,
       content: fullText,
       threadId: activeThreadRef.current,
       metadata: toolCallParts.length > 0 ? { toolCalls: toolCallParts } : undefined,
@@ -408,6 +415,7 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
         onStop={handleStop}
         isLoading={isLoading}
         disabled={!dbUser || creditError}
+        onAgentSelect={setTargetAgent}
         extraControls={
           <SkillPicker
             skills={tenantSkills}

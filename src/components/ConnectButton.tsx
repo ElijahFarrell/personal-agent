@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Nango from '@nangohq/frontend'
+import { API_ROUTES } from '@/constants/api'
 
 interface ConnectButtonProps {
   integrationId: string
@@ -27,7 +28,7 @@ export function ConnectButton({
     setError(null)
 
     try {
-      const res = await fetch('/api/nango/session', { method: 'POST' })
+      const res = await fetch(API_ROUTES.nangoSession, { method: 'POST' })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
         throw new Error(data.error ?? 'Failed to get session')
@@ -38,7 +39,7 @@ export function ConnectButton({
 
       await nango.auth(integrationId)
 
-      await fetch('/api/nango/confirm', {
+      await fetch(API_ROUTES.nangoConfirm, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ provider }),
@@ -60,7 +61,7 @@ export function ConnectButton({
     setError(null)
 
     try {
-      const res = await fetch('/api/nango/disconnect', {
+      const res = await fetch(API_ROUTES.nangoDisconnect, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ provider }),
