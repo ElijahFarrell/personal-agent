@@ -3,11 +3,12 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { UserButton } from '@clerk/nextjs'
-import { LayoutDashboard, Plug, Zap, MessageSquare, FileText, Bot } from 'lucide-react'
+import { LayoutDashboard, Plug, Zap, MessageSquare, FileText, Bot, Users } from 'lucide-react'
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Overview', icon: LayoutDashboard, exact: true },
   { href: '/dashboard/chat', label: 'Chat', icon: MessageSquare, exact: false },
+  { href: '/dashboard/prospects', label: 'Prospects', icon: Users, exact: false },
   { href: '/dashboard/agents', label: 'Agents', icon: Bot, exact: false },
   { href: '/dashboard/context', label: 'Context', icon: FileText, exact: false },
   { href: '/dashboard/integrations', label: 'Integrations', icon: Plug, exact: false },

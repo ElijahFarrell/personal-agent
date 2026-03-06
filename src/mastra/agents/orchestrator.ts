@@ -16,7 +16,7 @@ export function createOrchestratorAgent(
   agentInstructions?: Record<string, string>,
   connectedProviders: string[] = []
 ) {
-  const agentTools = createAgentTools(userId, tenantId, agentInstructions)
+  const agentTools = createAgentTools(userId, tenantId, agentInstructions, connectedProviders)
 
   const baseInstructions = buildOrchestratorPrompt(userId, tenantId, connectedProviders)
   const orchestratorCustom = agentInstructions?.orchestrator?.trim()

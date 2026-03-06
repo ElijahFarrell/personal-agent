@@ -3,7 +3,10 @@
  * The orchestrator is the central intelligence — it delegates all specialized
  * work to sub-agent tools and synthesizes their results.
  */
-const AGENT_DESCRIPTIONS: Record<string, { provider: string | null; desc: string }> = {
+const AGENT_DESCRIPTIONS: Record<
+  string,
+  { provider?: string | null; providers?: string[]; desc: string }
+> = {
   'email-agent': { provider: 'gmail', desc: 'Read inbox, summarize emails, draft replies, send emails. Use for anything email-related.' },
   'research-agent': { provider: null, desc: 'Web search, fact-finding, market research, competitive analysis, news. Fast or deep search available.' },
   'calendar-agent': { provider: 'google-calendar', desc: "View today's schedule, upcoming events, create new events, check availability." },
@@ -11,8 +14,13 @@ const AGENT_DESCRIPTIONS: Record<string, { provider: string | null; desc: string
   'content-agent': { provider: null, desc: 'Write LinkedIn posts, newsletters, tweets, marketing copy, and any professional content.' },
   'instagram-agent': { provider: 'instagram', desc: 'Send Instagram DMs and outreach messages. Always confirms before sending.' },
   'browser-agent': { provider: null, desc: 'Navigate websites, extract page content, fill and submit forms. Confirms before submitting.' },
-  'slack-agent': { provider: 'slack', desc: 'Send messages, list channels and users in Slack workspaces. Always confirms before sending.' },
-  'notion-agent': { provider: 'notion', desc: 'Search, read, and create pages in Notion workspaces.' },
+  'messaging-agent': { providers: ['slack', 'microsoft-teams', 'discord'], desc: 'Slack, Teams, Discord — list channels, send messages. Always confirms before sending.' },
+  'docs-agent': { providers: ['google-docs', 'google-sheet', 'airtable', 'notion'], desc: 'Google Docs, Sheets, Airtable, Notion — search, read, create documents and records.' },
+  'real-estate-agent': { providers: ['follow-up-boss', 'calendly'], desc: 'Follow Up Boss, Calendly — contacts, deals, tasks, event types, scheduling.' },
+  'finance-agent': { providers: ['stripe', 'quickbooks'], desc: 'Stripe, QuickBooks — customers, charges, invoices, payments.' },
+  'marketing-agent': { provider: 'mailchimp', desc: 'Mailchimp — audiences, campaigns.' },
+  'crm-agent': { providers: ['hubspot', 'salesforce', 'pipedrive', 'zoho-crm'], desc: 'HubSpot, Salesforce, Pipedrive, Zoho CRM — contacts, deals, companies, tasks, notes.' },
+  'project-agent': { providers: ['jira', 'asana', 'monday'], desc: 'Jira, Asana, Monday.com — issues, tasks, projects, boards, sprints, updates.' },
 }
 
 export function buildOrchestratorPrompt(
@@ -23,9 +31,15 @@ export function buildOrchestratorPrompt(
   const providerSet = new Set(connectedProviders)
 
   const agentLines = Object.entries(AGENT_DESCRIPTIONS)
-    .map(([name, { provider, desc }]) => {
-      if (provider && !providerSet.has(provider)) {
-        return `- **${name}**: *(not connected — user needs to connect ${provider} in Integrations)*`
+    .map(([name, { provider, providers, desc }]) => {
+      const isConnected = provider
+        ? providerSet.has(provider)
+        : providers
+          ? providers.some((p) => providerSet.has(p))
+          : true
+      if (!isConnected) {
+        const providerList = providers?.join(', ') ?? provider ?? ''
+        return `- **${name}**: *(not connected — user needs to connect ${providerList} in Integrations)*`
       }
       return `- **${name}**: ${desc}`
     })
@@ -77,6 +91,8 @@ Never pressure the user to confirm — always present drafts clearly and wait.
 ## Context Engineering
 
 You receive injected business context docs and relevant skills at the start of this conversation. Use them proactively — do not ask the user to repeat their brand voice, ICP, niche, or business background if it's already provided.
+
+You also receive the user's prospects pipeline — use it to suggest follow-ups, prioritize outreach, provide pipeline summaries when asked, and answer questions like "who needs a follow-up?", "give me a pipeline summary", or "what should I work on today?".
 
 If needed context is missing (e.g., tone for a new content type), check memory first via mem0-recall. If still unavailable, tell the user specifically what would help and suggest they add it to their Context page.
 

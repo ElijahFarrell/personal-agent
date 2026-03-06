@@ -43,6 +43,9 @@ export const config = {
   linkedin: {
     apiKey: optionalEnv('LINKEDAPI_KEY'),
   },
+  apify: {
+    apiToken: optionalEnv('APIFY_API_TOKEN'),
+  },
   meta: {
     appSecret: optionalEnv('META_APP_SECRET'),
     verifyToken: optionalEnv('META_VERIFY_TOKEN'),

@@ -1,6 +1,6 @@
 import { defineSchema, defineTable } from 'convex/server'
 import { v } from 'convex/values'
-import { CONTEXT_DOC_CATEGORY, CREDIT_ACTION, CREDIT_TX_TYPE, INDEXES, INTEGRATION_STATUS, MESSAGE_ROLE, MESSAGE_SOURCE, ROLE, SCOPE, TABLES, TIER } from './constants'
+import { CONTEXT_DOC_CATEGORY, CREDIT_ACTION, CREDIT_TX_TYPE, CUSTOM_FIELD_TYPE, DRAFT_STATUS, INDEXES, INTEGRATION_STATUS, MESSAGE_ROLE, MESSAGE_SOURCE, OUTREACH_CHANNEL, PROSPECT_SOURCE, PROSPECT_STAGE, PROSPECT_STATUS, ROLE, SCOPE, TABLES, TIER } from './constants'
 
 export default defineSchema({
   [TABLES.TENANTS]: defineTable({
@@ -160,4 +160,117 @@ export default defineSchema({
   })
     .index(INDEXES.BY_TENANT_ID, ['tenantId'])
     .index(INDEXES.BY_TENANT_CREATED, ['tenantId', 'createdAt']),
+
+  // ─── Prospects ──────────────────────────────────────────────────────────────
+
+  [TABLES.PROSPECTS]: defineTable({
+    tenantId: v.id(TABLES.TENANTS),
+    ownerId: v.optional(v.id(TABLES.USERS)),
+    name: v.string(),
+    company: v.optional(v.string()),
+    email: v.optional(v.string()),
+    phone: v.optional(v.string()),
+    linkedinUrl: v.optional(v.string()),
+    websiteUrl: v.optional(v.string()),
+    status: v.union(
+      v.literal(PROSPECT_STATUS.NEW),
+      v.literal(PROSPECT_STATUS.RESEARCHING),
+      v.literal(PROSPECT_STATUS.DRAFT_READY),
+      v.literal(PROSPECT_STATUS.APPROVED),
+      v.literal(PROSPECT_STATUS.SENT),
+      v.literal(PROSPECT_STATUS.REPLIED),
+      v.literal(PROSPECT_STATUS.ARCHIVED)
+    ),
+    stage: v.optional(v.union(
+      v.literal(PROSPECT_STAGE.NEW),
+      v.literal(PROSPECT_STAGE.MESSAGED),
+      v.literal(PROSPECT_STAGE.FOLLOW_UP),
+      v.literal(PROSPECT_STAGE.MEETING_BOOKED),
+      v.literal(PROSPECT_STAGE.INTERESTED),
+      v.literal(PROSPECT_STAGE.DEAD),
+      v.literal(PROSPECT_STAGE.DEAL_OPEN)
+    )),
+    source: v.union(
+      v.literal(PROSPECT_SOURCE.MANUAL),
+      v.literal(PROSPECT_SOURCE.LINKEDIN_SEARCH),
+      v.literal(PROSPECT_SOURCE.CRM_IMPORT),
+      v.literal(PROSPECT_SOURCE.CSV_IMPORT)
+    ),
+    notes: v.optional(v.string()),
+    customFields: v.optional(v.any()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index(INDEXES.BY_TENANT_ID, ['tenantId'])
+    .index(INDEXES.BY_TENANT_STATUS, ['tenantId', 'status'])
+    .index(INDEXES.BY_TENANT_STAGE, ['tenantId', 'stage'])
+    .index(INDEXES.BY_OWNER_ID, ['ownerId']),
+
+  [TABLES.PROSPECT_FIELD_DEFINITIONS]: defineTable({
+    tenantId: v.id(TABLES.TENANTS),
+    name: v.string(),
+    label: v.string(),
+    fieldType: v.union(
+      v.literal(CUSTOM_FIELD_TYPE.TEXT),
+      v.literal(CUSTOM_FIELD_TYPE.NUMBER),
+      v.literal(CUSTOM_FIELD_TYPE.SELECT),
+      v.literal(CUSTOM_FIELD_TYPE.DATE),
+      v.literal(CUSTOM_FIELD_TYPE.URL),
+      v.literal(CUSTOM_FIELD_TYPE.BOOLEAN)
+    ),
+    options: v.optional(v.array(v.string())),
+    isRequired: v.optional(v.boolean()),
+    sortOrder: v.number(),
+    createdAt: v.number(),
+  })
+    .index(INDEXES.BY_TENANT_ID, ['tenantId']),
+
+  [TABLES.PROSPECT_RESEARCH_SNAPSHOTS]: defineTable({
+    prospectId: v.id(TABLES.PROSPECTS),
+    tenantId: v.id(TABLES.TENANTS),
+    linkedinProfile: v.optional(v.object({
+      headline: v.optional(v.string()),
+      recentActivity: v.optional(v.string()),
+      connectionDegree: v.optional(v.string()),
+    })),
+    companyInfo: v.optional(v.object({
+      summary: v.optional(v.string()),
+      sourceUrl: v.optional(v.string()),
+    })),
+    newsArticles: v.optional(v.array(v.object({
+      title: v.string(),
+      url: v.string(),
+      snippet: v.string(),
+    }))),
+    personalizationAngles: v.optional(v.array(v.string())),
+    researchedAt: v.number(),
+  })
+    .index(INDEXES.BY_PROSPECT_ID, ['prospectId'])
+    .index(INDEXES.BY_TENANT_ID, ['tenantId']),
+
+  [TABLES.OUTREACH_DRAFTS]: defineTable({
+    prospectId: v.id(TABLES.PROSPECTS),
+    tenantId: v.id(TABLES.TENANTS),
+    channel: v.union(
+      v.literal(OUTREACH_CHANNEL.LINKEDIN),
+      v.literal(OUTREACH_CHANNEL.EMAIL),
+      v.literal(OUTREACH_CHANNEL.INSTAGRAM)
+    ),
+    subject: v.optional(v.string()),
+    body: v.string(),
+    status: v.union(
+      v.literal(DRAFT_STATUS.PENDING_REVIEW),
+      v.literal(DRAFT_STATUS.APPROVED),
+      v.literal(DRAFT_STATUS.REJECTED),
+      v.literal(DRAFT_STATUS.SENT),
+      v.literal(DRAFT_STATUS.FAILED)
+    ),
+    sentAt: v.optional(v.number()),
+    sendError: v.optional(v.string()),
+    crmSynced: v.optional(v.boolean()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index(INDEXES.BY_PROSPECT_ID, ['prospectId'])
+    .index(INDEXES.BY_TENANT_ID, ['tenantId']),
 })
