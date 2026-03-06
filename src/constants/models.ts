@@ -50,3 +50,11 @@ export const AgentModels = {
   finance:      Models.CLAUDE_HAIKU,
   marketing:    Models.CLAUDE_HAIKU,
 } as const
+
+/** Context window sizes (tokens) per model for usage display */
+export const CONTEXT_WINDOW_SIZES: Record<string, number> = {
+  'anthropic/claude-sonnet-4-5': 200_000,
+  'anthropic/claude-haiku-4-5': 200_000,
+  'anthropic/claude-opus-4-5': 200_000,
+}
+export const DEFAULT_CONTEXT_WINDOW = 200_000

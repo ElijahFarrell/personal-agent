@@ -264,10 +264,45 @@ export async function POST(req: NextRequest) {
       stream = await agent.stream(agentMessages as Parameters<typeof agent.stream>[0])
     }
 
+    let capturedUsage: { promptTokens?: number; completionTokens?: number } | null = null
+    const aiStream = toAISdkStream(stream!, { from: 'agent' })
+
     const uiStream = createUIMessageStream({
       execute: async ({ writer }) => {
-        for await (const part of toAISdkStream(stream!, { from: 'agent' })) {
-          await writer.write(part)
+        writer.write({
+          type: 'data-skills',
+          data: {
+            type: 'skills',
+            items: allSkills.map(({ skill, score }) => ({
+              id: skill.id,
+              name: skill.name,
+              score,
+            })),
+          },
+        })
+        for await (const part of aiStream as AsyncIterable<{
+          type?: string
+          usage?: { promptTokens?: number; completionTokens?: number }
+        }>) {
+          const p = part as Record<string, unknown>
+          if (p?.type === 'finish' && p.usage && typeof p.usage === 'object') {
+            const u = p.usage as { promptTokens?: number; completionTokens?: number }
+            capturedUsage = {
+              promptTokens: u.promptTokens,
+              completionTokens: u.completionTokens,
+            }
+          }
+          await writer.write(part as Parameters<typeof writer.write>[0])
+        }
+        if (capturedUsage) {
+          writer.write({
+            type: 'data-usage',
+            data: {
+              type: 'usage',
+              inputTokens: capturedUsage.promptTokens ?? 0,
+              outputTokens: capturedUsage.completionTokens ?? 0,
+            },
+          })
         }
       },
     })

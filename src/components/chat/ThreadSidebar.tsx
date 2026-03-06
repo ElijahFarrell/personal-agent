@@ -125,26 +125,31 @@ export function ThreadSidebar({ activeThreadId, onSelectThread, onNewThread }: T
   const threadCount = threads?.length ?? 0
 
   return (
-    <div className="flex h-full flex-col bg-gray-950/40 backdrop-blur-sm">
-      <div className="px-3 pt-3 pb-2 flex flex-col gap-2">
-        <Button
-          onClick={onNewThread}
-          variant="ghost"
-          className="w-full justify-start gap-2 rounded-xl text-base font-semibold text-gray-200 hover:bg-brand-600/10 hover:text-white border border-transparent hover:border-brand-600/20 transition-all"
-        >
-          <Plus className="h-4 w-4" />
-          New Chat
-        </Button>
-        {threadCount > 0 ? (
+    <div className="flex h-full flex-col bg-sidebar border-l border-sidebar-border">
+      <div className="flex items-center justify-between gap-2 px-3 py-2 border-b border-sidebar-border">
+        <span className="text-sm font-medium text-sidebar-foreground">Chats</span>
+        <div className="flex items-center gap-0.5">
           <Button
-            onClick={() => setShowClearAllDialog(true)}
+            onClick={onNewThread}
             variant="ghost"
-            className="w-full justify-start gap-2 rounded-lg text-sm text-gray-500 hover:bg-gray-800/60 hover:text-red-400"
+            size="icon"
+            className="h-7 w-7 rounded-md text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            aria-label="New chat"
           >
-            <Trash2 className="h-3 w-3" />
-            Clear all
+            <Plus className="h-4 w-4" />
           </Button>
-        ) : null}
+          {threadCount > 0 ? (
+            <Button
+              onClick={() => setShowClearAllDialog(true)}
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+              aria-label="Clear all"
+            >
+              <Trash2 className="h-3 w-3" />
+            </Button>
+          ) : null}
+        </div>
       </div>
 
       <ScrollArea className="flex-1 px-2">
@@ -165,48 +170,54 @@ export function ThreadSidebar({ activeThreadId, onSelectThread, onNewThread }: T
                         if (e.key === 'Enter') handleRename(thread._id)
                         if (e.key === 'Escape') setEditingId(null)
                       }}
-                      className="flex-1 rounded bg-gray-800 px-2 py-0.5 text-xs text-gray-200 outline-none ring-1 ring-gray-600"
+                      className="flex-1 rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground outline-none ring-1 ring-ring"
                     />
                     <button
                       onClick={() => handleRename(thread._id)}
-                      className="rounded p-0.5 text-gray-400 hover:text-green-400"
+                      className="rounded p-0.5 text-muted-foreground hover:text-green-500"
                     >
                       ✓
                     </button>
                     <button
                       onClick={() => setEditingId(null)}
-                      className="rounded p-0.5 text-gray-400 hover:text-red-400"
+                      className="rounded p-0.5 text-muted-foreground hover:text-destructive"
                     >
                       ✕
                     </button>
                   </div>
                 ) : (
                   <>
-                    {/* Selection button — occupies the full row */}
                     <button
                       type="button"
                       onClick={() => onSelectThread(thread._id)}
                       className={cn(
-                        'flex flex-1 min-w-0 items-center gap-2 rounded-lg px-3 py-2 text-left text-base transition-colors',
+                        'flex flex-1 min-w-0 items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors',
                         isActive
-                          ? 'bg-brand-600/15 text-brand-300'
-                          : 'text-gray-400 hover:bg-gray-800/60 hover:text-gray-200'
+                          ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                          : 'text-muted-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
                       )}
                     >
-                      <MessageSquare className="h-4 w-4 shrink-0 opacity-50" />
-                      <span className="flex-1 truncate text-[15px]">{thread.title}</span>
-                      <span className="shrink-0 text-sm text-gray-500 pr-6">
+                      <MessageSquare className="h-4 w-4 shrink-0 opacity-70" />
+                      <span className="flex-1 truncate">{thread.title}</span>
+                      <span className="shrink-0 text-xs text-muted-foreground pr-6">
                         {formatRelativeTime(thread.updatedAt)}
                       </span>
                     </button>
 
-                    {/* Actions — absolutely positioned so they don't interfere with the selection button's events */}
-                    <div className="absolute right-1 top-1/2 -translate-y-1/2">
+                    <div className="absolute right-1 top-1/2 flex -translate-y-1/2 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+                      <button
+                        type="button"
+                        onClick={() => setThreadToDelete(thread._id)}
+                        className="flex items-center justify-center rounded p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        aria-label="Delete thread"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <button
                             type="button"
-                            className="flex items-center justify-center rounded p-1 text-gray-500 hover:text-gray-300 hover:bg-gray-700/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-500"
+                            className="flex items-center justify-center rounded p-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                             aria-label="Thread actions"
                           >
                             <MoreHorizontal className="h-4 w-4" />
@@ -224,7 +235,7 @@ export function ThreadSidebar({ activeThreadId, onSelectThread, onNewThread }: T
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onSelect={() => setThreadToDelete(thread._id)}
-                            className="text-red-400 focus:text-red-400"
+                            className="text-destructive focus:text-destructive"
                           >
                             <Trash2 className="h-3 w-3" />
                             Delete
@@ -239,7 +250,7 @@ export function ThreadSidebar({ activeThreadId, onSelectThread, onNewThread }: T
           })}
 
           {threads && threads.length === 0 ? (
-            <p className="px-3 py-4 text-center text-sm text-gray-600">
+            <p className="px-3 py-4 text-center text-sm text-muted-foreground">
               No conversations yet
             </p>
           ) : null}

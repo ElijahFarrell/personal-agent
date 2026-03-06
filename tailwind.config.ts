@@ -73,12 +73,14 @@ const config: Config = {
   		},
   		fontFamily: {
   			sans: [
-  				'Inter',
+  				'var(--font-geist-sans)',
+  				'ui-sans-serif',
   				'system-ui',
   				'sans-serif'
   			],
   			mono: [
-  				'JetBrains Mono',
+  				'var(--font-geist-mono)',
+  				'ui-monospace',
   				'monospace'
   			]
   		},
