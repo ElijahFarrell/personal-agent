@@ -130,7 +130,7 @@ export function ThreadSidebar({ activeThreadId, onSelectThread, onNewThread }: T
         <Button
           onClick={onNewThread}
           variant="ghost"
-          className="w-full justify-start gap-2 rounded-xl text-sm font-semibold text-gray-200 hover:bg-brand-600/10 hover:text-white border border-transparent hover:border-brand-600/20 transition-all"
+          className="w-full justify-start gap-2 rounded-xl text-base font-semibold text-gray-200 hover:bg-brand-600/10 hover:text-white border border-transparent hover:border-brand-600/20 transition-all"
         >
           <Plus className="h-4 w-4" />
           New Chat
@@ -139,7 +139,7 @@ export function ThreadSidebar({ activeThreadId, onSelectThread, onNewThread }: T
           <Button
             onClick={() => setShowClearAllDialog(true)}
             variant="ghost"
-            className="w-full justify-start gap-2 rounded-lg text-xs text-gray-500 hover:bg-gray-800/60 hover:text-red-400"
+            className="w-full justify-start gap-2 rounded-lg text-sm text-gray-500 hover:bg-gray-800/60 hover:text-red-400"
           >
             <Trash2 className="h-3 w-3" />
             Clear all
@@ -192,24 +192,25 @@ export function ThreadSidebar({ activeThreadId, onSelectThread, onNewThread }: T
                       }
                     }}
                     className={cn(
-                      'flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm transition-colors cursor-pointer',
+                      'flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-base transition-colors cursor-pointer',
                       isActive
                         ? 'bg-brand-600/15 text-brand-300'
                         : 'text-gray-400 hover:bg-gray-800/60 hover:text-gray-200'
                     )}
                   >
-                    <MessageSquare className="h-3.5 w-3.5 shrink-0 opacity-50" />
-                    <span className="flex-1 truncate">{thread.title}</span>
-                    <span className="shrink-0 text-xs text-gray-600">
+                    <MessageSquare className="h-4 w-4 shrink-0 opacity-50" />
+                    <span className="flex-1 truncate text-[15px]">{thread.title}</span>
+                    <span className="shrink-0 text-sm text-gray-600">
                       {formatRelativeTime(thread.updatedAt)}
                     </span>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <button
                           onClick={(e) => e.stopPropagation()}
-                          className="shrink-0 rounded p-0.5 text-gray-600 opacity-0 group-hover:opacity-100 hover:text-gray-300"
+                          className="shrink-0 rounded p-1 text-gray-500 hover:text-gray-300 hover:bg-gray-700/50"
+                          aria-label="Thread actions (rename, delete)"
                         >
-                          <MoreHorizontal className="h-3.5 w-3.5" />
+                          <MoreHorizontal className="h-4 w-4" />
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-40">
@@ -242,7 +243,7 @@ export function ThreadSidebar({ activeThreadId, onSelectThread, onNewThread }: T
           })}
 
           {threads && threads.length === 0 ? (
-            <p className="px-3 py-4 text-center text-xs text-gray-600">
+            <p className="px-3 py-4 text-center text-sm text-gray-600">
               No conversations yet
             </p>
           ) : null}
