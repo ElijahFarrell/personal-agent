@@ -1,30 +1,17 @@
 'use client'
 
+import { Sheet, SheetContent } from '@/components/ui/sheet'
+import { ChatWindow } from './ChatWindow'
 import { useState, useCallback } from 'react'
 import type { Id } from '@convex/_generated/dataModel'
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet'
-import { ChatWindow } from './ChatWindow'
-import { cn } from '@/lib/utils'
 
-export interface ChatPanelProps {
+interface ChatPanelProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  /** Optional context hint for the current page (e.g. prospect name) */
   contextHint?: string
-  className?: string
 }
 
-export function ChatPanel({
-  open,
-  onOpenChange,
-  contextHint,
-  className,
-}: ChatPanelProps) {
+export function ChatPanel({ open, onOpenChange, contextHint }: ChatPanelProps) {
   const [activeThreadId, setActiveThreadId] = useState<Id<'threads'> | null>(null)
 
   const handleThreadCreated = useCallback((threadId: Id<'threads'>) => {
@@ -32,29 +19,18 @@ export function ChatPanel({
   }, [])
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <Sheet modal={false} open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className={cn(
-          'flex flex-col w-full sm:max-w-lg p-0 gap-0 border-l border-border bg-background',
-          className
-        )}
+        className="flex w-[400px] flex-col gap-0 border-l border-gray-800/60 bg-gray-950 p-0"
       >
-        <SheetHeader className="shrink-0 border-b border-border px-4 py-3">
-          <SheetTitle className="text-base font-semibold text-foreground flex items-center gap-2">
-            AI Assistant
-            {contextHint ? (
-              <span className="text-xs font-normal text-muted-foreground truncate max-w-[200px]">
-                — {contextHint}
-              </span>
-            ) : null}
-          </SheetTitle>
-        </SheetHeader>
-        <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-          <ChatWindow
-            threadId={activeThreadId}
-            onThreadCreated={handleThreadCreated}
-          />
+        {contextHint && (
+          <div className="shrink-0 border-b border-gray-800/60 px-4 py-2 text-sm text-gray-400">
+            {contextHint}
+          </div>
+        )}
+        <div className="flex flex-1 min-h-0 overflow-hidden">
+          <ChatWindow threadId={activeThreadId} onThreadCreated={handleThreadCreated} />
         </div>
       </SheetContent>
     </Sheet>

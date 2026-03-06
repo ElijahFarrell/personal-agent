@@ -30,7 +30,15 @@ import { api } from '@convex/_generated/api'
 import type { Id } from '@convex/_generated/dataModel'
 import type { ProspectStatus, ProspectStage } from '@/types'
 import { API_ROUTES } from '@/constants/api'
+import { cn } from '@/lib/utils'
 import { ALL_STATUSES, ALL_STAGES, STATUS_META, STAGE_META } from '@/constants/ui'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { ChatPanel } from '@/components/chat/ChatPanel'
 import { ImportProspectsModal } from '@/components/prospects/ImportProspectsModal'
 
@@ -622,15 +630,31 @@ export default function ProspectsPage() {
                       </td>
                       <td className={`${tdClass} text-gray-400`}>{prospect.company ?? '—'}</td>
                       <td className={tdClass} onClick={(e) => e.stopPropagation()}>
-                        <select
+                        <Select
                           value={stage}
-                          onChange={(e) => handleStageChange(prospect._id, e.target.value as ProspectStage)}
-                          className={`rounded-md border px-2 py-0.5 text-[11px] font-medium ${STAGE_META[stage].color} cursor-pointer bg-transparent outline-none`}
+                          onValueChange={(v) => handleStageChange(prospect._id, v as ProspectStage)}
                         >
-                          {ALL_STAGES.map((s) => (
-                            <option key={s} value={s} className="bg-gray-900 text-gray-300">{STAGE_META[s].label}</option>
-                          ))}
-                        </select>
+                          <SelectTrigger
+                            size="sm"
+                            className={cn(
+                              'h-7 w-[110px] border-gray-800 bg-gray-800/40 shadow-none',
+                              STAGE_META[stage].color
+                            )}
+                          >
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {ALL_STAGES.map((s) => (
+                              <SelectItem
+                                key={s}
+                                value={s}
+                                className={cn('bg-gray-900', STAGE_META[s].color)}
+                              >
+                                {STAGE_META[s].label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </td>
                       <td className={tdClass}>
                         <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium ${STATUS_META[prospect.status as ProspectStatus]?.color ?? ''}`}>
