@@ -7,12 +7,26 @@ import { api } from '@convex/_generated/api'
 import type { Id } from '@convex/_generated/dataModel'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Plus, MessageSquare, MoreHorizontal, Pencil, Trash2, Check, X } from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Plus, MessageSquare, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface ThreadSidebarProps {
   activeThreadId: Id<'threads'> | null
-  onSelectThread: (threadId: Id<'threads'>) => void
+  onSelectThread: (threadId: Id<'threads'> | null) => void
   onNewThread: () => void
 }
 
@@ -41,12 +55,15 @@ export function ThreadSidebar({ activeThreadId, onSelectThread, onNewThread }: T
   )
   const updateTitle = useMutation(api.threads.updateThreadTitle)
   const deleteThread = useMutation(api.threads.deleteThread)
+  const deleteAllThreads = useMutation(api.threads.deleteAllThreadsForUser)
 
   const [editingId, setEditingId] = useState<Id<'threads'> | null>(null)
   const [editTitle, setEditTitle] = useState('')
-  const [menuOpenId, setMenuOpenId] = useState<Id<'threads'> | null>(null)
+  const [threadToDelete, setThreadToDelete] = useState<Id<'threads'> | null>(null)
+  const [showClearAllDialog, setShowClearAllDialog] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [isClearingAll, setIsClearingAll] = useState(false)
   const editInputRef = useRef<HTMLInputElement>(null)
-  const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (editingId && editInputRef.current) {
@@ -54,16 +71,6 @@ export function ThreadSidebar({ activeThreadId, onSelectThread, onNewThread }: T
       editInputRef.current.select()
     }
   }, [editingId])
-
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpenId(null)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
 
   const handleRename = useCallback(
     async (threadId: Id<'threads'>) => {
@@ -77,17 +84,49 @@ export function ThreadSidebar({ activeThreadId, onSelectThread, onNewThread }: T
     [editTitle, updateTitle]
   )
 
-  const handleDelete = useCallback(
-    async (threadId: Id<'threads'>) => {
-      setMenuOpenId(null)
-      await deleteThread({ threadId })
+  const getNextThreadAfterDelete = useCallback(
+    (deletedId: Id<'threads'>): Id<'threads'> | null => {
+      const list = threads ?? []
+      const idx = list.findIndex((t) => t._id === deletedId)
+      if (idx < 0) return activeThreadId === deletedId ? null : activeThreadId
+      if (activeThreadId !== deletedId) return activeThreadId
+      if (idx < list.length - 1) return list[idx + 1]._id
+      if (idx > 0) return list[idx - 1]._id
+      return null
     },
-    [deleteThread]
+    [threads, activeThreadId]
   )
+
+  const handleConfirmDelete = useCallback(async () => {
+    if (!threadToDelete) return
+    setIsDeleting(true)
+    try {
+      const nextId = getNextThreadAfterDelete(threadToDelete)
+      await deleteThread({ threadId: threadToDelete })
+      onSelectThread(nextId)
+    } finally {
+      setThreadToDelete(null)
+      setIsDeleting(false)
+    }
+  }, [threadToDelete, deleteThread, getNextThreadAfterDelete, onSelectThread])
+
+  const handleConfirmClearAll = useCallback(async () => {
+    if (!dbUser) return
+    setIsClearingAll(true)
+    try {
+      await deleteAllThreads({ userId: dbUser._id })
+      onSelectThread(null)
+    } finally {
+      setShowClearAllDialog(false)
+      setIsClearingAll(false)
+    }
+  }, [dbUser, deleteAllThreads, onSelectThread])
+
+  const threadCount = threads?.length ?? 0
 
   return (
     <div className="flex h-full flex-col bg-gray-950/40 backdrop-blur-sm">
-      <div className="px-3 pt-3 pb-2">
+      <div className="px-3 pt-3 pb-2 flex flex-col gap-2">
         <Button
           onClick={onNewThread}
           variant="ghost"
@@ -96,6 +135,16 @@ export function ThreadSidebar({ activeThreadId, onSelectThread, onNewThread }: T
           <Plus className="h-4 w-4" />
           New Chat
         </Button>
+        {threadCount > 0 ? (
+          <Button
+            onClick={() => setShowClearAllDialog(true)}
+            variant="ghost"
+            className="w-full justify-start gap-2 rounded-lg text-xs text-gray-500 hover:bg-gray-800/60 hover:text-red-400"
+          >
+            <Trash2 className="h-3 w-3" />
+            Clear all
+          </Button>
+        ) : null}
       </div>
 
       <ScrollArea className="flex-1 px-2">
@@ -103,7 +152,6 @@ export function ThreadSidebar({ activeThreadId, onSelectThread, onNewThread }: T
           {(threads ?? []).map((thread) => {
             const isActive = thread._id === activeThreadId
             const isEditing = editingId === thread._id
-            const isMenuOpen = menuOpenId === thread._id
 
             return (
               <div key={thread._id} className="group relative">
@@ -123,13 +171,13 @@ export function ThreadSidebar({ activeThreadId, onSelectThread, onNewThread }: T
                       onClick={() => handleRename(thread._id)}
                       className="rounded p-0.5 text-gray-400 hover:text-green-400"
                     >
-                      <Check className="h-3 w-3" />
+                      ✓
                     </button>
                     <button
                       onClick={() => setEditingId(null)}
                       className="rounded p-0.5 text-gray-400 hover:text-red-400"
                     >
-                      <X className="h-3 w-3" />
+                      ✕
                     </button>
                   </div>
                 ) : (
@@ -155,54 +203,106 @@ export function ThreadSidebar({ activeThreadId, onSelectThread, onNewThread }: T
                     <span className="shrink-0 text-xs text-gray-600">
                       {formatRelativeTime(thread.updatedAt)}
                     </span>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setMenuOpenId(isMenuOpen ? null : thread._id)
-                      }}
-                      className="shrink-0 rounded p-0.5 text-gray-600 opacity-0 group-hover:opacity-100 hover:text-gray-300"
-                    >
-                      <MoreHorizontal className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                )}
-
-                {isMenuOpen && (
-                  <div
-                    ref={menuRef}
-                    className="absolute right-2 top-8 z-20 w-32 rounded-lg border border-gray-700 bg-gray-900 py-1 shadow-xl"
-                  >
-                    <button
-                      onClick={() => {
-                        setMenuOpenId(null)
-                        setEditTitle(thread.title)
-                        setEditingId(thread._id)
-                      }}
-                      className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-gray-300 hover:bg-gray-800"
-                    >
-                      <Pencil className="h-3 w-3" />
-                      Rename
-                    </button>
-                    <button
-                      onClick={() => handleDelete(thread._id)}
-                      className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-red-400 hover:bg-gray-800"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                      Delete
-                    </button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          onClick={(e) => e.stopPropagation()}
+                          className="shrink-0 rounded p-0.5 text-gray-600 opacity-0 group-hover:opacity-100 hover:text-gray-300"
+                        >
+                          <MoreHorizontal className="h-3.5 w-3.5" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-40">
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setEditTitle(thread.title)
+                            setEditingId(thread._id)
+                          }}
+                        >
+                          <Pencil className="h-3 w-3" />
+                          Rename
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setThreadToDelete(thread._id)
+                          }}
+                          className="text-red-400 focus:text-red-400"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 )}
               </div>
             )
           })}
 
-          {threads && threads.length === 0 && (
+          {threads && threads.length === 0 ? (
             <p className="px-3 py-4 text-center text-xs text-gray-600">
               No conversations yet
             </p>
-          )}
+          ) : null}
         </div>
       </ScrollArea>
+
+      <Dialog open={!!threadToDelete} onOpenChange={(open) => !open && setThreadToDelete(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete conversation?</DialogTitle>
+            <DialogDescription>
+              This cannot be undone. All messages in this conversation will be permanently deleted.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setThreadToDelete(null)}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting ? 'Deleting…' : 'Delete'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showClearAllDialog} onOpenChange={setShowClearAllDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Clear all conversations?</DialogTitle>
+            <DialogDescription>
+              This will permanently delete all {threadCount} conversation
+              {threadCount === 1 ? '' : 's'}. This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setShowClearAllDialog(false)}
+              disabled={isClearingAll}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmClearAll}
+              disabled={isClearingAll}
+            >
+              {isClearingAll ? 'Clearing…' : 'Clear all'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

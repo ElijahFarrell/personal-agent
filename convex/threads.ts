@@ -56,6 +56,27 @@ export const deleteThread = mutation({
   },
 })
 
+export const deleteAllThreadsForUser = mutation({
+  args: {
+    userId: v.id(TABLES.USERS),
+  },
+  handler: async (ctx, args) => {
+    const threads = await ctx.db
+      .query(TABLES.THREADS)
+      .withIndex(INDEXES.BY_USER_UPDATED, (q) => q.eq('userId', args.userId))
+      .collect()
+
+    for (const thread of threads) {
+      const messages = await ctx.db
+        .query(TABLES.MESSAGES)
+        .withIndex(INDEXES.BY_THREAD_CREATED, (q) => q.eq('threadId', thread._id))
+        .collect()
+      await Promise.all(messages.map((m) => ctx.db.delete(m._id)))
+      await ctx.db.delete(thread._id)
+    }
+  },
+})
+
 // ─── Queries ──────────────────────────────────────────────────────────────────
 
 export const getThreadsByUserId = query({

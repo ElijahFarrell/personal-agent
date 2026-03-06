@@ -11,6 +11,7 @@ export {
   createOrchestratorAgent,
   createEmailAgent,
   createResearchAgent,
+  createCalendarAgent,
   createLinkedInAgent,
   createContentAgent,
   createInstagramAgent,

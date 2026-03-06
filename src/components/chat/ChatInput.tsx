@@ -1,13 +1,22 @@
 'use client'
 
-import { useRef, useState, useCallback, type KeyboardEvent, type ChangeEvent, type ReactNode } from 'react'
+import {
+  useRef,
+  useState,
+  useCallback,
+  useEffect,
+  type KeyboardEvent,
+  type ChangeEvent,
+  type ReactNode,
+} from 'react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
+import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover'
 import { ArrowUp, Square, Mic, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-
-const MAX_LENGTH = 4000
-const MAX_ROWS = 8
+import { API_ROUTES } from '@/constants/api'
+import { CHAT_LIMITS } from '@/constants/chat'
+import { AgentMentionPopover } from './AgentMentionPopover'
 
 interface ChatInputProps {
   value: string
@@ -17,34 +26,84 @@ interface ChatInputProps {
   isLoading: boolean
   disabled?: boolean
   extraControls?: ReactNode
+  /** Called when user selects an agent via @mention. agentId is the agent to route to. */
+  onAgentSelect?: (agentId: string | null) => void
 }
 
-export function ChatInput({ value, onChange, onSubmit, onStop, isLoading, disabled, extraControls }: ChatInputProps) {
+export function ChatInput({
+  value,
+  onChange,
+  onSubmit,
+  onStop,
+  isLoading,
+  disabled,
+  extraControls,
+  onAgentSelect,
+}: ChatInputProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<Blob[]>([])
   const valueRef = useRef(value)
+  const cursorRef = useRef(0)
   valueRef.current = value
 
   const [isRecording, setIsRecording] = useState(false)
   const [isTranscribing, setIsTranscribing] = useState(false)
+  const [showMention, setShowMention] = useState(false)
+
+  const { mentionQuery, mentionStart } = (() => {
+    const pos = cursorRef.current
+    const before = value.slice(0, pos)
+    const lastAt = before.lastIndexOf('@')
+    if (lastAt < 0) return { mentionQuery: '', mentionStart: -1 }
+    const q = before.slice(lastAt + 1)
+    if (q.includes(' ') || q.includes('\n')) return { mentionQuery: '', mentionStart: -1 }
+    return { mentionQuery: q, mentionStart: lastAt }
+  })()
+
+  useEffect(() => {
+    cursorRef.current = textareaRef.current?.selectionStart ?? value.length
+  })
+
+  useEffect(() => {
+    setShowMention(mentionStart >= 0)
+  }, [mentionStart])
 
   const autoResize = useCallback(() => {
     const el = textareaRef.current
     if (!el) return
     el.style.height = 'auto'
     const lineHeight = parseInt(getComputedStyle(el).lineHeight, 10) || 20
-    const maxHeight = lineHeight * MAX_ROWS + 24
+    const maxHeight = lineHeight * CHAT_LIMITS.MAX_INPUT_ROWS + 24
     el.style.height = `${Math.min(el.scrollHeight, maxHeight)}px`
   }, [])
 
   const handleChange = useCallback(
     (e: ChangeEvent<HTMLTextAreaElement>) => {
-      if (e.target.value.length > MAX_LENGTH) return
+      if (e.target.value.length > CHAT_LIMITS.MAX_INPUT_LENGTH) return
+      cursorRef.current = e.target.selectionStart ?? e.target.value.length
       onChange(e.target.value)
       autoResize()
     },
     [onChange, autoResize]
+  )
+
+  const handleSelectAgent = useCallback(
+    (agentId: string, displayName: string) => {
+      if (mentionStart < 0) return
+      const before = value.slice(0, mentionStart)
+      const after = value.slice(cursorRef.current)
+      const newValue = `${before}@${displayName} ${after}`
+      onChange(newValue)
+      setShowMention(false)
+      onAgentSelect?.(agentId)
+      textareaRef.current?.focus()
+      setTimeout(() => {
+        const newPos = mentionStart + displayName.length + 2
+        textareaRef.current?.setSelectionRange(newPos, newPos)
+      }, 0)
+    },
+    [value, mentionStart, onChange, onAgentSelect]
   )
 
   const handleSubmit = useCallback(() => {
@@ -58,13 +117,23 @@ export function ChatInput({ value, onChange, onSubmit, onStop, isLoading, disabl
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLTextAreaElement>) => {
+      if (showMention && e.key === 'Escape') {
+        setShowMention(false)
+        e.preventDefault()
+        return
+      }
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault()
         handleSubmit()
       }
     },
-    [handleSubmit]
+    [handleSubmit, showMention]
   )
+
+  const syncCursor = useCallback(() => {
+    const el = textareaRef.current
+    if (el) cursorRef.current = el.selectionStart ?? el.value.length
+  }, [])
 
   const startRecording = useCallback(async () => {
     try {
@@ -87,13 +156,13 @@ export function ChatInput({ value, onChange, onSubmit, onStop, isLoading, disabl
           const formData = new FormData()
           formData.append('audio', blob, 'recording.webm')
 
-          const res = await fetch('/api/voice/transcribe', { method: 'POST', body: formData })
+          const res = await fetch(API_ROUTES.voiceTranscribe, { method: 'POST', body: formData })
           const data = await res.json()
 
           if (data.text) {
             const current = valueRef.current
             const combined = current ? `${current} ${data.text}` : data.text
-            onChange(combined.slice(0, MAX_LENGTH))
+            onChange(combined.slice(0, CHAT_LIMITS.MAX_INPUT_LENGTH))
             autoResize()
           }
         } catch (err) {
@@ -127,7 +196,7 @@ export function ChatInput({ value, onChange, onSubmit, onStop, isLoading, disabl
     }
   }, [isRecording, startRecording, stopRecording])
 
-  const charsLeft = MAX_LENGTH - value.length
+  const charsLeft = CHAT_LIMITS.MAX_INPUT_LENGTH - value.length
   const showCharCount = charsLeft < 500
 
   return (
@@ -139,21 +208,40 @@ export function ChatInput({ value, onChange, onSubmit, onStop, isLoading, disabl
         </div>
       )}
       <div className="mx-auto max-w-4xl relative flex items-end gap-2 rounded-2xl border border-gray-700/60 bg-gray-900/50 backdrop-blur-sm px-3 py-2 transition-all focus-within:border-brand-600/40 focus-within:ring-1 focus-within:ring-brand-600/20">
-        <Textarea
-          ref={textareaRef}
-          value={value}
-          onChange={handleChange}
-          onKeyDown={handleKeyDown}
-          placeholder="Send a message…"
-          disabled={disabled}
-          rows={3}
-          className={cn(
-            'flex-1 resize-none border-0 bg-transparent p-0 text-[15px] text-gray-100 placeholder:text-gray-500',
-            'focus-visible:ring-0 focus-visible:ring-offset-0',
-            'min-h-[3.5rem] leading-relaxed'
-          )}
-          aria-label="Message input"
-        />
+        <Popover open={showMention} onOpenChange={setShowMention}>
+          <PopoverAnchor asChild>
+            <div className="relative flex-1 min-w-0 flex flex-col">
+              <Textarea
+                ref={textareaRef}
+                value={value}
+                onChange={handleChange}
+                onKeyDown={handleKeyDown}
+                onSelect={syncCursor}
+                onKeyUp={syncCursor}
+                placeholder="Send a message… (type @ to mention an agent)"
+                disabled={disabled}
+                rows={3}
+                className={cn(
+                  'flex-1 resize-none border-0 bg-transparent p-0 text-[15px] text-gray-100 placeholder:text-gray-500',
+                  'focus-visible:ring-0 focus-visible:ring-offset-0',
+                  'min-h-[3.5rem] leading-relaxed'
+                )}
+                aria-label="Message input"
+              />
+            </div>
+          </PopoverAnchor>
+          <PopoverContent
+            side="top"
+            align="start"
+            className="w-[320px] p-0"
+            onOpenAutoFocus={(e) => e.preventDefault()}
+          >
+            <AgentMentionPopover
+              query={mentionQuery}
+              onSelect={handleSelectAgent}
+            />
+          </PopoverContent>
+        </Popover>
 
         <div className="flex shrink-0 items-center gap-1.5 pb-0.5">
           {extraControls}

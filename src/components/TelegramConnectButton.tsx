@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useUser } from '@clerk/nextjs'
+import { API_ROUTES } from '@/constants/api'
 import { useMutation, useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
 
@@ -42,7 +43,7 @@ export function TelegramConnectButton({
     setLinkUrl(null)
 
     try {
-      const res = await fetch('/api/telegram/link', { method: 'POST' })
+      const res = await fetch(API_ROUTES.telegramLink, { method: 'POST' })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
         throw new Error(data.error ?? 'Failed to get link')

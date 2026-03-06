@@ -72,7 +72,7 @@ function EmptyState({ onPromptClick }: { onPromptClick?: (prompt: string) => voi
         <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-600/10 border border-brand-500/20">
           <Sparkles className="h-7 w-7 text-brand-400" />
         </div>
-        <div className="absolute -inset-3 rounded-3xl bg-brand-500/5 blur-xl" />
+        <div className="absolute -inset-3 rounded-3xl bg-brand-500/10 blur-xl" />
       </div>
 
       <div className="space-y-2">

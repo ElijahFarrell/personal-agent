@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 import { api } from '@convex/_generated/api'
 import type { Id } from '@convex/_generated/dataModel'
+import { API_ROUTES } from '@/constants/api'
 
 type DocCategory = 'business-info' | 'preferences' | 'reference-docs' | 'custom'
 type ScopeTab = 'org' | 'user'
@@ -121,7 +122,7 @@ export default function ContextPage() {
   async function indexDocInQdrant(docId: string, data: DocFormData) {
     setIndexing(true)
     try {
-      await fetch('/api/context/index', {
+      await fetch(API_ROUTES.contextIndex, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -187,7 +188,7 @@ export default function ContextPage() {
       setDeleting(docId)
       try {
         await deleteDocMut({ docId })
-        await fetch('/api/context/index', {
+        await fetch(API_ROUTES.contextIndex, {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ docId }),
