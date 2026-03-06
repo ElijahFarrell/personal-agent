@@ -154,9 +154,9 @@ export function ThreadSidebar({ activeThreadId, onSelectThread, onNewThread }: T
             const isEditing = editingId === thread._id
 
             return (
-              <div key={thread._id} className="group relative">
+              <div key={thread._id} className="group relative flex items-center rounded-lg">
                 {isEditing ? (
-                  <div className="flex items-center gap-1 px-2 py-1.5">
+                  <div className="flex flex-1 items-center gap-1 px-2 py-1.5">
                     <input
                       ref={editInputRef}
                       value={editTitle}
@@ -181,62 +181,58 @@ export function ThreadSidebar({ activeThreadId, onSelectThread, onNewThread }: T
                     </button>
                   </div>
                 ) : (
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => onSelectThread(thread._id)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault()
-                        onSelectThread(thread._id)
-                      }
-                    }}
-                    className={cn(
-                      'flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-base transition-colors cursor-pointer',
-                      isActive
-                        ? 'bg-brand-600/15 text-brand-300'
-                        : 'text-gray-400 hover:bg-gray-800/60 hover:text-gray-200'
-                    )}
-                  >
-                    <MessageSquare className="h-4 w-4 shrink-0 opacity-50" />
-                    <span className="flex-1 truncate text-[15px]">{thread.title}</span>
-                    <span className="shrink-0 text-sm text-gray-600">
-                      {formatRelativeTime(thread.updatedAt)}
-                    </span>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <button
-                          onClick={(e) => e.stopPropagation()}
-                          className="shrink-0 rounded p-1 text-gray-500 hover:text-gray-300 hover:bg-gray-700/50"
-                          aria-label="Thread actions (rename, delete)"
-                        >
-                          <MoreHorizontal className="h-4 w-4" />
-                        </button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-40">
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setEditTitle(thread.title)
-                            setEditingId(thread._id)
-                          }}
-                        >
-                          <Pencil className="h-3 w-3" />
-                          Rename
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setThreadToDelete(thread._id)
-                          }}
-                          className="text-red-400 focus:text-red-400"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
+                  <>
+                    {/* Selection button — occupies the full row */}
+                    <button
+                      type="button"
+                      onClick={() => onSelectThread(thread._id)}
+                      className={cn(
+                        'flex flex-1 min-w-0 items-center gap-2 rounded-lg px-3 py-2 text-left text-base transition-colors',
+                        isActive
+                          ? 'bg-brand-600/15 text-brand-300'
+                          : 'text-gray-400 hover:bg-gray-800/60 hover:text-gray-200'
+                      )}
+                    >
+                      <MessageSquare className="h-4 w-4 shrink-0 opacity-50" />
+                      <span className="flex-1 truncate text-[15px]">{thread.title}</span>
+                      <span className="shrink-0 text-sm text-gray-500 pr-6">
+                        {formatRelativeTime(thread.updatedAt)}
+                      </span>
+                    </button>
+
+                    {/* Actions — absolutely positioned so they don't interfere with the selection button's events */}
+                    <div className="absolute right-1 top-1/2 -translate-y-1/2">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            type="button"
+                            className="flex items-center justify-center rounded p-1 text-gray-500 hover:text-gray-300 hover:bg-gray-700/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-500"
+                            aria-label="Thread actions"
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-40">
+                          <DropdownMenuItem
+                            onSelect={() => {
+                              setEditTitle(thread.title)
+                              setEditingId(thread._id)
+                            }}
+                          >
+                            <Pencil className="h-3 w-3" />
+                            Rename
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={() => setThreadToDelete(thread._id)}
+                            className="text-red-400 focus:text-red-400"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </>
                 )}
               </div>
             )
