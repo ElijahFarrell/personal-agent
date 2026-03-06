@@ -36,6 +36,13 @@ export const saveMessage = mutation({
   },
 })
 
+export const deleteMessage = mutation({
+  args: { messageId: v.id(TABLES.MESSAGES) },
+  handler: async (ctx, { messageId }) => {
+    await ctx.db.delete(messageId)
+  },
+})
+
 // ─── Queries ──────────────────────────────────────────────────────────────────
 
 /** Returns all messages for a user, ordered oldest → newest. */

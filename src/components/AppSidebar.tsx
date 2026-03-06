@@ -30,6 +30,7 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
+  SidebarTrigger,
 } from '@/components/ui/sidebar'
 import {
   Collapsible,
@@ -143,20 +144,21 @@ export function AppSidebar() {
   }, [])
 
   return (
-    <Sidebar side="left" collapsible="none" className="border-r border-sidebar-border">
-      <SidebarHeader className="px-4 py-5">
+    <Sidebar side="left" collapsible="icon" className="border-r border-sidebar-border">
+      <SidebarHeader className="flex flex-row items-center justify-between gap-2 px-2 py-4">
         <Link
           href="/dashboard"
-          className="flex items-center gap-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring rounded-lg"
+          className="flex items-center gap-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring rounded-lg min-w-0 group-data-[collapsible=icon]:hidden"
           aria-label="AI OS home"
         >
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary shadow-md shadow-primary/30">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary shadow-md shadow-primary/30">
             <Zap className="h-4 w-4 text-primary-foreground" aria-hidden="true" />
           </div>
-          <span className="text-[15px] font-semibold tracking-tight text-sidebar-foreground">
+          <span className="text-[15px] font-semibold tracking-tight text-sidebar-foreground truncate">
             AI OS
           </span>
         </Link>
+        <SidebarTrigger />
       </SidebarHeader>
 
       <SidebarContent>

@@ -32,6 +32,7 @@ import {
   PromptInputTools,
 } from '@/components/ai-elements/prompt-input'
 import { SkillPicker } from './SkillPicker'
+import { AgentMentionPopover } from './AgentMentionPopover'
 import { ActiveSkillsCard } from './ActiveSkillsCard'
 import {
   Context,
@@ -45,8 +46,10 @@ import {
 import { API_ROUTES } from '@/constants/api'
 import { DEFAULT_CONTEXT_WINDOW } from '@/constants/models'
 import { CHAT_LIMITS, CHAT_ROLES, CHAT_SOURCES } from '@/constants/chat'
-import { Sparkles } from 'lucide-react'
+import { AGENT_BY_ID, type AgentId } from '@/constants/agents'
+import { Sparkles, X } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 
@@ -88,7 +91,6 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
   )
 
   const [pinnedSkillIds, setPinnedSkillIds] = useState<Set<string>>(new Set())
-  const [targetAgent, setTargetAgent] = useState<string | null>(null)
   const [cumulativeUsage, setCumulativeUsage] = useState({
     inputTokens: 0,
     outputTokens: 0,
@@ -98,7 +100,10 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
   >([])
   const [creditError, setCreditError] = useState(false)
   const [chatError, setChatError] = useState<string | null>(null)
+  const [targetAgent, setTargetAgent] = useState<AgentId | null>(null)
   const activeThreadRef = useRef<Id<'threads'> | null>(threadId)
+  const targetAgentRef = useRef<AgentId | null>(null)
+  const inputAreaRef = useRef<HTMLDivElement>(null)
   const pendingThreadIdRef = useRef<Id<'threads'> | null>(null)
   const flushedThreadRef = useRef(false)
   if (!pendingThreadIdRef.current) {
@@ -125,7 +130,6 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
 
   const pinnedSkillIdsRef = useRef(pinnedSkillIds)
   pinnedSkillIdsRef.current = pinnedSkillIds
-  const targetAgentRef = useRef(targetAgent)
   targetAgentRef.current = targetAgent
 
   const transport = useMemo(
@@ -596,9 +600,28 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
             }}
             className="mx-auto max-w-4xl"
           >
-            <PromptInputTextarea placeholder="Send a message…" />
+            <div ref={inputAreaRef} className="relative">
+              <AgentMentionPopover anchorRef={inputAreaRef} onSelect={setTargetAgent} />
+              <PromptInputTextarea placeholder="Send a message…" />
+            </div>
             <PromptInputFooter>
               <PromptInputTools>
+                {targetAgent && (
+                  <Badge
+                    variant="secondary"
+                    className="gap-1 text-xs shrink-0"
+                  >
+                    @{AGENT_BY_ID.get(targetAgent)?.displayName ?? targetAgent}
+                    <button
+                      type="button"
+                      onClick={() => setTargetAgent(null)}
+                      className="rounded p-0.5 hover:bg-muted"
+                      aria-label="Clear agent"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                )}
                 <SkillPicker
                   skills={tenantSkills}
                   pinnedIds={pinnedSkillIds}
