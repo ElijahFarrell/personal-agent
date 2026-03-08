@@ -12,6 +12,8 @@ export type PlanTier = 'free' | 'pro' | 'enterprise'
 export type ResourceScope = 'org' | 'user'
 
 // ─── Skills ──────────────────────────────────────────────────────────────────
+// Skill content types now come from @mastra/core/workspace (Skill, SkillMetadata).
+// These legacy types are kept for backward compatibility during migration.
 
 export interface SkillMeta {
   id: string
@@ -22,16 +24,10 @@ export interface SkillMeta {
   constraints: string[]
   filePath: string
   rawContent: string
-  /** Sibling .md files in the skill folder, keyed by filename */
   bundledFiles: Record<string, string>
 }
 
-export interface SkillEmbedding {
-  skillId: string
-  type: 'description' | 'triggers' | 'examples'
-  vector: number[]
-}
-
+/** @deprecated Use SkillPreference from services/skillsService instead */
 export interface SkillSearchResult {
   skill: SkillMeta
   score: number
@@ -318,11 +314,16 @@ export interface TenantSkillRecord {
   tenantId: string
   userId?: string
   scope: ResourceScope
-  name: string
-  description: string
-  systemPrompt: string
+  skillName: string
   isEnabled: boolean
+  isPinned: boolean
   createdAt: Date
+  /** @deprecated Kept for migration compat */
+  name?: string
+  /** @deprecated Kept for migration compat */
+  description?: string
+  /** @deprecated Kept for migration compat */
+  systemPrompt?: string
 }
 
 // ─── Prospects ───────────────────────────────────────────────────────────────

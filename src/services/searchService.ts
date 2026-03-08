@@ -22,6 +22,18 @@ export interface ExaSearchOptions {
   maxCharacters?: number
 }
 
+/** Extended options for deep Exa research with filtering. */
+export interface ExaDeepSearchOptions {
+  numResults?: number
+  maxCharacters?: number
+  category?: 'news' | 'research paper' | 'financial report' | 'company' | 'tweet'
+  includeDomains?: string[]
+  excludeDomains?: string[]
+  startPublishedDate?: string
+  endPublishedDate?: string
+  maxAgeHours?: number
+}
+
 const tavilyClient = config.search.tavilyApiKey
   ? tavily({ apiKey: config.search.tavilyApiKey })
   : null
@@ -92,12 +104,42 @@ export async function searchExa(
 }
 
 /**
+ * Deep Exa search with full filtering: category, domain include/exclude,
+ * date range, and content freshness control via maxAgeHours.
+ */
+export async function searchExaDeep(
+  query: string,
+  options: ExaDeepSearchOptions = {}
+): Promise<SearchResult[]> {
+  if (!exaClient) throw new Error('Exa API key is not configured')
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const searchParams: Record<string, any> = {
+    numResults: options.numResults ?? 10,
+    contents: {
+      text: { maxCharacters: options.maxCharacters ?? 3000 },
+    },
+  }
+
+  if (options.category) searchParams.category = options.category
+  if (options.includeDomains?.length) searchParams.includeDomains = options.includeDomains
+  if (options.excludeDomains?.length) searchParams.excludeDomains = options.excludeDomains
+  if (options.startPublishedDate) searchParams.startPublishedDate = options.startPublishedDate
+  if (options.endPublishedDate) searchParams.endPublishedDate = options.endPublishedDate
+  if (options.maxAgeHours !== undefined) searchParams.maxAgeHours = options.maxAgeHours
+
+  const response = await exaClient.search(query, searchParams)
+  const results = response.results ?? []
+  return results.map((r) => {
+    const text = (r as { text?: string }).text ?? ''
+    const score = r.score ?? 0
+    return toSearchResult(r.title ?? '', r.url ?? '', text, score)
+  })
+}
+
+/**
  * Unified search that picks the right engine based on type.
  * 'fast' uses Tavily for quick lookups; 'deep' uses Exa for research.
- *
- * @param query - Search query
- * @param type - 'fast' for Tavily, 'deep' for Exa
- * @returns Array of search results
  */
 export async function search(
   query: string,

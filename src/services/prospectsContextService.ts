@@ -44,16 +44,12 @@ function timeAgo(timestamp: number): string {
  * Groups prospects by stage, includes owner info, and provides aggregate stats.
  */
 export async function buildProspectsContext(
-  tenantId: string,
+  tenantId: Id<'tenants'>,
   currentUserId?: string
 ): Promise<string> {
   const [prospects, users] = await Promise.all([
-    convex.query(api.prospects.getProspectsByTenantId, {
-      tenantId: tenantId as Id<'tenants'>,
-    }),
-    convex.query(api.users.getUsersByTenantId, {
-      tenantId: tenantId as Id<'tenants'>,
-    }),
+    convex.query(api.prospects.getProspectsByTenantId, { tenantId }),
+    convex.query(api.users.getUsersByTenantId, { tenantId }),
   ])
 
   if (!prospects || prospects.length === 0) return ''

@@ -18,10 +18,33 @@ import {
 } from 'lucide-react'
 import { api } from '@convex/_generated/api'
 import type { Id } from '@convex/_generated/dataModel'
+import Link from 'next/link'
 import { API_ROUTES } from '@/constants/api'
 
 type SeedStatus = 'idle' | 'seeding' | 'done' | 'error'
 type ScopeTab = 'org' | 'user'
+
+interface SkillsHealthPayload {
+  health: {
+    stats: {
+      availableCount: number
+      workspaceCount: number
+      tenantContentCount: number
+      preferenceCount: number
+      enabledCount: number
+      pinnedCount: number
+      missingPreferenceCount: number
+    }
+    issues: string[]
+    missingPreferences: string[]
+  }
+}
+
+interface ResolvedSkillPreview {
+  name: string
+  score: number
+  isPinned: boolean
+}
 
 interface SkillFormData {
   name: string
@@ -51,6 +74,13 @@ export default function SkillsPage() {
   const [formError, setFormError] = useState('')
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState<Id<'tenantSkills'> | null>(null)
+  const [skillsHealth, setSkillsHealth] = useState<SkillsHealthPayload['health'] | null>(null)
+  const [healthError, setHealthError] = useState('')
+  const [healthLoading, setHealthLoading] = useState(false)
+  const [testQuery, setTestQuery] = useState('')
+  const [testResolved, setTestResolved] = useState<ResolvedSkillPreview[]>([])
+  const [testError, setTestError] = useState('')
+  const [testingSkills, setTestingSkills] = useState(false)
 
   const dbUser = useQuery(
     api.users.getUserByClerkUserId,
@@ -79,8 +109,60 @@ export default function SkillsPage() {
   const filteredSkills = skills?.filter((s) => {
     if (!searchQuery.trim()) return true
     const q = searchQuery.toLowerCase()
-    return s.name.toLowerCase().includes(q) || s.description.toLowerCase().includes(q)
+    const name = s.skillName ?? s.name ?? ''
+    const desc = s.description ?? ''
+    return name.toLowerCase().includes(q) || desc.toLowerCase().includes(q)
   })
+
+  const fetchSkillsHealth = useCallback(async () => {
+    if (!dbUser) return
+
+    setHealthLoading(true)
+    setHealthError('')
+
+    try {
+      const res = await fetch(API_ROUTES.skills)
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({ error: 'Failed to load skills status' }))
+        throw new Error(data.error)
+      }
+
+      const data = (await res.json()) as SkillsHealthPayload
+      setSkillsHealth(data.health)
+    } catch (err) {
+      setHealthError(err instanceof Error ? err.message : 'Failed to load skills status')
+    } finally {
+      setHealthLoading(false)
+    }
+  }, [dbUser])
+
+  const runSkillTest = useCallback(async () => {
+    const query = testQuery.trim()
+    if (!query) return
+
+    setTestingSkills(true)
+    setTestError('')
+
+    try {
+      const params = new URLSearchParams({ q: query })
+      const res = await fetch(`${API_ROUTES.skills}?${params}`)
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({ error: 'Skill test failed' }))
+        throw new Error(data.error)
+      }
+
+      const data = (await res.json()) as SkillsHealthPayload & {
+        resolved: ResolvedSkillPreview[]
+      }
+      setSkillsHealth(data.health)
+      setTestResolved(data.resolved)
+    } catch (err) {
+      setTestError(err instanceof Error ? err.message : 'Skill test failed')
+      setTestResolved([])
+    } finally {
+      setTestingSkills(false)
+    }
+  }, [testQuery])
 
   async function runSeed() {
     setSeedStatus('seeding')
@@ -91,6 +173,7 @@ export default function SkillsPage() {
         throw new Error(error)
       }
       setSeedStatus('done')
+      await fetchSkillsHealth()
     } catch (err) {
       console.error('[Skills] Seed error:', err)
       setSeedStatus('error')
@@ -105,6 +188,7 @@ export default function SkillsPage() {
         const { error } = await res.json().catch(() => ({ error: 'Reindex failed' }))
         throw new Error(error)
       }
+      await fetchSkillsHealth()
     } catch (err) {
       console.error('[Skills] Reindex error:', err)
     } finally {
@@ -121,6 +205,11 @@ export default function SkillsPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dbUser, orgSkills])
 
+  useEffect(() => {
+    if (!dbUser) return
+    void fetchSkillsHealth()
+  }, [dbUser, fetchSkillsHealth])
+
   function openCreateForm() {
     setEditingSkillId(null)
     setFormData(EMPTY_FORM)
@@ -131,9 +220,9 @@ export default function SkillsPage() {
   function openEditForm(skill: NonNullable<typeof skills>[number]) {
     setEditingSkillId(skill._id)
     setFormData({
-      name: skill.name,
-      description: skill.description,
-      systemPrompt: skill.systemPrompt,
+      name: skill.skillName ?? skill.name ?? '',
+      description: skill.description ?? '',
+      systemPrompt: skill.systemPrompt ?? '',
       isEnabled: skill.isEnabled,
     })
     setFormError('')
@@ -171,18 +260,24 @@ export default function SkillsPage() {
           isEnabled: formData.isEnabled,
         })
       } else {
-        await createSkill({
-          tenantId: dbUser.tenantId,
-          userId: activeTab === 'user' ? dbUser._id : undefined,
-          scope: activeTab,
-          name: formData.name.trim(),
-          description: formData.description.trim(),
-          systemPrompt: formData.systemPrompt,
-          isEnabled: formData.isEnabled,
+        const res = await fetch(API_ROUTES.skillsAuthor, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            skillName: formData.name.trim(),
+            description: formData.description.trim(),
+            content: formData.systemPrompt,
+            scope: activeTab,
+          }),
         })
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({ error: 'Save failed' }))
+          throw new Error(data.error)
+        }
       }
       closeForm()
       await runReindex()
+      await fetchSkillsHealth()
     } catch (err) {
       setFormError(err instanceof Error ? err.message : 'Failed to save skill')
     } finally {
@@ -196,6 +291,7 @@ export default function SkillsPage() {
     try {
       await deleteSkillMut({ skillId })
       await runReindex()
+      await fetchSkillsHealth()
     } catch (err) {
       console.error('[Skills] Delete error:', err)
     } finally {
@@ -203,14 +299,15 @@ export default function SkillsPage() {
     }
   }
 
-  const handleToggle = useCallback(async (skillId: Id<'tenantSkills'>) => {
+  async function handleToggle(skillId: Id<'tenantSkills'>) {
     try {
       await toggleSkillMut({ skillId })
       await runReindex()
+      await fetchSkillsHealth()
     } catch (err) {
       console.error('[Skills] Toggle error:', err)
     }
-  }, [toggleSkillMut])
+  }
 
   const isLoading = skills === undefined || seedStatus === 'seeding'
 
@@ -264,6 +361,14 @@ export default function SkillsPage() {
               </button>
             )}
 
+            <Link
+              href="/dashboard/skills/browse"
+              className="flex items-center gap-2 rounded-lg border border-gray-700 bg-gray-800/60 px-3 py-2 text-xs font-medium text-gray-300 transition-colors hover:border-gray-600 hover:bg-gray-800 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+            >
+              <Search className="h-3.5 w-3.5" aria-hidden="true" />
+              Browse Skills
+            </Link>
+
             <button
               type="button"
               onClick={openCreateForm}
@@ -280,6 +385,141 @@ export default function SkillsPage() {
             Sync failed. Check the terminal for details, then try again.
           </p>
         )}
+
+        <section className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
+          <div className="rounded-xl border border-gray-800/80 bg-gray-900/50 p-5">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-sm font-medium text-white">Skills Status</h2>
+                <p className="mt-1 text-xs text-gray-500">
+                  This shows whether the chat runtime can actually retrieve skills, not just whether
+                  preference rows exist in Convex.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={fetchSkillsHealth}
+                disabled={healthLoading || !dbUser}
+                className="flex items-center gap-2 rounded-lg border border-gray-700 bg-gray-800/60 px-3 py-2 text-xs font-medium text-gray-300 transition-colors hover:border-gray-600 hover:bg-gray-800 hover:text-white disabled:opacity-50"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 ${healthLoading ? 'animate-spin' : ''}`} />
+                Refresh Status
+              </button>
+            </div>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="rounded-lg border border-gray-800 bg-gray-950/40 p-3">
+                <p className="text-[11px] uppercase tracking-wide text-gray-500">Retrievable</p>
+                <p className="mt-1 text-2xl font-semibold text-white">
+                  {skillsHealth?.stats.availableCount ?? '—'}
+                </p>
+              </div>
+              <div className="rounded-lg border border-gray-800 bg-gray-950/40 p-3">
+                <p className="text-[11px] uppercase tracking-wide text-gray-500">Local Files</p>
+                <p className="mt-1 text-2xl font-semibold text-white">
+                  {skillsHealth?.stats.workspaceCount ?? '—'}
+                </p>
+              </div>
+              <div className="rounded-lg border border-gray-800 bg-gray-950/40 p-3">
+                <p className="text-[11px] uppercase tracking-wide text-gray-500">Tenant Content</p>
+                <p className="mt-1 text-2xl font-semibold text-white">
+                  {skillsHealth?.stats.tenantContentCount ?? '—'}
+                </p>
+              </div>
+              <div className="rounded-lg border border-gray-800 bg-gray-950/40 p-3">
+                <p className="text-[11px] uppercase tracking-wide text-gray-500">Missing Mappings</p>
+                <p className="mt-1 text-2xl font-semibold text-white">
+                  {skillsHealth?.stats.missingPreferenceCount ?? '—'}
+                </p>
+              </div>
+            </div>
+
+            {healthError && (
+              <p className="mt-4 rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs text-red-400">
+                {healthError}
+              </p>
+            )}
+
+            {skillsHealth?.issues.length ? (
+              <div className="mt-4 rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-3">
+                <p className="text-xs font-medium text-amber-300">Attention needed</p>
+                <div className="mt-2 flex flex-col gap-1.5 text-xs text-amber-200/90">
+                  {skillsHealth.issues.map((issue) => (
+                    <p key={issue}>{issue}</p>
+                  ))}
+                </div>
+              </div>
+            ) : skillsHealth ? (
+              <p className="mt-4 rounded-lg border border-green-500/20 bg-green-500/10 px-4 py-3 text-xs text-green-300">
+                Skill retrieval looks healthy. Preferences and retrievable skills are aligned.
+              </p>
+            ) : null}
+          </div>
+
+          <div className="rounded-xl border border-gray-800/80 bg-gray-900/50 p-5">
+            <h2 className="text-sm font-medium text-white">Test Retrieval</h2>
+            <p className="mt-1 text-xs text-gray-500">
+              Enter a sample prompt to preview which skills chat would inject.
+            </p>
+
+            <div className="mt-4 flex gap-3">
+              <input
+                type="text"
+                value={testQuery}
+                onChange={(e) => setTestQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    void runSkillTest()
+                  }
+                }}
+                placeholder="e.g. draft a linkedin post for founders"
+                className="flex-1 rounded-lg border border-gray-700 bg-gray-800/60 px-3 py-2 text-sm text-white placeholder-gray-500 outline-none transition-colors focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50"
+              />
+              <button
+                type="button"
+                onClick={() => void runSkillTest()}
+                disabled={testingSkills || !testQuery.trim()}
+                className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-500 disabled:opacity-50"
+              >
+                {testingSkills ? 'Testing…' : 'Test'}
+              </button>
+            </div>
+
+            {testError && (
+              <p className="mt-3 rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs text-red-400">
+                {testError}
+              </p>
+            )}
+
+            <div className="mt-4 flex flex-col gap-2">
+              {testResolved.length === 0 ? (
+                <p className="rounded-lg border border-gray-800 bg-gray-950/40 px-3 py-3 text-xs text-gray-500">
+                  Run a test prompt to see the matching skills here.
+                </p>
+              ) : (
+                testResolved.map((skill) => (
+                  <div
+                    key={skill.name}
+                    className="flex items-center justify-between gap-3 rounded-lg border border-gray-800 bg-gray-950/40 px-3 py-2.5"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-white">{skill.name}</p>
+                      <p className="text-[11px] text-gray-500">
+                        score {skill.score.toFixed(2)}
+                      </p>
+                    </div>
+                    {skill.isPinned ? (
+                      <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-[10px] font-medium uppercase tracking-wide text-amber-300">
+                        Pinned
+                      </span>
+                    ) : null}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </section>
 
         {/* Scope Tabs */}
         <div className="flex gap-1 rounded-lg border border-gray-800 bg-gray-900/50 p-1">
@@ -374,8 +614,8 @@ export default function SkillsPage() {
                       />
                     </span>
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-white">{skill.name}</p>
-                      <p className="truncate text-xs text-gray-500">{skill.description}</p>
+                      <p className="text-sm font-medium text-white">{skill.skillName ?? skill.name}</p>
+                      <p className="truncate text-xs text-gray-500">{skill.description ?? ''}</p>
                     </div>
                   </div>
 
@@ -384,7 +624,7 @@ export default function SkillsPage() {
                       type="button"
                       role="switch"
                       aria-checked={skill.isEnabled}
-                      aria-label={`${skill.isEnabled ? 'Disable' : 'Enable'} ${skill.name}`}
+                      aria-label={`${skill.isEnabled ? 'Disable' : 'Enable'} ${skill.skillName ?? skill.name}`}
                       onClick={() => handleToggle(skill._id)}
                       className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${
                         skill.isEnabled ? 'bg-brand-600' : 'bg-gray-700'
@@ -400,7 +640,7 @@ export default function SkillsPage() {
                     <button
                       type="button"
                       onClick={() => openEditForm(skill)}
-                      aria-label={`Edit ${skill.name}`}
+                      aria-label={`Edit ${skill.skillName ?? skill.name}`}
                       className="rounded-md p-1.5 text-gray-500 transition-colors hover:bg-gray-800 hover:text-gray-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
                     >
                       <Pencil className="h-3.5 w-3.5" />
@@ -410,7 +650,7 @@ export default function SkillsPage() {
                       type="button"
                       onClick={() => handleDelete(skill._id)}
                       disabled={deleting === skill._id}
-                      aria-label={`Delete ${skill.name}`}
+                      aria-label={`Delete ${skill.skillName ?? skill.name}`}
                       className="rounded-md p-1.5 text-gray-500 transition-colors hover:bg-red-500/10 hover:text-red-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 disabled:opacity-50"
                     >
                       <Trash2 className={`h-3.5 w-3.5 ${deleting === skill._id ? 'animate-pulse' : ''}`} />

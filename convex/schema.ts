@@ -1,6 +1,6 @@
 import { defineSchema, defineTable } from 'convex/server'
 import { v } from 'convex/values'
-import { CONTEXT_DOC_CATEGORY, CREDIT_ACTION, CREDIT_TX_TYPE, CUSTOM_FIELD_TYPE, DRAFT_STATUS, INDEXES, INTEGRATION_STATUS, MESSAGE_ROLE, MESSAGE_SOURCE, OUTREACH_CHANNEL, PROSPECT_SOURCE, PROSPECT_STAGE, PROSPECT_STATUS, ROLE, SCOPE, TABLES, TIER } from './constants'
+import { CONTEXT_DOC_CATEGORY, CREDIT_ACTION, CREDIT_TX_TYPE, CUSTOM_FIELD_TYPE, DRAFT_STATUS, INDEXES, INTEGRATION_STATUS, MESSAGE_ROLE, MESSAGE_SOURCE, OUTREACH_CHANNEL, PROSPECT_SOURCE, PROSPECT_STAGE, PROSPECT_STATUS, ROLE, SCOPE, SKILL_SOURCE, TABLES, TIER } from './constants'
 
 export default defineSchema({
   [TABLES.TENANTS]: defineTable({
@@ -45,15 +45,42 @@ export default defineSchema({
     tenantId: v.id(TABLES.TENANTS),
     userId: v.optional(v.id(TABLES.USERS)),
     scope: v.optional(v.union(v.literal(SCOPE.ORG), v.literal(SCOPE.USER))),
-    name: v.string(),
-    description: v.string(),
-    systemPrompt: v.string(),
+    skillName: v.optional(v.string()),
     isEnabled: v.boolean(),
+    isPinned: v.optional(v.boolean()),
     createdAt: v.number(),
+    // Legacy fields kept for backward compat during migration
+    name: v.optional(v.string()),
+    description: v.optional(v.string()),
+    systemPrompt: v.optional(v.string()),
   })
     .index(INDEXES.BY_TENANT_ID, ['tenantId'])
     .index(INDEXES.BY_USER_ID, ['userId'])
     .index(INDEXES.BY_TENANT_SCOPE, ['tenantId', 'scope']),
+
+  [TABLES.SKILL_CONTENT]: defineTable({
+    tenantId: v.id(TABLES.TENANTS),
+    userId: v.optional(v.id(TABLES.USERS)),
+    scope: v.union(v.literal(SCOPE.ORG), v.literal(SCOPE.USER)),
+    skillName: v.string(),
+    description: v.string(),
+    /** Full SKILL.md content (markdown with frontmatter) */
+    content: v.string(),
+    source: v.union(
+      v.literal(SKILL_SOURCE.AUTHORED),
+      v.literal(SKILL_SOURCE.INSTALLED)
+    ),
+    /** For installed skills: GitHub repo (e.g. "anthropics/skills/frontend-design") */
+    sourceUrl: v.optional(v.string()),
+    /** Reference files bundled with the skill, keyed by relative path */
+    references: v.optional(v.any()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index(INDEXES.BY_TENANT_ID, ['tenantId'])
+    .index(INDEXES.BY_USER_ID, ['userId'])
+    .index(INDEXES.BY_TENANT_SCOPE, ['tenantId', 'scope'])
+    .index(INDEXES.BY_TENANT_SKILL_NAME, ['tenantId', 'skillName']),
 
   [TABLES.MESSAGES]: defineTable({
     userId: v.id(TABLES.USERS),

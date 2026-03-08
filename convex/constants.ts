@@ -5,6 +5,7 @@ export const TABLES = {
   USERS: 'users',
   USER_INTEGRATIONS: 'userIntegrations',
   TENANT_SKILLS: 'tenantSkills',
+  SKILL_CONTENT: 'skillContent',
   MESSAGES: 'messages',
   THREADS: 'threads',
   CONTEXT_DOCS: 'contextDocs',
@@ -36,6 +37,7 @@ export const INDEXES = {
   BY_TENANT_STATUS: 'by_tenantId_status',
   BY_TENANT_STAGE: 'by_tenantId_stage',
   BY_OWNER_ID: 'by_ownerId',
+  BY_TENANT_SKILL_NAME: 'by_tenantId_skillName',
 } as const
 
 // ─── Enum Values ─────────────────────────────────────────────────────────────
@@ -112,6 +114,11 @@ export const CONTEXT_DOC_CATEGORY = {
 export const SCOPE = {
   ORG: 'org',
   USER: 'user',
+} as const
+
+export const SKILL_SOURCE = {
+  AUTHORED: 'authored',
+  INSTALLED: 'installed',
 } as const
 
 // ─── Prospect System ─────────────────────────────────────────────────────────

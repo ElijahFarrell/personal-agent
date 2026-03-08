@@ -2,16 +2,17 @@ import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { ConvexHttpClient } from 'convex/browser'
 import { api } from '@convex/_generated/api'
-import { reindexSkillsFromDB, ensureCollection } from '@/skills/skillRetriever'
+import { workspace } from '@/mastra/workspace'
+import { listSkills } from '@/services/skillsService'
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
 
 /**
- * Re-indexes all enabled Convex skills (org + user) into Qdrant for the current tenant.
- * Call after any skill CRUD operation to keep the vector store in sync.
+ * Refreshes the Mastra workspace skill index and syncs preferences to Convex.
+ * Call after adding/modifying SKILL.md files to pick up changes.
  */
 export async function POST() {
-  const { userId, orgId } = await auth()
+  const { userId } = await auth()
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -27,28 +28,22 @@ export async function POST() {
     )
   }
 
-  const qdrantTenantId = orgId ?? userId
+  await workspace.skills?.refresh()
 
-  const skills = await convex.query(api.skills.getSkillsByTenantId, {
-    tenantId: dbUser.tenantId,
+  const skills = await listSkills({
+    tenantId: String(dbUser.tenantId),
+    userId: String(dbUser._id),
   })
+  const skillNames = skills.map((s) => s.name)
 
-  await ensureCollection()
-  await reindexSkillsFromDB(
-    qdrantTenantId,
-    skills.map((s) => ({
-      ...s,
-      _id: String(s._id),
-      scope: (s.scope ?? 'org') as 'org' | 'user',
-      userId: s.userId ? String(s.userId) : undefined,
-    }))
-  )
-
-  const enabledCount = skills.filter((s) => s.isEnabled).length
+  const result = await convex.mutation(api.skills.syncSkillPreferences, {
+    tenantId: dbUser.tenantId,
+    skillNames,
+  })
 
   return NextResponse.json({
     ok: true,
-    indexed: enabledCount,
-    total: skills.length,
+    refreshed: skills.length,
+    newPreferences: result.synced,
   })
 }

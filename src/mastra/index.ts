@@ -1,16 +1,23 @@
 import { Mastra } from '@mastra/core'
+import { workspace } from './workspace'
 
 /**
  * The Mastra instance is the registry for all agents and workflows.
  * Agents are created per-user via factories (for memory isolation),
  * so we don't register them here directly — they're instantiated in route handlers.
+ *
+ * The workspace provides:
+ * - Skill discovery from /skills via SKILL.md files (Mastra Workspace Skills)
+ * - BM25 + vector (Qdrant) hybrid search over skill and context content
+ * - Filesystem access for skill references, scripts, and assets
  */
-export const mastra = new Mastra({})
+export const mastra = new Mastra({ workspace })
 
 export {
   createOrchestratorAgent,
   createEmailAgent,
   createResearchAgent,
+  createDeepResearchAgent,
   createCalendarAgent,
   createLinkedInAgent,
   createContentAgent,

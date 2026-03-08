@@ -159,7 +159,10 @@ export function ThreadSidebar({ activeThreadId, onSelectThread, onNewThread }: T
             const isEditing = editingId === thread._id
 
             return (
-              <div key={thread._id} className="group relative flex items-center rounded-lg">
+              <div
+                key={thread._id}
+                className="group relative flex items-center rounded-lg overflow-visible"
+              >
                 {isEditing ? (
                   <div className="flex flex-1 items-center gap-1 px-2 py-1.5">
                     <input
@@ -191,7 +194,7 @@ export function ThreadSidebar({ activeThreadId, onSelectThread, onNewThread }: T
                       type="button"
                       onClick={() => onSelectThread(thread._id)}
                       className={cn(
-                        'flex flex-1 min-w-0 items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors',
+                        'flex min-w-0 flex-1 items-center gap-2 rounded-lg px-3 py-2 pr-20 text-left text-sm transition-colors',
                         isActive
                           ? 'bg-sidebar-accent text-sidebar-accent-foreground'
                           : 'text-muted-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
@@ -199,17 +202,28 @@ export function ThreadSidebar({ activeThreadId, onSelectThread, onNewThread }: T
                     >
                       <MessageSquare className="h-4 w-4 shrink-0 opacity-70" />
                       <span className="flex-1 truncate">{thread.title}</span>
-                      <span className="shrink-0 text-xs text-muted-foreground pr-6">
+                      <span className="shrink-0 text-xs text-muted-foreground">
                         {formatRelativeTime(thread.updatedAt)}
                       </span>
                     </button>
 
-                    <div className="absolute right-1 top-1/2 flex -translate-y-1/2 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+                    <div
+                      className={cn(
+                        'absolute right-2 top-1/2 z-10 flex shrink-0 -translate-y-1/2 items-center gap-0.5 rounded-md border border-sidebar-border/60 bg-sidebar/95 p-0.5 shadow-sm backdrop-blur-sm transition-opacity',
+                        isActive
+                          ? 'opacity-100'
+                          : 'opacity-70 hover:opacity-100'
+                      )}
+                    >
                       <button
                         type="button"
                         onClick={() => setThreadToDelete(thread._id)}
-                        className="flex items-center justify-center rounded p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        className={cn(
+                          'flex items-center justify-center rounded p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
+                          isActive && 'text-sidebar-foreground'
+                        )}
                         aria-label="Delete thread"
+                        title="Delete thread"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
