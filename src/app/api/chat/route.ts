@@ -7,6 +7,7 @@ import {
   createOrchestratorAgent,
   createEmailAgent,
   createResearchAgent,
+  createDeepResearchAgent,
   createCalendarAgent,
   createLinkedInAgent,
   createContentAgent,
@@ -20,7 +21,11 @@ import {
   createFinanceAgent,
   createMarketingAgent,
 } from '@/mastra'
-import { retrieveRelevantSkills, buildSkillsContext, buildPinnedSkillsContext } from '@/skills/skillRetriever'
+import {
+  resolveSkillsForMessage,
+  buildSkillsSystemContext,
+  type SkillPreference,
+} from '@/services/skillsService'
 import { retrieveRelevantContext, buildContextBlock } from '@/services/contextService'
 import { buildProspectsContext } from '@/services/prospectsContextService'
 import { getTenantContext } from '@/middleware/tenantContext'
@@ -68,11 +73,12 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
 
-    const { threadId, agentInstructions, pinnedSkillIds, targetAgent, messages: uiMessages } = body as {
+    const { threadId, agentInstructions, pinnedSkillIds, targetAgent, deepResearch, messages: uiMessages } = body as {
       threadId?: string
       agentInstructions?: Record<string, string>
       pinnedSkillIds?: string[]
       targetAgent?: string
+      deepResearch?: boolean
       messages?: unknown[]
     }
 
@@ -115,11 +121,57 @@ export async function POST(req: NextRequest) {
     }
 
     const dbUserId = dbUser?._id ? String(dbUser._id) : undefined
+    const skillScope = dbUser
+      ? {
+          tenantId: String(dbUser.tenantId),
+          userId: String(dbUser._id),
+        }
+      : undefined
 
-    const [relevantSkills, relevantContext, historyDocs, prospectsContext] = await Promise.all([
-      retrieveRelevantSkills(message, tenantId, dbUserId).catch((err) => {
-        console.warn('[Chat API] Skill retrieval failed (continuing without context):', err?.message ?? err)
-        if (err?.data) console.warn('[Chat API] Qdrant error detail:', JSON.stringify(err.data))
+    let skillPreferences: SkillPreference[] = []
+    if (dbUser) {
+      try {
+        const prefs = await convex.query(api.skills.getSkillPreferences, {
+          tenantId: dbUser.tenantId,
+          userId: dbUser._id,
+        })
+        skillPreferences = prefs.map((p) => ({
+          skillName: p.skillName,
+          isEnabled: p.isEnabled,
+          isPinned: p.isPinned,
+        }))
+
+        if (pinnedSkillIds && pinnedSkillIds.length > 0) {
+          const pinnedLookup = new Set(pinnedSkillIds)
+          const allChatSkills = await convex.query(api.skills.getAllSkillsForChat, {
+            tenantId: dbUser.tenantId,
+            userId: dbUser._id,
+          })
+          for (const cs of allChatSkills) {
+            if (pinnedLookup.has(cs._id)) {
+              const existing = skillPreferences.find(
+                (p) => p.skillName.toLowerCase() === cs.name.toLowerCase()
+              )
+              if (existing) {
+                existing.isPinned = true
+              } else {
+                skillPreferences.push({
+                  skillName: cs.name,
+                  isEnabled: true,
+                  isPinned: true,
+                })
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('[Chat API] Skill preferences fetch failed:', (err as Error)?.message ?? err)
+      }
+    }
+
+    const [resolvedSkills, relevantContext, historyDocs, prospectsContext] = await Promise.all([
+      resolveSkillsForMessage(message, skillPreferences, 5, skillScope).catch((err) => {
+        console.warn('[Chat API] Skill retrieval failed (continuing without context):', (err as Error)?.message ?? err)
         return []
       }),
       retrieveRelevantContext(message, tenantId, dbUserId).catch((err) => {
@@ -134,33 +186,17 @@ export async function POST(req: NextRequest) {
               return []
             })
         : Promise.resolve([]),
-      buildProspectsContext(tenantId, dbUserId).catch((err) => {
-        console.warn('[Chat API] Prospects context failed (continuing without):', (err as Error)?.message ?? err)
-        return ''
-      }),
+      dbUser
+        ? buildProspectsContext(dbUser.tenantId, dbUserId).catch((err) => {
+            console.warn('[Chat API] Prospects context failed (continuing without):', (err as Error)?.message ?? err)
+            return ''
+          })
+        : Promise.resolve(''),
     ])
 
-    let allSkills = [...relevantSkills]
-    if (pinnedSkillIds && pinnedSkillIds.length > 0 && dbUser) {
-      try {
-        const allVisibleSkills = await convex.query(api.skills.getAllSkillsForChat, {
-          tenantId: dbUser.tenantId,
-          userId: dbUser._id,
-        })
-        const pinned = allVisibleSkills.filter((s) => pinnedSkillIds.includes(s._id))
-        const pinnedResults = buildPinnedSkillsContext(pinned)
-        const existingIds = new Set(allSkills.map((s) => s.skill.id))
-        for (const pr of pinnedResults) {
-          if (!existingIds.has(pr.skill.id)) allSkills.push(pr)
-        }
-      } catch (err) {
-        console.warn('[Chat API] Pinned skills fetch failed:', (err as Error)?.message ?? err)
-      }
-    }
-
     console.log(
-      `[Chat API] skills=${allSkills.length > 0
-        ? allSkills.map((s) => `${s.skill.name} (${s.score.toFixed(2)})`).join(', ')
+      `[Chat API] skills=${resolvedSkills.length > 0
+        ? resolvedSkills.map((s) => `${s.skill.name} (${s.score.toFixed(2)})`).join(', ')
         : 'none'} | context=${relevantContext.length} docs | history=${historyDocs.length} msgs`
     )
 
@@ -178,7 +214,7 @@ export async function POST(req: NextRequest) {
 
     console.log(`[Chat API] connectedProviders=${connectedProviders.join(', ') || 'none'}`)
 
-    const skillsContext = buildSkillsContext(allSkills)
+    const skillsContext = buildSkillsSystemContext(resolvedSkills)
     const contextBlock = buildContextBlock(relevantContext)
 
     const agentMessages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }> = []
@@ -259,6 +295,12 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    if (stream === null && deepResearch) {
+      console.log('[Chat API] Deep research mode enabled')
+      const agent = createDeepResearchAgent(userId)
+      stream = await agent.stream(agentMessages as Parameters<typeof agent.stream>[0])
+    }
+
     if (stream === null) {
       const agent = createOrchestratorAgent(userId, tenantId, agentInstructions, connectedProviders)
       stream = await agent.stream(agentMessages as Parameters<typeof agent.stream>[0])
@@ -273,8 +315,8 @@ export async function POST(req: NextRequest) {
           type: 'data-skills',
           data: {
             type: 'skills',
-            items: allSkills.map(({ skill, score }) => ({
-              id: skill.id,
+            items: resolvedSkills.map(({ skill, score }) => ({
+              id: skill.name,
               name: skill.name,
               score,
             })),

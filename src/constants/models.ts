@@ -36,6 +36,9 @@ export const AgentModels = {
   linkedin:     Models.CLAUDE_SONNET,
   browser:      Models.CLAUDE_SONNET,
 
+  /** Deep research — needs strong reasoning for multi-source synthesis */
+  deepResearch: Models.CLAUDE_SONNET,
+
   /** Sub-agents where speed matters more than nuance */
   calendar:     Models.CLAUDE_HAIKU,
   instagram:    Models.CLAUDE_HAIKU,

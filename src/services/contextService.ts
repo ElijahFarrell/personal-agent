@@ -1,43 +1,18 @@
-import { createHash } from 'crypto'
-import { embed, gateway } from 'ai'
-import { QdrantClient } from '@qdrant/js-client-rest'
-import { config } from '@/lib/config'
+import { qdrantVector, embedText } from '@/mastra/workspace'
 import type { ResourceScope } from '@/types'
-import {
-  QDRANT_COLLECTIONS,
-  VECTOR_CONFIG,
-} from '@/constants/vector'
 
-const COLLECTION = QDRANT_COLLECTIONS.CONTEXT_DOCS
-const VECTOR_SIZE = VECTOR_CONFIG.DIMENSION
-const RELEVANCE_THRESHOLD = VECTOR_CONFIG.CONTEXT_THRESHOLD
-const TOP_K = VECTOR_CONFIG.CONTEXT_TOP_K
-
-const qdrant = new QdrantClient({
-  url: config.qdrant.url,
-  apiKey: config.qdrant.apiKey || undefined,
-})
-
-function toUUID(str: string): string {
-  const h = createHash('md5').update(str).digest('hex')
-  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20, 32)}`
-}
-
-async function embedText(text: string): Promise<number[]> {
-  const { embedding } = await embed({
-    model: gateway.embedding('openai/text-embedding-3-small'),
-    value: text,
-  })
-  return embedding
-}
+const COLLECTION = 'context_docs'
+const DIMENSION = 1536
+const RELEVANCE_THRESHOLD = 0.4
+const TOP_K = 5
 
 async function ensureCollection(): Promise<void> {
-  const collections = await qdrant.getCollections()
-  const exists = collections.collections.some((c) => c.name === COLLECTION)
-
-  if (!exists) {
-    await qdrant.createCollection(COLLECTION, {
-      vectors: { size: VECTOR_SIZE, distance: 'Cosine' },
+  const indexes = await qdrantVector.listIndexes()
+  if (!indexes.includes(COLLECTION)) {
+    await qdrantVector.createIndex({
+      indexName: COLLECTION,
+      dimension: DIMENSION,
+      metric: 'cosine',
     })
   }
 }
@@ -57,35 +32,33 @@ export async function indexContextDoc(doc: {
   const text = `${doc.title}\n\n${doc.content}`
   const vector = await embedText(text)
 
-  await qdrant.upsert(COLLECTION, {
-    wait: true,
-    points: [
+  await qdrantVector.upsert({
+    indexName: COLLECTION,
+    vectors: [vector],
+    metadata: [
       {
-        id: toUUID(`${doc.tenantId}-${doc.id}`),
-        vector,
-        payload: {
-          docId: doc.id,
-          tenantId: doc.tenantId,
-          scope: doc.scope,
-          ...(doc.userId ? { userId: doc.userId } : {}),
-          title: doc.title,
-          content: doc.content,
-          category: doc.category,
-        },
+        docId: doc.id,
+        tenantId: doc.tenantId,
+        scope: doc.scope,
+        ...(doc.userId ? { userId: doc.userId } : {}),
+        title: doc.title,
+        content: doc.content,
+        category: doc.category,
       },
     ],
+    ids: [`${doc.tenantId}-${doc.id}`],
   })
 }
 
 /** Remove a context doc from Qdrant. */
 export async function removeContextDoc(tenantId: string, docId: string): Promise<void> {
   try {
-    await qdrant.delete(COLLECTION, {
-      wait: true,
-      points: [toUUID(`${tenantId}-${docId}`)],
+    await qdrantVector.deleteVector({
+      indexName: COLLECTION,
+      id: `${tenantId}-${docId}`,
     })
   } catch {
-    // Point may not exist yet — safe to ignore
+    // Point may not exist — safe to ignore
   }
 }
 
@@ -112,29 +85,32 @@ export async function retrieveRelevantContext(
     return []
   }
 
-  const queryEmbedding = await embedText(query)
+  const queryVector = await embedText(query)
 
-  const results = await qdrant.search(COLLECTION, {
-    vector: queryEmbedding,
-    limit: TOP_K * 5,
-    score_threshold: RELEVANCE_THRESHOLD,
-    with_payload: true,
+  const results = await qdrantVector.query({
+    indexName: COLLECTION,
+    queryVector,
+    topK: TOP_K * 5,
+    includeVector: false,
   })
 
   const visible = results.filter((r) => {
-    if (r.payload?.tenantId !== tenantId) return false
-    const scope = r.payload?.scope as string | undefined
-    if (scope === 'user') return r.payload?.userId === userId
-    return true // org-scoped or legacy (no scope field)
+    if (r.metadata?.tenantId !== tenantId) return false
+    const scope = r.metadata?.scope as string | undefined
+    if (scope === 'user') return r.metadata?.userId === userId
+    return true
   })
 
-  return visible.slice(0, TOP_K).map((r) => ({
-    docId: r.payload?.docId as string,
-    title: r.payload?.title as string,
-    content: r.payload?.content as string,
-    category: r.payload?.category as string,
-    score: r.score,
-  }))
+  return visible
+    .filter((r) => r.score >= RELEVANCE_THRESHOLD)
+    .slice(0, TOP_K)
+    .map((r) => ({
+      docId: r.metadata?.docId as string,
+      title: r.metadata?.title as string,
+      content: r.metadata?.content as string,
+      category: r.metadata?.category as string,
+      score: r.score,
+    }))
 }
 
 /** Format retrieved context docs as a prompt block. */

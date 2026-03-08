@@ -43,14 +43,23 @@ import {
   ContextOutputUsage,
   ContextTrigger,
 } from '@/components/ai-elements/context'
+import { SpeechInput } from '@/components/ai-elements/speech-input'
+import { usePromptInputController } from '@/components/ai-elements/prompt-input'
+import { ChartRenderer, type ChartSpec } from './ChartRenderer'
 import { API_ROUTES } from '@/constants/api'
 import { DEFAULT_CONTEXT_WINDOW } from '@/constants/models'
 import { CHAT_LIMITS, CHAT_ROLES, CHAT_SOURCES } from '@/constants/chat'
 import { AGENT_BY_ID, type AgentId } from '@/constants/agents'
-import { Sparkles, X } from 'lucide-react'
+import { Sparkles, X, Telescope } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 
 function isToolPart(part: { type: string }): boolean {
@@ -62,6 +71,37 @@ function mapToolState(state: string): 'input-available' | 'input-streaming' | 'o
   if (state === 'result' || state === 'output-available') return 'output-available'
   if (state === 'call' || state === 'partial-call') return 'input-streaming'
   return 'input-available'
+}
+
+/** Voice input button — must render inside PromptInputProvider to access setInput. */
+function VoiceInputButton() {
+  const controller = usePromptInputController()
+  const handleTranscription = useCallback(
+    (text: string) => {
+      controller.textInput.setInput(
+        (controller.textInput.value ? controller.textInput.value + ' ' : '') + text
+      )
+    },
+    [controller]
+  )
+
+  const handleAudioRecorded = useCallback(async (blob: Blob): Promise<string> => {
+    const form = new FormData()
+    form.append('audio', blob)
+    const res = await fetch(API_ROUTES.voiceTranscribe, { method: 'POST', body: form })
+    const data = await res.json()
+    return data.text ?? ''
+  }, [])
+
+  return (
+    <SpeechInput
+      size="icon"
+      variant="ghost"
+      className="h-7 w-7 shrink-0"
+      onTranscriptionChange={handleTranscription}
+      onAudioRecorded={handleAudioRecorded}
+    />
+  )
 }
 
 interface ChatWindowProps {
@@ -101,6 +141,7 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
   const [creditError, setCreditError] = useState(false)
   const [chatError, setChatError] = useState<string | null>(null)
   const [targetAgent, setTargetAgent] = useState<AgentId | null>(null)
+  const [deepResearch, setDeepResearch] = useState(false)
   const activeThreadRef = useRef<Id<'threads'> | null>(threadId)
   const targetAgentRef = useRef<AgentId | null>(null)
   const inputAreaRef = useRef<HTMLDivElement>(null)
@@ -131,6 +172,8 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
   const pinnedSkillIdsRef = useRef(pinnedSkillIds)
   pinnedSkillIdsRef.current = pinnedSkillIds
   targetAgentRef.current = targetAgent
+  const deepResearchRef = useRef(deepResearch)
+  deepResearchRef.current = deepResearch
 
   const transport = useMemo(
     () =>
@@ -144,6 +187,7 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
               ? [...pinnedSkillIdsRef.current]
               : undefined,
           targetAgent: targetAgentRef.current ?? undefined,
+          deepResearch: deepResearchRef.current || undefined,
         }),
       }),
     [],
@@ -473,9 +517,10 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
   return (
     <div className="flex h-full flex-col">
       <Conversation className="flex-1">
-        <ConversationContent className="mx-auto max-w-4xl gap-6 px-4 py-6">
+        <ConversationContent className="mx-auto flex min-h-full w-full max-w-4xl flex-col gap-6 px-4 py-6">
           {displayMessages.length === 0 && !isStreaming && !isLoading ? (
             <ConversationEmptyState
+              className="flex-1 py-12"
               title="Your AI Operating System"
               description="Tell me what you need. I'll coordinate AI agents to scout, analyze, and get things done."
               icon={
@@ -485,18 +530,18 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
               }
             >
               <div className="mt-4 flex w-full justify-center">
-                <div className="flex max-w-md flex-col gap-2 w-full">
-                {SUGGESTED_PROMPTS.map((prompt) => (
-                  <button
-                    key={prompt}
-                    type="button"
-                    onClick={() => handleSend(prompt)}
-                    disabled={!dbUser || creditError}
-                    className="rounded-lg border border-border bg-card px-4 py-3 text-left text-base text-muted-foreground transition-colors hover:border-primary/40 hover:bg-accent hover:text-foreground"
-                  >
-                    &quot;{prompt}&quot;
-                  </button>
-                ))}
+                <div className="flex w-full max-w-lg flex-col gap-2">
+                  {SUGGESTED_PROMPTS.map((prompt) => (
+                    <button
+                      key={prompt}
+                      type="button"
+                      onClick={() => handleSend(prompt)}
+                      disabled={!dbUser || creditError}
+                      className="rounded-lg border border-border bg-card px-4 py-3 text-left text-base text-muted-foreground transition-colors hover:border-primary/40 hover:bg-accent hover:text-foreground"
+                    >
+                      &quot;{prompt}&quot;
+                    </button>
+                  ))}
                 </div>
               </div>
             </ConversationEmptyState>
@@ -522,6 +567,15 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
                                 const args = (inv as { args?: Record<string, unknown> }).args
                                 const result = (inv as { result?: unknown }).result
                                 const mappedState = mapToolState(state)
+                                const isChartTool = toolName === 'generate-chart' || toolName === 'generateChart'
+                                const chartSpec = isChartTool && mappedState === 'output-available'
+                                  ? (result as { chartSpec?: ChartSpec })?.chartSpec
+                                  : undefined
+
+                                if (chartSpec) {
+                                  return <ChartRenderer key={`${toolName}-${i}`} spec={chartSpec} />
+                                }
+
                                 return (
                                   <Tool key={`${toolName}-${i}`}>
                                     <ToolHeader
@@ -600,12 +654,14 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
             }}
             className="mx-auto max-w-4xl"
           >
-            <div ref={inputAreaRef} className="relative">
+            <div ref={inputAreaRef}>
               <AgentMentionPopover anchorRef={inputAreaRef} onSelect={setTargetAgent} />
+           
               <PromptInputTextarea placeholder="Send a message…" />
-            </div>
+              </div>
+           
             <PromptInputFooter>
-              <PromptInputTools>
+              <PromptInputTools className="flex-1 flex-wrap gap-1.5">
                 {targetAgent && (
                   <Badge
                     variant="secondary"
@@ -617,6 +673,40 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
                       onClick={() => setTargetAgent(null)}
                       className="rounded p-0.5 hover:bg-muted"
                       aria-label="Clear agent"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                )}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      variant={deepResearch ? 'default' : 'ghost'}
+                      size="icon"
+                      className={cn(
+                        'h-7 w-7 shrink-0',
+                        deepResearch && 'bg-primary text-primary-foreground shadow-sm shadow-primary/25'
+                      )}
+                      onClick={() => setDeepResearch((v) => !v)}
+                      aria-label="Toggle deep research"
+                      aria-pressed={deepResearch}
+                    >
+                      <Telescope />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    {deepResearch ? 'Deep Research ON' : 'Deep Research'}
+                  </TooltipContent>
+                </Tooltip>
+                {deepResearch && (
+                  <Badge variant="secondary" className="gap-1 text-xs shrink-0">
+                    Deep Research
+                    <button
+                      type="button"
+                      onClick={() => setDeepResearch(false)}
+                      className="rounded p-0.5 hover:bg-muted"
+                      aria-label="Disable deep research"
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -647,11 +737,14 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
                   className="shrink-0"
                 />
               </PromptInputTools>
-              <PromptInputSubmit
-                status={status}
-                onStop={stop}
-                disabled={!dbUser || creditError}
-              />
+              <div className="flex shrink-0 items-center gap-1">
+                <VoiceInputButton />
+                <PromptInputSubmit
+                  status={status}
+                  onStop={stop}
+                  disabled={!dbUser || creditError}
+                />
+              </div>
             </PromptInputFooter>
           </PromptInput>
         </PromptInputProvider>

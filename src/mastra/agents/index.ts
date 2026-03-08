@@ -4,6 +4,7 @@
 export { createOrchestratorAgent } from './orchestrator'
 export { createEmailAgent } from './emailAgent'
 export { createResearchAgent } from './researchAgent'
+export { createDeepResearchAgent } from './deepResearchAgent'
 export { createCalendarAgent } from './calendarAgent'
 export { createLinkedInAgent } from './linkedinAgent'
 export { createContentAgent } from './contentAgent'

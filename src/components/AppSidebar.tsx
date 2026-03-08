@@ -15,6 +15,7 @@ import {
   Sparkles,
   FolderOpen,
   ChevronRight,
+  Store,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -78,6 +79,7 @@ const NAV_CONFIG: (NavItem | NavGroup)[] = [
     children: [
       { type: 'item', href: '/dashboard/context', label: 'Context', icon: FileText },
       { type: 'item', href: '/dashboard/skills', label: 'Skills', icon: Zap },
+      { type: 'item', href: '/dashboard/skills/browse', label: 'Skill Store', icon: Store },
       { type: 'item', href: '/dashboard/integrations', label: 'Integrations', icon: Plug },
     ],
   },

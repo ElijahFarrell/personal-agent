@@ -4,7 +4,11 @@ import type { NarrowedContext } from 'telegraf'
 import type { Message, Update } from 'telegraf/types'
 import { ConvexHttpClient } from 'convex/browser'
 import { createOrchestratorAgent } from '@/mastra'
-import { retrieveRelevantSkills, buildSkillsContext } from '@/skills/skillRetriever'
+import {
+  resolveSkillsForMessage,
+  buildSkillsSystemContext,
+  type SkillPreference,
+} from '@/services/skillsService'
 import { retrieveRelevantContext, buildContextBlock } from '@/services/contextService'
 import { config } from '@/lib/config'
 import { api } from '@convex/_generated/api'
@@ -74,13 +78,32 @@ async function processMessage(ctx: TextContext, messageText: string): Promise<vo
   const userId = convexUser.clerkUserId
   const tenantId = tenant.clerkOrgId
   const dbUserId = String(convexUser._id)
+  const skillScope = {
+    tenantId: String(convexUser.tenantId),
+    userId: dbUserId,
+  }
 
   try {
     await ctx.sendChatAction('typing')
 
-    const [relevantSkills, relevantContext] = await Promise.all([
-      retrieveRelevantSkills(messageText, tenantId, dbUserId).catch((err) => {
-        console.warn('[Telegram] Skill retrieval failed (continuing without context):', err?.message ?? err)
+    let skillPreferences: SkillPreference[] = []
+    try {
+      const prefs = await convex.query(api.skills.getSkillPreferences, {
+        tenantId: convexUser.tenantId,
+        userId: convexUser._id,
+      })
+      skillPreferences = prefs.map((p) => ({
+        skillName: p.skillName,
+        isEnabled: p.isEnabled,
+        isPinned: p.isPinned,
+      }))
+    } catch (err) {
+      console.warn('[Telegram] Skill preferences fetch failed:', (err as Error)?.message ?? err)
+    }
+
+    const [resolvedSkills, relevantContext] = await Promise.all([
+      resolveSkillsForMessage(messageText, skillPreferences, 5, skillScope).catch((err) => {
+        console.warn('[Telegram] Skill retrieval failed (continuing without context):', (err as Error)?.message ?? err)
         return []
       }),
       retrieveRelevantContext(messageText, tenantId, dbUserId).catch((err) => {
@@ -89,7 +112,7 @@ async function processMessage(ctx: TextContext, messageText: string): Promise<vo
       }),
     ])
 
-    const skillsContext = buildSkillsContext(relevantSkills)
+    const skillsContext = buildSkillsSystemContext(resolvedSkills)
     const contextBlock = buildContextBlock(relevantContext)
     const agent = createOrchestratorAgent(userId, tenantId)
 

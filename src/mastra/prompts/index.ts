@@ -1,6 +1,7 @@
 export { buildOrchestratorPrompt } from './orchestrator'
 export { EMAIL_PROMPT } from './email'
 export { RESEARCH_PROMPT } from './research'
+export { DEEP_RESEARCH_PROMPT } from './deepResearch'
 export { CALENDAR_PROMPT } from './calendar'
 export { LINKEDIN_PROMPT } from './linkedin'
 export { CONTENT_PROMPT } from './content'

@@ -79,7 +79,7 @@ const CardAction = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("flex items-center gap-2", className)}
+    className={cn("ml-auto self-start", className)}
     {...props}
   />
 ))
