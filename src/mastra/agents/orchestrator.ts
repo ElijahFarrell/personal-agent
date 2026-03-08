@@ -1,3 +1,4 @@
+import { gateway } from 'ai'
 import { Agent } from '@mastra/core/agent'
 import { AgentModels } from '@/constants/models'
 import { createMem0MemorizeTool } from '../tools/mem0Memorize'
@@ -14,7 +15,8 @@ export function createOrchestratorAgent(
   userId: string,
   tenantId: string,
   agentInstructions?: Record<string, string>,
-  connectedProviders: string[] = []
+  connectedProviders: string[] = [],
+  modelId?: string
 ) {
   const agentTools = createAgentTools(userId, tenantId, agentInstructions, connectedProviders)
 
@@ -24,11 +26,13 @@ export function createOrchestratorAgent(
     ? `${baseInstructions}\n\n## Additional Instructions\n${orchestratorCustom}`
     : baseInstructions
 
+  const model = modelId ? gateway(modelId) : AgentModels.orchestrator()
+
   return new Agent({
     id: `orchestrator-${userId}`,
     name: 'orchestrator',
     instructions,
-    model: AgentModels.orchestrator(),
+    model,
     voice: createVoice(),
     tools: {
       ...agentTools,
