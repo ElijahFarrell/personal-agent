@@ -32,6 +32,7 @@ import {
   PromptInputTools,
 } from '@/components/ai-elements/prompt-input'
 import { SkillPicker } from './SkillPicker'
+import { ModelSelector } from './ModelSelector'
 import { AgentMentionPopover } from './AgentMentionPopover'
 import { ActiveSkillsCard } from './ActiveSkillsCard'
 import {
@@ -47,7 +48,7 @@ import { SpeechInput } from '@/components/ai-elements/speech-input'
 import { usePromptInputController } from '@/components/ai-elements/prompt-input'
 import { ChartRenderer, type ChartSpec } from './ChartRenderer'
 import { API_ROUTES } from '@/constants/api'
-import { DEFAULT_CONTEXT_WINDOW } from '@/constants/models'
+import { DEFAULT_CHAT_MODEL_ID, DEFAULT_CONTEXT_WINDOW } from '@/constants/models'
 import { CHAT_LIMITS, CHAT_ROLES, CHAT_SOURCES } from '@/constants/chat'
 import { AGENT_BY_ID, type AgentId } from '@/constants/agents'
 import { Sparkles, X, Telescope } from 'lucide-react'
@@ -142,6 +143,7 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
   const [chatError, setChatError] = useState<string | null>(null)
   const [targetAgent, setTargetAgent] = useState<AgentId | null>(null)
   const [deepResearch, setDeepResearch] = useState(false)
+  const [selectedModel, setSelectedModel] = useState<string>('auto')
   const activeThreadRef = useRef<Id<'threads'> | null>(threadId)
   const targetAgentRef = useRef<AgentId | null>(null)
   const inputAreaRef = useRef<HTMLDivElement>(null)
@@ -174,6 +176,8 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
   targetAgentRef.current = targetAgent
   const deepResearchRef = useRef(deepResearch)
   deepResearchRef.current = deepResearch
+  const selectedModelRef = useRef(selectedModel)
+  selectedModelRef.current = selectedModel
 
   const transport = useMemo(
     () =>
@@ -188,6 +192,10 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
               : undefined,
           targetAgent: targetAgentRef.current ?? undefined,
           deepResearch: deepResearchRef.current || undefined,
+          model:
+            selectedModelRef.current !== 'auto'
+              ? selectedModelRef.current
+              : undefined,
         }),
       }),
     [],
@@ -646,7 +654,7 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
         </div>
       )}
 
-      <div className="border-t border-border bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div ref={inputAreaRef} className="border-t border-border bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <PromptInputProvider>
           <PromptInput
             onSubmit={async ({ text }) => {
@@ -654,11 +662,8 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
             }}
             className="mx-auto max-w-4xl"
           >
-            <div ref={inputAreaRef}>
-              <AgentMentionPopover anchorRef={inputAreaRef} onSelect={setTargetAgent} />
-           
-              <PromptInputTextarea placeholder="Send a message…" />
-              </div>
+            <PromptInputTextarea placeholder="Send a message…" />
+            <AgentMentionPopover anchorRef={inputAreaRef} onSelect={setTargetAgent} />
            
             <PromptInputFooter>
               <PromptInputTools className="flex-1 flex-wrap gap-1.5">
@@ -720,7 +725,9 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
                 <Context
                   usedTokens={cumulativeUsage.inputTokens + cumulativeUsage.outputTokens}
                   maxTokens={DEFAULT_CONTEXT_WINDOW}
-                  modelId="anthropic/claude-sonnet-4-5"
+                  modelId={
+                    selectedModel === 'auto' ? DEFAULT_CHAT_MODEL_ID : selectedModel
+                  }
                 >
                   <ContextTrigger className="h-7 px-2 text-xs" />
                   <ContextContent>
@@ -738,6 +745,7 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
                 />
               </PromptInputTools>
               <div className="flex shrink-0 items-center gap-1">
+                <ModelSelector value={selectedModel} onChange={setSelectedModel} />
                 <VoiceInputButton />
                 <PromptInputSubmit
                   status={status}

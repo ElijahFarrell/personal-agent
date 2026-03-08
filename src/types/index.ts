@@ -96,6 +96,8 @@ export interface ChatRequest {
   agentInstructions?: Record<string, string>
   /** Skill IDs to force-include in context regardless of vector search relevance. */
   pinnedSkillIds?: string[]
+  /** Override model for orchestrator (e.g. "google/gemini-3.1-pro-preview"). Omit for default. */
+  model?: string
 }
 
 export interface ChatResponse {

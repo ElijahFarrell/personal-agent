@@ -73,12 +73,13 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
 
-    const { threadId, agentInstructions, pinnedSkillIds, targetAgent, deepResearch, messages: uiMessages } = body as {
+    const { threadId, agentInstructions, pinnedSkillIds, targetAgent, deepResearch, model, messages: uiMessages } = body as {
       threadId?: string
       agentInstructions?: Record<string, string>
       pinnedSkillIds?: string[]
       targetAgent?: string
       deepResearch?: boolean
+      model?: string
       messages?: unknown[]
     }
 
@@ -302,7 +303,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (stream === null) {
-      const agent = createOrchestratorAgent(userId, tenantId, agentInstructions, connectedProviders)
+      const agent = createOrchestratorAgent(userId, tenantId, agentInstructions, connectedProviders, model)
       stream = await agent.stream(agentMessages as Parameters<typeof agent.stream>[0])
     }
 
