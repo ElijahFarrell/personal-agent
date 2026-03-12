@@ -22,10 +22,10 @@ export function ChatPanel({ open, onOpenChange, contextHint }: ChatPanelProps) {
     <Sheet modal={false} open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="flex w-[400px] flex-col gap-0 border-l border-gray-800/60 bg-gray-950 p-0"
+        className="flex w-[400px] flex-col gap-0 border-l border-white/10 p-0"
       >
         {contextHint && (
-          <div className="shrink-0 border-b border-gray-800/60 px-4 py-2 text-sm text-gray-400">
+          <div className="shrink-0 border-b border-white/10 px-4 py-2 text-sm text-muted-foreground">
             {contextHint}
           </div>
         )}

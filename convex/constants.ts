@@ -148,6 +148,7 @@ export const PROSPECT_SOURCE = {
   LINKEDIN_SEARCH: 'linkedin_search',
   CRM_IMPORT: 'crm_import',
   CSV_IMPORT: 'csv_import',
+  EXA_WEBSET: 'exa_webset',
 } as const
 
 export const OUTREACH_CHANNEL = {

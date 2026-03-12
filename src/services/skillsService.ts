@@ -1,3 +1,5 @@
+import { readdir, readFile } from 'fs/promises'
+import { join } from 'path'
 import { ConvexHttpClient } from 'convex/browser'
 import { api } from '@convex/_generated/api'
 import type { Id } from '@convex/_generated/dataModel'
@@ -58,6 +60,83 @@ function normalizeSkillName(name: string): string {
   return name.trim().toLowerCase()
 }
 
+/** Parse YAML frontmatter from SKILL.md. Returns { name, description } and raw content. */
+function parseSkillFrontmatter(raw: string): {
+  name: string
+  description: string
+  content: string
+} {
+  const match = raw.match(/^---\s*\n([\s\S]*?)\n---\s*\n([\s\S]*)$/)
+  const body = match ? match[2] : raw
+  const front = match ? match[1] : ''
+
+  let name = ''
+  let description = ''
+
+  for (const line of front.split('\n')) {
+    const nameMatch = line.match(/^name:\s*(.+)$/)
+    if (nameMatch) name = nameMatch[1].trim().replace(/^['"]|['"]$/g, '')
+    const descMatch = line.match(/^description:\s*(.+)$/)
+    if (descMatch) description = descMatch[1].trim().replace(/^['"]|['"]$/g, '')
+  }
+
+  return { name: name || 'unknown', description, content: body.trim() }
+}
+
+/** Fallback: list skills by reading skills/ directory from filesystem. */
+async function listSkillsFromFilesystem(): Promise<SkillMetadata[]> {
+  const skillsDir = join(process.cwd(), 'skills')
+  try {
+    const entries = await readdir(skillsDir, { withFileTypes: true })
+    const results: SkillMetadata[] = []
+
+    for (const entry of entries) {
+      if (!entry.isDirectory()) continue
+      const skillPath = join(skillsDir, entry.name, 'SKILL.md')
+      try {
+        const raw = await readFile(skillPath, 'utf-8')
+        const { name, description } = parseSkillFrontmatter(raw)
+        results.push({
+          name: name || entry.name,
+          description: description || '',
+        } as SkillMetadata)
+      } catch {
+        results.push({ name: entry.name, description: '' } as SkillMetadata)
+      }
+    }
+    return results
+  } catch {
+    return []
+  }
+}
+
+/** Fallback: get a single skill by reading from filesystem. */
+async function getSkillFromFilesystem(name: string): Promise<Skill | null> {
+  const skillsDir = join(process.cwd(), 'skills')
+  try {
+    const entries = await readdir(skillsDir, { withFileTypes: true })
+    const normalized = normalizeSkillName(name)
+    const dir = entries.find(
+      (e) => e.isDirectory() && normalizeSkillName(e.name) === normalized
+    )
+    if (!dir) return null
+
+    const skillPath = join(skillsDir, dir.name, 'SKILL.md')
+    const raw = await readFile(skillPath, 'utf-8')
+    const { name: parsedName, description, content } = parseSkillFrontmatter(raw)
+
+    return {
+      name: parsedName || dir.name,
+      description: description || '',
+      instructions: content,
+      references: undefined,
+      sourceUrl: undefined,
+    } as unknown as Skill
+  } catch {
+    return null
+  }
+}
+
 function toTenantSkillMetadata(skill: TenantSkillContentRecord): SkillMetadata {
   return {
     name: skill.skillName,
@@ -77,26 +156,32 @@ function toTenantSkill(skill: TenantSkillContentRecord): Skill {
 
 async function listWorkspaceSkills(): Promise<SkillMetadata[]> {
   try {
-    return (await workspace.skills?.list()) ?? []
+    const listed = (await workspace.skills?.list()) ?? []
+    if (listed.length > 0) return listed
   } catch {
-    return []
+    /* fall through to filesystem fallback */
   }
+  return listSkillsFromFilesystem()
 }
 
 async function getWorkspaceSkill(name: string): Promise<Skill | null> {
   try {
-    return (await workspace.skills?.get(name)) ?? null
+    const skill = (await workspace.skills?.get(name)) ?? null
+    if (skill) return skill
   } catch {
+    /* fall through */
+  }
+  try {
     const listed = await listWorkspaceSkills()
     const match = listed.find((skill) => normalizeSkillName(skill.name) === normalizeSkillName(name))
-    if (!match) return null
-
-    try {
-      return (await workspace.skills?.get(match.name)) ?? null
-    } catch {
-      return null
+    if (match) {
+      const ret = (await workspace.skills?.get(match.name)) ?? null
+      if (ret) return ret
     }
+  } catch {
+    /* fall through to filesystem fallback */
   }
+  return getSkillFromFilesystem(name)
 }
 
 async function searchWorkspaceSkills(

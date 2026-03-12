@@ -25,7 +25,7 @@ const config: Config = {
   			border: 'hsl(var(--border))',
   			input: 'hsl(var(--input))',
   			ring: 'hsl(var(--ring))',
-  			background: 'hsl(var(--background))',
+  			background: 'hsl(var(--background) / <alpha-value>)',
   			foreground: 'hsl(var(--foreground))',
   			primary: {
   				DEFAULT: 'hsl(var(--primary))',
@@ -48,15 +48,15 @@ const config: Config = {
   				foreground: 'hsl(var(--accent-foreground))'
   			},
   			popover: {
-  				DEFAULT: 'hsl(var(--popover))',
+  				DEFAULT: 'hsl(var(--popover) / <alpha-value>)',
   				foreground: 'hsl(var(--popover-foreground))'
   			},
   			card: {
-  				DEFAULT: 'hsl(var(--card))',
+  				DEFAULT: 'hsl(var(--card) / <alpha-value>)',
   				foreground: 'hsl(var(--card-foreground))'
   			},
   			sidebar: {
-  				DEFAULT: 'hsl(var(--sidebar-background))',
+  				DEFAULT: 'hsl(var(--sidebar-background) / <alpha-value>)',
   				foreground: 'hsl(var(--sidebar-foreground))',
   				primary: 'hsl(var(--sidebar-primary))',
   				'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',

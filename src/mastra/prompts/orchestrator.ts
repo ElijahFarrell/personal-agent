@@ -19,6 +19,7 @@ const AGENT_DESCRIPTIONS: Record<
   'real-estate-agent': { providers: ['follow-up-boss', 'calendly'], desc: 'Follow Up Boss, Calendly — contacts, deals, tasks, event types, scheduling.' },
   'finance-agent': { providers: ['stripe', 'quickbooks'], desc: 'Stripe, QuickBooks — customers, charges, invoices, payments.' },
   'marketing-agent': { provider: 'mailchimp', desc: 'Mailchimp — audiences, campaigns.' },
+  'sdr-agent': { provider: null, desc: 'Exa Websets: search companies, list all past websets/results, add to Prospects. Use for "all my Exa searches", "get past results", company search, or adding websets by ID.' },
   'crm-agent': { providers: ['hubspot', 'salesforce', 'pipedrive', 'zoho-crm'], desc: 'HubSpot, Salesforce, Pipedrive, Zoho CRM — contacts, deals, companies, tasks, notes.' },
   'project-agent': { providers: ['jira', 'asana', 'monday'], desc: 'Jira, Asana, Monday.com — issues, tasks, projects, boards, sprints, updates.' },
 }

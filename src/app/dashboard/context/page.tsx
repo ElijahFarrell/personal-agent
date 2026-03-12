@@ -232,13 +232,13 @@ export default function ContextPage() {
         </div>
 
         {/* Scope Tabs */}
-        <div className="flex gap-1 rounded-lg border border-gray-800 bg-gray-900/50 p-1">
+        <div className="flex gap-1 rounded-lg border border-white/10 bg-card/80 backdrop-blur-md p-1">
           <button
             type="button"
             onClick={() => setActiveTab('org')}
             className={`flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
               activeTab === 'org'
-                ? 'bg-gray-800 text-white'
+                ? 'bg-accent text-accent-foreground'
                 : 'text-gray-400 hover:text-gray-300'
             }`}
           >
@@ -250,7 +250,7 @@ export default function ContextPage() {
             onClick={() => setActiveTab('user')}
             className={`flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
               activeTab === 'user'
-                ? 'bg-gray-800 text-white'
+                ? 'bg-accent text-accent-foreground'
                 : 'text-gray-400 hover:text-gray-300'
             }`}
           >
@@ -268,23 +268,23 @@ export default function ContextPage() {
               placeholder="Search context docs…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-lg border border-gray-800 bg-gray-900/50 py-2 pl-10 pr-4 text-sm text-white placeholder-gray-500 outline-none transition-colors focus:border-gray-600 focus:ring-1 focus:ring-brand-500/50"
+              className="w-full rounded-lg border border-input bg-background/80 py-2 pl-10 pr-4 text-sm text-foreground placeholder-muted-foreground outline-none transition-colors focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50"
             />
           </div>
         )}
 
         {/* Docs List grouped by category */}
         {isLoading ? (
-          <section className="rounded-xl border border-gray-800/80 bg-gray-900/50">
+          <section className="rounded-xl border border-white/10 bg-card/80 backdrop-blur-md">
             <div className="flex flex-col items-center justify-center gap-2 px-5 py-12 text-center">
               <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-600 border-t-brand-500" />
               <p className="text-sm text-gray-500">Loading…</p>
             </div>
           </section>
         ) : filteredDocs && filteredDocs.length === 0 ? (
-          <section className="rounded-xl border border-gray-800/80 bg-gray-900/50">
+          <section className="rounded-xl border border-white/10 bg-card/80 backdrop-blur-md">
             <div className="flex flex-col items-center justify-center gap-3 px-5 py-12 text-center">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-800/60">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted/50">
                 <FolderOpen className="h-5 w-5 text-gray-600" aria-hidden="true" />
               </div>
               <div>
@@ -315,9 +315,9 @@ export default function ContextPage() {
                   <section
                     key={category}
                     aria-label={meta.label}
-                    className="rounded-xl border border-gray-800/80 bg-gray-900/50"
+                    className="rounded-xl border border-white/10 bg-card/80 backdrop-blur-md"
                   >
-                    <div className="flex items-center gap-2 border-b border-gray-800/60 px-5 py-3">
+                    <div className="flex items-center gap-2 border-b border-white/10 px-5 py-3">
                       <span className={`flex h-6 w-6 items-center justify-center rounded-md ${meta.color}`}>
                         <Icon className="h-3.5 w-3.5" />
                       </span>
@@ -329,7 +329,7 @@ export default function ContextPage() {
                       {items.map((doc) => (
                         <li
                           key={doc._id}
-                          className="flex items-center justify-between gap-4 px-5 py-4 transition-colors hover:bg-gray-800/20"
+                          className="flex items-center justify-between gap-4 px-5 py-4 transition-colors hover:bg-accent/50"
                         >
                           <div className="flex min-w-0 items-center gap-3">
                             <FileText className="h-4 w-4 shrink-0 text-gray-500" aria-hidden="true" />
@@ -346,7 +346,7 @@ export default function ContextPage() {
                               type="button"
                               onClick={() => openEditForm(doc)}
                               aria-label={`Edit ${doc.title}`}
-                              className="rounded-md p-1.5 text-gray-500 transition-colors hover:bg-gray-800 hover:text-gray-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                              className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
                             >
                               <Pencil className="h-3.5 w-3.5" />
                             </button>
@@ -380,8 +380,8 @@ export default function ContextPage() {
           aria-modal="true"
           aria-label={editingDocId ? 'Edit context doc' : 'Add context'}
         >
-          <div className="mx-4 flex w-full max-w-2xl flex-col rounded-xl border border-gray-800 bg-gray-900 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-gray-800/60 px-6 py-4">
+          <div className="mx-4 flex w-full max-w-2xl flex-col rounded-xl border border-white/10 bg-card/90 backdrop-blur-xl shadow-2xl">
+            <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
               <div>
                 <h2 className="text-lg font-semibold text-white">
                   {editingDocId ? 'Edit Context' : 'Add Context'}
@@ -397,7 +397,7 @@ export default function ContextPage() {
                 type="button"
                 onClick={closeForm}
                 aria-label="Close"
-                className="rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-800 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -420,7 +420,7 @@ export default function ContextPage() {
                   value={formData.title}
                   onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
                   placeholder="e.g. Our ICP, Brand Voice, Pricing"
-                  className="w-full rounded-lg border border-gray-700 bg-gray-800/60 px-3 py-2 text-sm text-white placeholder-gray-500 outline-none transition-colors focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50"
+                  className="w-full rounded-lg border border-input bg-background/80 px-3 py-2 text-sm text-foreground placeholder-muted-foreground outline-none transition-colors focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50"
                 />
               </div>
 
@@ -432,7 +432,7 @@ export default function ContextPage() {
                   id="ctx-category"
                   value={formData.category}
                   onChange={(e) => setFormData((prev) => ({ ...prev, category: e.target.value as DocCategory }))}
-                  className="w-full rounded-lg border border-gray-700 bg-gray-800/60 px-3 py-2 text-sm text-white outline-none transition-colors focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50"
+                  className="w-full rounded-lg border border-input bg-background/80 px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50"
                 >
                   {Object.entries(CATEGORY_META).map(([key, meta]) => (
                     <option key={key} value={key}>
@@ -456,7 +456,7 @@ export default function ContextPage() {
                       : `Add any information your AI agent should know about your business.\n\nExamples:\n- Business description and niche\n- Target audience / ICP details\n- Brand voice and tone guidelines\n- Key products or services\n- Pricing information\n- Common FAQs`
                   }
                   rows={14}
-                  className="w-full rounded-lg border border-gray-700 bg-gray-800/60 px-3 py-2.5 text-sm leading-relaxed text-white placeholder-gray-600 outline-none transition-colors focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50"
+                  className="w-full rounded-lg border border-input bg-background/80 px-3 py-2.5 text-sm leading-relaxed text-foreground placeholder-muted-foreground outline-none transition-colors focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50"
                 />
                 <p className="mt-1.5 text-xs text-gray-600">
                   This content is vectorized and automatically injected into chat when relevant.
@@ -464,11 +464,11 @@ export default function ContextPage() {
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-3 border-t border-gray-800/60 px-6 py-4">
+            <div className="flex items-center justify-end gap-3 border-t border-white/10 px-6 py-4">
               <button
                 type="button"
                 onClick={closeForm}
-                className="rounded-lg border border-gray-700 bg-gray-800/60 px-4 py-2 text-sm font-medium text-gray-300 transition-colors hover:border-gray-600 hover:bg-gray-800 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                className="rounded-lg border border-input bg-background/80 px-4 py-2 text-sm font-medium text-foreground transition-colors hover:border-border hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
               >
                 Cancel
               </button>

@@ -1,3 +1,5 @@
+import { readdir } from 'fs/promises'
+import { join } from 'path'
 import { Workspace, LocalFilesystem, LocalSkillSource } from '@mastra/core/workspace'
 import { QdrantVector } from '@mastra/qdrant'
 import { embed, gateway } from 'ai'
@@ -49,4 +51,22 @@ export const workspace = new Workspace({
   autoIndexPaths: ['/skills/**/*.md'],
 })
 
-export { qdrantVector, embedText, convexSkillSource }
+/** Log skill source configuration on first load. */
+void (async () => {
+  let localSkillCount = 0
+  try {
+    const entries = await readdir(join(process.cwd(), 'skills'), {
+      withFileTypes: true,
+    })
+    localSkillCount = entries.filter((e) => e.isDirectory()).length
+  } catch {
+    /* skills dir may not exist */
+  }
+  console.log('[Workspace] Skill source config:', {
+    qdrant: !!QDRANT_URL,
+    convex: !!(CONVEX_URL && DEFAULT_TENANT_ID),
+    localSkillCount,
+  })
+})()
+
+export { qdrantVector, embedText, convexSkillSource, skillSource }

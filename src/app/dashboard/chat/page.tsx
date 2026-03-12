@@ -30,7 +30,7 @@ export default function ChatPage() {
 
       <button
         onClick={() => setSidebarOpen((prev) => !prev)}
-        className="absolute right-0 top-2 z-10 mr-2 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-800 hover:text-gray-300"
+        className="absolute right-0 top-2 z-10 mr-2 rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
         style={sidebarOpen ? { right: 320 } : undefined}
         aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
       >
@@ -43,7 +43,7 @@ export default function ChatPage() {
 
       <aside
         className={cn(
-          'shrink-0 border-l border-gray-800/40 bg-gray-950/30 backdrop-blur-sm transition-[width] duration-200 ease-in-out overflow-hidden',
+          'shrink-0 border-l border-white/10 bg-sidebar/40 backdrop-blur-xl transition-[width] duration-200 ease-in-out overflow-hidden',
           sidebarOpen ? 'w-[320px]' : 'w-0 border-l-0'
         )}
       >

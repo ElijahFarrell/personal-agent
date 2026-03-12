@@ -654,13 +654,13 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
         </div>
       )}
 
-      <div ref={inputAreaRef} className="border-t border-border bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div ref={inputAreaRef} className="border-t border-white/5 px-4 py-3">
         <PromptInputProvider>
           <PromptInput
             onSubmit={async ({ text }) => {
               if (text.trim()) await handleSend(text.trim())
             }}
-            className="mx-auto max-w-4xl"
+            className="mx-auto max-w-4xl [&_[data-slot=input-group]]:!bg-transparent [&_[data-slot=input-group]]:border-white/10"
           >
             <PromptInputTextarea placeholder="Send a message…" />
             <AgentMentionPopover anchorRef={inputAreaRef} onSelect={setTargetAgent} />

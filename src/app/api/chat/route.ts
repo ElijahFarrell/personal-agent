@@ -34,7 +34,8 @@ import type { Id } from '@convex/_generated/dataModel'
 import { AGENT_BY_ID, type AgentId } from '@/constants/agents'
 import { CHAT_CREDIT_ACTION, CHAT_LIMITS, CHAT_ROLES } from '@/constants/chat'
 
-export const maxDuration = 60
+// Exa Websets can take 5–10 min for complex searches; allow long-running SDR tool calls
+export const maxDuration = 300
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
 
@@ -122,6 +123,14 @@ export async function POST(req: NextRequest) {
     }
 
     const dbUserId = dbUser?._id ? String(dbUser._id) : undefined
+    // Convex tenant ID (required for mutations); fallback: resolve Clerk org ID
+    const convexTenantId =
+      dbUser?.tenantId ??
+      (
+        await convex
+          .query(api.tenants.getTenantByClerkOrgId, { clerkOrgId: tenantId })
+          .catch(() => null)
+      )?._id
     const skillScope = dbUser
       ? {
           tenantId: String(dbUser.tenantId),
@@ -303,7 +312,13 @@ export async function POST(req: NextRequest) {
     }
 
     if (stream === null) {
-      const agent = createOrchestratorAgent(userId, tenantId, agentInstructions, connectedProviders, model)
+      const agent = createOrchestratorAgent(
+        userId,
+        convexTenantId ?? tenantId,
+        agentInstructions,
+        connectedProviders,
+        model
+      )
       stream = await agent.stream(agentMessages as Parameters<typeof agent.stream>[0])
     }
 
