@@ -417,7 +417,7 @@ export default function AgentsPage() {
                 <button
                   type="button"
                   onClick={() => openAgent(agent)}
-                  className="flex shrink-0 items-center gap-1.5 rounded-lg border border-gray-700 bg-gray-800/60 px-3 py-1.5 text-xs font-medium text-gray-300 transition-colors hover:border-gray-600 hover:bg-gray-800 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                  className="flex shrink-0 items-center gap-1.5 rounded-lg border border-border bg-muted/60 px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-border hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
                 >
                   Configure
                   <ChevronRight className="h-3.5 w-3.5" />
@@ -432,7 +432,7 @@ export default function AgentsPage() {
           <p className="mb-3 text-xs font-medium uppercase tracking-wider text-gray-600">
             Specialist Agents
           </p>
-          <div className="rounded-xl border border-gray-800/80 bg-gray-900/50">
+          <div className="rounded-xl border border-white/10 bg-card/80 backdrop-blur-md">
             <ul className="divide-y divide-gray-800/60" role="list">
               {AGENTS.filter((a) => !a.isOrchestrator).map((agent) => {
                 const Icon = agent.icon
@@ -440,7 +440,7 @@ export default function AgentsPage() {
                 return (
                   <li
                     key={agent.id}
-                    className="flex items-center justify-between gap-4 px-5 py-4 transition-colors hover:bg-gray-800/20"
+                    className="flex items-center justify-between gap-4 px-5 py-4 transition-colors hover:bg-accent/50"
                   >
                     <div className="flex min-w-0 items-center gap-3">
                       <span
@@ -464,7 +464,7 @@ export default function AgentsPage() {
                     <button
                       type="button"
                       onClick={() => openAgent(agent)}
-                      className="flex shrink-0 items-center gap-1.5 rounded-lg border border-gray-700/60 bg-transparent px-2.5 py-1.5 text-xs font-medium text-gray-500 transition-colors hover:border-gray-600 hover:bg-gray-800/60 hover:text-gray-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                      className="flex shrink-0 items-center gap-1.5 rounded-lg border border-border bg-transparent px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-border hover:bg-accent/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
                     >
                       Configure
                       <ChevronRight className="h-3 w-3" />
@@ -477,7 +477,7 @@ export default function AgentsPage() {
         </section>
 
         {/* Info callout */}
-        <div className="flex items-start gap-3 rounded-lg border border-gray-800/60 bg-gray-900/30 px-4 py-3">
+        <div className="flex items-start gap-3 rounded-lg border border-white/10 bg-card/60 backdrop-blur-md px-4 py-3">
           <Cpu className="mt-0.5 h-4 w-4 shrink-0 text-gray-600" aria-hidden="true" />
           <p className="text-xs text-gray-500 leading-relaxed">
             All requests go through the <span className="text-gray-400">Orchestrator</span>, which decides which specialist agents to call — often in parallel. You never talk to sub-agents directly; the Orchestrator coordinates everything and gives you one unified response.
@@ -494,10 +494,10 @@ export default function AgentsPage() {
           aria-modal="true"
           aria-label={`${selectedAgent.name} configuration`}
         >
-          <div className="mx-4 flex w-full max-w-2xl flex-col rounded-xl border border-gray-800 bg-gray-900 shadow-2xl max-h-[90vh]">
+          <div className="mx-4 flex w-full max-w-2xl flex-col rounded-xl border border-white/10 bg-card/90 backdrop-blur-xl shadow-2xl max-h-[90vh]">
 
             {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-gray-800/60 px-6 py-4">
+            <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
               <div className="flex items-center gap-3">
                 <span
                   className={`flex h-8 w-8 items-center justify-center rounded-lg ${selectedAgent.iconBg}`}
@@ -517,7 +517,7 @@ export default function AgentsPage() {
                 type="button"
                 onClick={closeModal}
                 aria-label="Close"
-                className="rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-800 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -543,7 +543,7 @@ export default function AgentsPage() {
                   {selectedAgent.tools.map((tool) => (
                     <li
                       key={tool.id}
-                      className="flex items-baseline gap-2.5 rounded-lg bg-gray-800/40 px-3 py-2"
+                      className="flex items-baseline gap-2.5 rounded-lg bg-muted/60 px-3 py-2"
                     >
                       <code className="shrink-0 font-mono text-[11px] text-brand-400">{tool.id}</code>
                       <span className="text-xs text-gray-500">{tool.description}</span>
@@ -566,7 +566,7 @@ export default function AgentsPage() {
                   onChange={(e) => { setDraftInstructions(e.target.value); setSaved(false) }}
                   placeholder={`Add extra instructions for the ${selectedAgent.name}.\n\nExamples:\n• Always respond in Spanish\n• My preferred email sign-off is "Best, Jamie"\n• Never use bullet points in responses`}
                   rows={6}
-                  className="w-full rounded-lg border border-gray-700 bg-gray-800/60 px-3 py-2.5 text-sm leading-relaxed text-white placeholder-gray-600 outline-none transition-colors focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50"
+                  className="w-full rounded-lg border border-input bg-background/80 px-3 py-2.5 text-sm leading-relaxed text-foreground placeholder-muted-foreground outline-none transition-colors focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50"
                 />
                 <p className="mt-1.5 text-xs text-gray-600">
                   These instructions are appended to this agent&apos;s system prompt on every request.
@@ -575,7 +575,7 @@ export default function AgentsPage() {
             </div>
 
             {/* Modal Footer */}
-            <div className="flex items-center justify-between border-t border-gray-800/60 px-6 py-4">
+            <div className="flex items-center justify-between border-t border-white/10 px-6 py-4">
               <button
                 type="button"
                 onClick={handleClear}
@@ -591,7 +591,7 @@ export default function AgentsPage() {
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="rounded-lg border border-gray-700 bg-gray-800/60 px-4 py-2 text-sm font-medium text-gray-300 transition-colors hover:border-gray-600 hover:bg-gray-800 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                  className="rounded-lg border border-input bg-background/80 px-4 py-2 text-sm font-medium text-foreground transition-colors hover:border-border hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
                 >
                   Close
                 </button>

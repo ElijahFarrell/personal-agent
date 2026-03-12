@@ -336,7 +336,7 @@ export default function SkillsPage() {
               onClick={runReindex}
               disabled={reindexing || isLoading}
               aria-label="Re-index skills in vector store"
-              className="flex items-center gap-2 rounded-lg border border-gray-700 bg-gray-800/60 px-3 py-2 text-xs font-medium text-gray-300 transition-colors hover:border-gray-600 hover:bg-gray-800 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:opacity-50"
+              className="flex items-center gap-2 rounded-lg border border-border bg-muted/60 px-3 py-2 text-xs font-medium text-foreground transition-colors hover:border-border hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:opacity-50"
             >
               <Upload
                 className={`h-3.5 w-3.5 ${reindexing ? 'animate-pulse' : ''}`}
@@ -351,7 +351,7 @@ export default function SkillsPage() {
                 onClick={runSeed}
                 disabled={isLoading}
                 aria-label="Sync skills from filesystem"
-                className="flex items-center gap-2 rounded-lg border border-gray-700 bg-gray-800/60 px-3 py-2 text-xs font-medium text-gray-300 transition-colors hover:border-gray-600 hover:bg-gray-800 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:opacity-50"
+                className="flex items-center gap-2 rounded-lg border border-border bg-muted/60 px-3 py-2 text-xs font-medium text-foreground transition-colors hover:border-border hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:opacity-50"
               >
                 <RefreshCw
                   className={`h-3.5 w-3.5 ${seedStatus === 'seeding' ? 'animate-spin' : ''}`}
@@ -363,7 +363,7 @@ export default function SkillsPage() {
 
             <Link
               href="/dashboard/skills/browse"
-              className="flex items-center gap-2 rounded-lg border border-gray-700 bg-gray-800/60 px-3 py-2 text-xs font-medium text-gray-300 transition-colors hover:border-gray-600 hover:bg-gray-800 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+              className="flex items-center gap-2 rounded-lg border border-border bg-muted/60 px-3 py-2 text-xs font-medium text-foreground transition-colors hover:border-border hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
             >
               <Search className="h-3.5 w-3.5" aria-hidden="true" />
               Browse Skills
@@ -387,7 +387,7 @@ export default function SkillsPage() {
         )}
 
         <section className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-          <div className="rounded-xl border border-gray-800/80 bg-gray-900/50 p-5">
+          <div className="rounded-xl border border-white/10 bg-card/80 backdrop-blur-md p-5">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h2 className="text-sm font-medium text-white">Skills Status</h2>
@@ -400,7 +400,7 @@ export default function SkillsPage() {
                 type="button"
                 onClick={fetchSkillsHealth}
                 disabled={healthLoading || !dbUser}
-                className="flex items-center gap-2 rounded-lg border border-gray-700 bg-gray-800/60 px-3 py-2 text-xs font-medium text-gray-300 transition-colors hover:border-gray-600 hover:bg-gray-800 hover:text-white disabled:opacity-50"
+                className="flex items-center gap-2 rounded-lg border border-border bg-muted/60 px-3 py-2 text-xs font-medium text-foreground transition-colors hover:border-border hover:bg-accent hover:text-accent-foreground disabled:opacity-50"
               >
                 <RefreshCw className={`h-3.5 w-3.5 ${healthLoading ? 'animate-spin' : ''}`} />
                 Refresh Status
@@ -408,25 +408,25 @@ export default function SkillsPage() {
             </div>
 
             <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              <div className="rounded-lg border border-gray-800 bg-gray-950/40 p-3">
+              <div className="rounded-lg border border-white/10 bg-card/60 backdrop-blur-sm p-3">
                 <p className="text-[11px] uppercase tracking-wide text-gray-500">Retrievable</p>
                 <p className="mt-1 text-2xl font-semibold text-white">
                   {skillsHealth?.stats.availableCount ?? '—'}
                 </p>
               </div>
-              <div className="rounded-lg border border-gray-800 bg-gray-950/40 p-3">
+              <div className="rounded-lg border border-white/10 bg-card/60 backdrop-blur-sm p-3">
                 <p className="text-[11px] uppercase tracking-wide text-gray-500">Local Files</p>
                 <p className="mt-1 text-2xl font-semibold text-white">
                   {skillsHealth?.stats.workspaceCount ?? '—'}
                 </p>
               </div>
-              <div className="rounded-lg border border-gray-800 bg-gray-950/40 p-3">
+              <div className="rounded-lg border border-white/10 bg-card/60 backdrop-blur-sm p-3">
                 <p className="text-[11px] uppercase tracking-wide text-gray-500">Tenant Content</p>
                 <p className="mt-1 text-2xl font-semibold text-white">
                   {skillsHealth?.stats.tenantContentCount ?? '—'}
                 </p>
               </div>
-              <div className="rounded-lg border border-gray-800 bg-gray-950/40 p-3">
+              <div className="rounded-lg border border-white/10 bg-card/60 backdrop-blur-sm p-3">
                 <p className="text-[11px] uppercase tracking-wide text-gray-500">Missing Mappings</p>
                 <p className="mt-1 text-2xl font-semibold text-white">
                   {skillsHealth?.stats.missingPreferenceCount ?? '—'}
@@ -456,7 +456,7 @@ export default function SkillsPage() {
             ) : null}
           </div>
 
-          <div className="rounded-xl border border-gray-800/80 bg-gray-900/50 p-5">
+          <div className="rounded-xl border border-white/10 bg-card/80 backdrop-blur-md p-5">
             <h2 className="text-sm font-medium text-white">Test Retrieval</h2>
             <p className="mt-1 text-xs text-gray-500">
               Enter a sample prompt to preview which skills chat would inject.
@@ -474,7 +474,7 @@ export default function SkillsPage() {
                   }
                 }}
                 placeholder="e.g. draft a linkedin post for founders"
-                className="flex-1 rounded-lg border border-gray-700 bg-gray-800/60 px-3 py-2 text-sm text-white placeholder-gray-500 outline-none transition-colors focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50"
+                className="flex-1 rounded-lg border border-input bg-background/80 px-3 py-2 text-sm text-foreground placeholder-muted-foreground outline-none transition-colors focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50"
               />
               <button
                 type="button"
@@ -494,14 +494,14 @@ export default function SkillsPage() {
 
             <div className="mt-4 flex flex-col gap-2">
               {testResolved.length === 0 ? (
-                <p className="rounded-lg border border-gray-800 bg-gray-950/40 px-3 py-3 text-xs text-gray-500">
+                <p className="rounded-lg border border-white/10 bg-card/60 backdrop-blur-sm px-3 py-3 text-xs text-muted-foreground">
                   Run a test prompt to see the matching skills here.
                 </p>
               ) : (
                 testResolved.map((skill) => (
                   <div
                     key={skill.name}
-                    className="flex items-center justify-between gap-3 rounded-lg border border-gray-800 bg-gray-950/40 px-3 py-2.5"
+                    className="flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-card/60 backdrop-blur-sm px-3 py-2.5"
                   >
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium text-white">{skill.name}</p>
@@ -522,13 +522,13 @@ export default function SkillsPage() {
         </section>
 
         {/* Scope Tabs */}
-        <div className="flex gap-1 rounded-lg border border-gray-800 bg-gray-900/50 p-1">
+        <div className="flex gap-1 rounded-lg border border-white/10 bg-card/80 backdrop-blur-md p-1">
           <button
             type="button"
             onClick={() => setActiveTab('org')}
             className={`flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
               activeTab === 'org'
-                ? 'bg-gray-800 text-white'
+                ? 'bg-accent text-accent-foreground'
                 : 'text-gray-400 hover:text-gray-300'
             }`}
           >
@@ -540,7 +540,7 @@ export default function SkillsPage() {
             onClick={() => setActiveTab('user')}
             className={`flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
               activeTab === 'user'
-                ? 'bg-gray-800 text-white'
+                ? 'bg-accent text-accent-foreground'
                 : 'text-gray-400 hover:text-gray-300'
             }`}
           >
@@ -558,7 +558,7 @@ export default function SkillsPage() {
               placeholder="Search skills…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-lg border border-gray-800 bg-gray-900/50 py-2 pl-10 pr-4 text-sm text-white placeholder-gray-500 outline-none transition-colors focus:border-gray-600 focus:ring-1 focus:ring-brand-500/50"
+              className="w-full rounded-lg border border-input bg-background/80 py-2 pl-10 pr-4 text-sm text-foreground placeholder-muted-foreground outline-none transition-colors focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50"
             />
           </div>
         )}
@@ -566,7 +566,7 @@ export default function SkillsPage() {
         {/* Skills List */}
         <section
           aria-label="Skills list"
-          className="rounded-xl border border-gray-800/80 bg-gray-900/50"
+          className="rounded-xl border border-white/10 bg-card/80 backdrop-blur-md"
         >
           {isLoading ? (
             <div className="flex flex-col items-center justify-center gap-2 px-5 py-12 text-center">
@@ -577,7 +577,7 @@ export default function SkillsPage() {
             </div>
           ) : filteredSkills && filteredSkills.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-3 px-5 py-12 text-center">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-800/60">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted/50">
                 <PackageOpen className="h-5 w-5 text-gray-600" aria-hidden="true" />
               </div>
               <div>
@@ -598,12 +598,12 @@ export default function SkillsPage() {
               {filteredSkills?.map((skill) => (
                 <li
                   key={skill._id}
-                  className="flex items-center justify-between gap-4 px-5 py-4 transition-colors hover:bg-gray-800/20"
+                  className="flex items-center justify-between gap-4 px-5 py-4 transition-colors hover:bg-accent/50"
                 >
                   <div className="flex min-w-0 items-center gap-3">
                     <span
                       className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
-                        skill.isEnabled ? 'bg-amber-500/10' : 'bg-gray-800/60'
+                        skill.isEnabled ? 'bg-amber-500/10' : 'bg-muted/60'
                       }`}
                       aria-hidden="true"
                     >
@@ -641,7 +641,7 @@ export default function SkillsPage() {
                       type="button"
                       onClick={() => openEditForm(skill)}
                       aria-label={`Edit ${skill.skillName ?? skill.name}`}
-                      className="rounded-md p-1.5 text-gray-500 transition-colors hover:bg-gray-800 hover:text-gray-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                      className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
                     >
                       <Pencil className="h-3.5 w-3.5" />
                     </button>
@@ -672,8 +672,8 @@ export default function SkillsPage() {
           aria-modal="true"
           aria-label={editingSkillId ? 'Edit skill' : 'Create new skill'}
         >
-          <div className="mx-4 flex w-full max-w-2xl flex-col rounded-xl border border-gray-800 bg-gray-900 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-gray-800/60 px-6 py-4">
+          <div className="mx-4 flex w-full max-w-2xl flex-col rounded-xl border border-white/10 bg-card/90 backdrop-blur-xl shadow-2xl">
+            <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
               <div>
                 <h2 className="text-lg font-semibold text-white">
                   {editingSkillId ? 'Edit Skill' : 'Create New Skill'}
@@ -689,7 +689,7 @@ export default function SkillsPage() {
                 type="button"
                 onClick={closeForm}
                 aria-label="Close"
-                className="rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-800 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -712,7 +712,7 @@ export default function SkillsPage() {
                   value={formData.name}
                   onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                   placeholder="e.g. Brand Voice"
-                  className="w-full rounded-lg border border-gray-700 bg-gray-800/60 px-3 py-2 text-sm text-white placeholder-gray-500 outline-none transition-colors focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50"
+                  className="w-full rounded-lg border border-input bg-background/80 px-3 py-2 text-sm text-foreground placeholder-muted-foreground outline-none transition-colors focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50"
                 />
               </div>
 
@@ -726,7 +726,7 @@ export default function SkillsPage() {
                   value={formData.description}
                   onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
                   placeholder="A short summary of what this skill does"
-                  className="w-full rounded-lg border border-gray-700 bg-gray-800/60 px-3 py-2 text-sm text-white placeholder-gray-500 outline-none transition-colors focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50"
+                  className="w-full rounded-lg border border-input bg-background/80 px-3 py-2 text-sm text-foreground placeholder-muted-foreground outline-none transition-colors focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50"
                 />
               </div>
 
@@ -740,7 +740,7 @@ export default function SkillsPage() {
                   onChange={(e) => setFormData((prev) => ({ ...prev, systemPrompt: e.target.value }))}
                   placeholder={`# Skill: My Skill\n\n## Description\nDescribe what this skill does...\n\n## When to Use This Skill\n- Trigger 1\n- Trigger 2\n\n## Instructions\nStep-by-step instructions for the AI agent...`}
                   rows={16}
-                  className="w-full rounded-lg border border-gray-700 bg-gray-800/60 px-3 py-2.5 font-mono text-sm leading-relaxed text-white placeholder-gray-600 outline-none transition-colors focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50"
+                  className="w-full rounded-lg border border-input bg-background/80 px-3 py-2.5 font-mono text-sm leading-relaxed text-foreground placeholder-muted-foreground outline-none transition-colors focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50"
                 />
                 <p className="mt-1.5 text-xs text-gray-600">
                   Write the full skill prompt in Markdown. This is the system context injected when this skill is retrieved.
@@ -769,11 +769,11 @@ export default function SkillsPage() {
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-3 border-t border-gray-800/60 px-6 py-4">
+            <div className="flex items-center justify-end gap-3 border-t border-white/10 px-6 py-4">
               <button
                 type="button"
                 onClick={closeForm}
-                className="rounded-lg border border-gray-700 bg-gray-800/60 px-4 py-2 text-sm font-medium text-gray-300 transition-colors hover:border-gray-600 hover:bg-gray-800 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                className="rounded-lg border border-input bg-background/80 px-4 py-2 text-sm font-medium text-foreground transition-colors hover:border-border hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
               >
                 Cancel
               </button>

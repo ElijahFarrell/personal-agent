@@ -147,8 +147,8 @@ importers:
         specifier: ^8.6.0
         version: 8.6.0(react@19.2.4)
       exa-js:
-        specifier: ^2.5.0
-        version: 2.5.0(encoding@0.1.13)(ws@8.19.0)
+        specifier: ^2.8.0
+        version: 2.8.0(encoding@0.1.13)(ws@8.19.0)
       geist:
         specifier: ^1.7.0
         version: 1.7.0(next@15.5.12(@opentelemetry/api@1.9.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
@@ -3659,8 +3659,8 @@ packages:
     resolution: {integrity: sha512-CRT1WTyuQoD771GW56XEZFQ/ZoSfWid1alKGDYMmkt2yl8UXrVR4pspqWNEcqKvVIzg6PAltWjxcSSPrboA4iA==}
     engines: {node: '>=18.0.0'}
 
-  exa-js@2.5.0:
-    resolution: {integrity: sha512-qGVsywiEUztlSSGyTtGf3mvH9NqgfLGUZxrYeLpEDe/SnOSq0irjQf83Re1ltBEbj9NjAyn+cT0ej4mcZTA96Q==}
+  exa-js@2.8.0:
+    resolution: {integrity: sha512-y/rrmhq4TceY3CLa8N65mDDQ5pUP4MPqgM9C4nZQ01p1+MBFiS0GX/y/pEVxB5l8dOgGBaZT7zzUOhzaP8d1mw==}
 
   exit-hook@5.1.0:
     resolution: {integrity: sha512-INjr2xyxHo7bhAqf5ong++GZPPnpcuBcaXUKt03yf7Fie9yWD7FapL4teOU0+awQazGs5ucBh7xWs/AD+6nhog==}
@@ -10006,7 +10006,7 @@ snapshots:
     dependencies:
       eventsource-parser: 3.0.6
 
-  exa-js@2.5.0(encoding@0.1.13)(ws@8.19.0):
+  exa-js@2.8.0(encoding@0.1.13)(ws@8.19.0):
     dependencies:
       cross-fetch: 4.1.0(encoding@0.1.13)
       dotenv: 16.4.7

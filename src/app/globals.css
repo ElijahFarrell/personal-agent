@@ -11,6 +11,14 @@
     --card-foreground: 0 0% 98%;
     --popover: 0 0% 5%;
     --popover-foreground: 0 0% 98%;
+
+    /* Glassmorphism tokens */
+    --glass-bg: 0 0% 5% / 0.4;
+    --glass-border: 0 0% 100% / 0.08;
+    --glass-blur: 12px;
+    --glass-card-bg: 0 0% 5% / 0.35;
+    --glass-popover-bg: 0 0% 5% / 0.5;
+    --glass-sidebar-bg: 0 0% 4% / 0.6;
     --primary: 263 84% 58%;
     --primary-foreground: 0 0% 100%;
     --secondary: 0 0% 12%;
@@ -54,10 +62,27 @@ html {
 }
 
 body {
-  background-color: hsl(var(--background));
+  background:
+    radial-gradient(
+      ellipse 120% 100% at 50% -20%,
+      hsl(263 75% 28%),
+      transparent 55%
+    ),
+    radial-gradient(
+      ellipse 90% 70% at 100% 90%,
+      hsl(240 65% 22%),
+      transparent 55%
+    ),
+    radial-gradient(
+      ellipse 70% 60% at 0% 90%,
+      hsl(280 60% 20%),
+      transparent 55%
+    ),
+    hsl(var(--background));
   color: hsl(var(--foreground));
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
+  min-height: 100vh;
 }
 
 /* Balanced headings */
@@ -99,6 +124,16 @@ h1, h2, h3, h4 {
 /* text-wrap: balance utility */
 .text-wrap-balance {
   text-wrap: balance;
+}
+
+/* Glassmorphism utility */
+@layer utilities {
+  .glass {
+    background-color: hsl(var(--glass-card-bg));
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid hsl(var(--glass-border));
+  }
 }
 
 /* Streaming text cursor animation */

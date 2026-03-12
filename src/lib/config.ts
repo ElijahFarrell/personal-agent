@@ -46,6 +46,9 @@ export const config = {
   apify: {
     apiToken: optionalEnv('APIFY_API_TOKEN'),
   },
+  hunter: {
+    apiKey: optionalEnv('HUNTER_API_KEY'),
+  },
   meta: {
     appSecret: optionalEnv('META_APP_SECRET'),
     verifyToken: optionalEnv('META_VERIFY_TOKEN'),

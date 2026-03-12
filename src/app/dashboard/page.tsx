@@ -35,7 +35,7 @@ function TrialBanner({ daysRemaining }: { daysRemaining: number }) {
 
   return (
     <div
-      className={`flex items-center justify-between rounded-xl border px-5 py-4 ${
+      className={`flex items-center justify-between rounded-xl border px-5 py-4 backdrop-blur-md ${
         urgency
           ? 'border-amber-500/40 bg-amber-500/10'
           : 'border-brand-500/30 bg-brand-500/10'
@@ -54,12 +54,12 @@ function TrialBanner({ daysRemaining }: { daysRemaining: number }) {
           />
         </div>
         <div>
-          <p className="text-sm font-medium text-white">
+          <p className="text-sm font-medium text-foreground">
             {daysRemaining === 1
               ? 'Last day of your free trial'
               : `${daysRemaining} days left in your free trial`}
           </p>
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-muted-foreground">
             {urgency
               ? 'Upgrade now to keep all Pro features.'
               : 'Enjoying Pro features? Upgrade anytime to keep access.'}
@@ -122,10 +122,10 @@ export default function DashboardPage() {
     <div className="flex-1 overflow-y-auto p-8">
     <div className="mx-auto max-w-4xl space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-white text-wrap-balance">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground text-wrap-balance">
           Good morning, {firstName}
         </h1>
-        <p className="mt-1 text-[15px] text-gray-400">
+        <p className="mt-1 text-[15px] text-muted-foreground">
           Here&rsquo;s what&rsquo;s happening with your AI OS today.
         </p>
       </div>
@@ -138,31 +138,31 @@ export default function DashboardPage() {
         {STAT_CARDS.map(({ href, label, icon: Icon, color, bg }, i) => {
           const value = statValues[i]
           const card = (
-            <div className="group flex flex-col gap-4 rounded-xl border border-gray-800/80 bg-gray-900/50 p-5 transition-colors hover:border-gray-700 hover:bg-gray-900/80">
+            <div className="group flex flex-col gap-4 rounded-xl border border-white/15 bg-card/50 backdrop-blur-xl p-5 transition-colors hover:border-white/25 hover:bg-card/60">
               <div className="flex items-center justify-between">
                 <span className={`flex h-9 w-9 items-center justify-center rounded-lg ${bg}`}>
                   <Icon className={`h-4 w-4 ${color}`} aria-hidden="true" />
                 </span>
                 {href && (
-                  <ArrowRight
-                    className="h-4 w-4 text-gray-600 transition-colors group-hover:text-gray-400"
+                <ArrowRight
+                  className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-foreground"
                     aria-hidden="true"
                   />
                 )}
               </div>
               <div>
                 <p
-                  className="text-[13px] font-medium text-gray-400"
+                  className="text-[13px] font-medium text-muted-foreground"
                   id={`stat-label-${i}`}
                 >
                   {label}
                 </p>
                 <p
-                  className="mt-1 text-3xl font-semibold tabular-nums tracking-tight text-white"
+                  className="mt-1 text-3xl font-semibold tabular-nums tracking-tight text-foreground"
                   aria-labelledby={`stat-label-${i}`}
                 >
                   {value === null ? (
-                    <span className="text-gray-600" aria-label="Loading…">…</span>
+                    <span className="text-muted-foreground" aria-label="Loading…">…</span>
                   ) : (
                     value
                   )}
@@ -185,7 +185,7 @@ export default function DashboardPage() {
           )
         })}
 
-        <div className="group flex flex-col gap-4 rounded-xl border border-gray-800/80 bg-gray-900/50 p-5 transition-colors hover:border-gray-700 hover:bg-gray-900/80">
+        <div className="group flex flex-col gap-4 rounded-xl border border-white/10 bg-card/80 backdrop-blur-md p-5 transition-colors hover:border-white/20 hover:bg-card/90">
           <div className="flex items-center justify-between">
             <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-500/10">
               <Coins className="h-4 w-4 text-violet-400" aria-hidden="true" />
@@ -200,7 +200,7 @@ export default function DashboardPage() {
               aria-labelledby="stat-label-credits"
             >
               {creditBalance === undefined ? (
-                <span className="text-gray-600" aria-label="Loading…">…</span>
+                <span className="text-muted-foreground" aria-label="Loading…">…</span>
               ) : (
                 creditBalance
               )}
@@ -210,22 +210,22 @@ export default function DashboardPage() {
       </div>
 
       <section aria-labelledby="activity-heading">
-        <div className="rounded-xl border border-gray-800/80 bg-gray-900/50">
-          <div className="flex items-center justify-between border-b border-gray-800/60 px-5 py-4">
+        <div className="rounded-xl border border-white/15 bg-card/50 backdrop-blur-xl">
+          <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
             <h2
               id="activity-heading"
-              className="text-[15px] font-medium text-white"
+              className="text-[15px] font-medium text-foreground"
             >
               Recent Activity
             </h2>
-            <Clock className="h-4 w-4 text-gray-600" aria-hidden="true" />
+            <Clock className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
           </div>
           <div className="flex flex-col items-center justify-center gap-2 px-5 py-12 text-center">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-800/60">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted/50">
               <Clock className="h-5 w-5 text-gray-600" aria-hidden="true" />
             </div>
-            <p className="text-sm font-medium text-gray-400">No activity yet</p>
-            <p className="text-xs text-gray-600">
+            <p className="text-sm font-medium text-muted-foreground">No activity yet</p>
+            <p className="text-xs text-muted-foreground">
               Activity from your integrations and skills will appear here.
             </p>
           </div>

@@ -18,6 +18,7 @@ export { createProjectAgent } from './projectAgent'
 export { createRealEstateAgent } from './realEstateAgent'
 export { createFinanceAgent } from './financeAgent'
 export { createMarketingAgent } from './marketingAgent'
+export { createSDRAgent } from './sdrAgent'
 
 import { createOrchestratorAgent } from './orchestrator'
 import { createEmailAgent } from './emailAgent'

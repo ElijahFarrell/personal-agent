@@ -37,7 +37,8 @@ const sourceValidator = v.union(
   v.literal(PROSPECT_SOURCE.MANUAL),
   v.literal(PROSPECT_SOURCE.LINKEDIN_SEARCH),
   v.literal(PROSPECT_SOURCE.CRM_IMPORT),
-  v.literal(PROSPECT_SOURCE.CSV_IMPORT)
+  v.literal(PROSPECT_SOURCE.CSV_IMPORT),
+  v.literal(PROSPECT_SOURCE.EXA_WEBSET)
 )
 
 const channelValidator = v.union(
@@ -73,6 +74,44 @@ const importRowValidator = v.object({
   linkedinUrl: v.optional(v.string()),
   websiteUrl: v.optional(v.string()),
   notes: v.optional(v.string()),
+})
+
+const exaImportRowValidator = v.object({
+  companyName: v.string(),
+  email: v.optional(v.string()),
+  linkedinUrl: v.optional(v.string()),
+  domain: v.optional(v.string()),
+})
+
+export const importFromExa = mutation({
+  args: {
+    tenantId: v.id(TABLES.TENANTS),
+    ownerId: v.optional(v.id(TABLES.USERS)),
+    rows: v.array(exaImportRowValidator),
+  },
+  handler: async (ctx, { rows, tenantId, ownerId }) => {
+    const now = Date.now()
+    for (const row of rows) {
+      const websiteUrl = row.domain
+        ? (row.domain.startsWith('http') ? row.domain : `https://${row.domain}`)
+        : undefined
+      await ctx.db.insert(TABLES.PROSPECTS, {
+        tenantId,
+        ownerId,
+        name: row.companyName,
+        company: row.companyName,
+        email: row.email,
+        linkedinUrl: row.linkedinUrl,
+        websiteUrl,
+        status: PROSPECT_STATUS.NEW,
+        stage: PROSPECT_STAGE.NEW,
+        source: PROSPECT_SOURCE.EXA_WEBSET,
+        createdAt: now,
+        updatedAt: now,
+      })
+    }
+    return rows.length
+  },
 })
 
 export const importProspects = mutation({

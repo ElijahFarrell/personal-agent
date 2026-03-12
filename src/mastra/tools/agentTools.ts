@@ -14,6 +14,7 @@ import { createProjectAgent } from '../agents/projectAgent'
 import { createRealEstateAgent } from '../agents/realEstateAgent'
 import { createFinanceAgent } from '../agents/financeAgent'
 import { createMarketingAgent } from '../agents/marketingAgent'
+import { createSDRAgent } from '../agents/sdrAgent'
 
 const taskSchema = z.object({
   task: z.string().describe('Complete description of the task to perform, including all relevant context (names, URLs, tone, goals)'),
@@ -338,6 +339,26 @@ export function createAgentTools(
         } catch (error) {
           const message = error instanceof Error ? error.message : 'Unknown error'
           return `Marketing agent error: ${message}`
+        }
+      },
+    }),
+
+    sdrAgent: createTool({
+      id: 'sdr-agent',
+      description:
+        'Delegate company search to the SDR Agent. Use Exa Websets to find companies matching a complex query. ' +
+        'Progressive flow: 5 samples first, then offer 15-20 more. Display as table. Add to Prospects when user approves.',
+      inputSchema: taskSchema,
+      execute: async (input) => {
+        try {
+          const agent = createSDRAgent(userId, tenantId)
+          const result = await agent.generate(
+            withCustomInstructions(input.task, agentInstructions?.sdr)
+          )
+          return result.text
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Unknown error'
+          return `SDR agent error: ${message}`
         }
       },
     }),

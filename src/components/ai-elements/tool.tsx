@@ -19,6 +19,11 @@ import {
   XCircleIcon,
 } from "lucide-react";
 import { isValidElement } from "react";
+import { cjk } from "@streamdown/cjk";
+import { code } from "@streamdown/code";
+import { math } from "@streamdown/math";
+import { mermaid } from "@streamdown/mermaid";
+import { Streamdown } from "streamdown";
 
 import { CodeBlock } from "./code-block";
 
@@ -133,6 +138,17 @@ export type ToolOutputProps = ComponentProps<"div"> & {
   errorText: ToolPart["errorText"];
 };
 
+function looksLikeMarkdown(s: string): boolean {
+  return (
+    s.includes("|") ||
+    s.includes("```") ||
+    s.includes("**") ||
+    /^#{1,6}\s/m.test(s) ||
+    s.includes("- ") ||
+    s.includes("* ")
+  );
+}
+
 export const ToolOutput = ({
   className,
   output,
@@ -150,7 +166,21 @@ export const ToolOutput = ({
       <CodeBlock code={JSON.stringify(output, null, 2)} language="json" />
     );
   } else if (typeof output === "string") {
-    Output = <CodeBlock code={output} language="json" />;
+    if (looksLikeMarkdown(output)) {
+      Output = (
+        <div className="prose prose-sm dark:prose-invert max-w-none [&_table]:text-xs">
+          <Streamdown plugins={{ cjk, code, math, mermaid }}>
+            {output}
+          </Streamdown>
+        </div>
+      );
+    } else {
+      Output = (
+        <pre className="whitespace-pre-wrap break-words text-inherit">
+          {output}
+        </pre>
+      );
+    }
   }
 
   return (

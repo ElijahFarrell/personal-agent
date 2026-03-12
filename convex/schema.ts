@@ -221,7 +221,8 @@ export default defineSchema({
       v.literal(PROSPECT_SOURCE.MANUAL),
       v.literal(PROSPECT_SOURCE.LINKEDIN_SEARCH),
       v.literal(PROSPECT_SOURCE.CRM_IMPORT),
-      v.literal(PROSPECT_SOURCE.CSV_IMPORT)
+      v.literal(PROSPECT_SOURCE.CSV_IMPORT),
+      v.literal(PROSPECT_SOURCE.EXA_WEBSET)
     ),
     notes: v.optional(v.string()),
     customFields: v.optional(v.any()),
