@@ -1,5 +1,9 @@
 import { createTool } from '@mastra/core/tools'
 import { z } from 'zod'
+import { ConvexHttpClient } from 'convex/browser'
+import { api } from '@convex/_generated/api'
+import type { Id } from '@convex/_generated/dataModel'
+import { getNextRunAt } from '@/services/scheduleService'
 import { createEmailAgent } from '../agents/emailAgent'
 import { createResearchAgent } from '../agents/researchAgent'
 import { createCalendarAgent } from '../agents/calendarAgent'
@@ -15,6 +19,8 @@ import { createRealEstateAgent } from '../agents/realEstateAgent'
 import { createFinanceAgent } from '../agents/financeAgent'
 import { createMarketingAgent } from '../agents/marketingAgent'
 import { createSDRAgent } from '../agents/sdrAgent'
+
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
 
 const taskSchema = z.object({
   task: z.string().describe('Complete description of the task to perform, including all relevant context (names, URLs, tone, goals)'),
@@ -359,6 +365,137 @@ export function createAgentTools(
         } catch (error) {
           const message = error instanceof Error ? error.message : 'Unknown error'
           return `SDR agent error: ${message}`
+        }
+      },
+    }),
+
+    createSchedule: createTool({
+      id: 'create-schedule',
+      description:
+        'Create a recurring schedule (cron job) for the user. Use when the user wants something to run automatically at a specific time, e.g. "every morning at 9am check my channels", "every Monday send a summary", "hourly pull revenue data". ' +
+        'Cron format: minute hour day-of-month month day-of-week (e.g. "0 9 * * *" = 9am daily, "0 9 * * 1" = 9am Mondays). Timezone defaults to America/New_York.',
+      inputSchema: z.object({
+        name: z.string().describe('Short name for the schedule'),
+        description: z.string().optional().describe('What this schedule does'),
+        cronExpression: z.string().describe('Cron expression, e.g. "0 9 * * *" for 9am daily'),
+        timezone: z.string().optional().describe('IANA timezone, e.g. America/New_York'),
+        agentPrompt: z.string().describe('The prompt/instruction to run (e.g. "Check all my communication channels, pull revenue data, and give me insights on what happened the day prior")'),
+        autoApprove: z.boolean().optional().describe('If true, auto-approve actions without asking. Default false.'),
+      }),
+      execute: async (input) => {
+        try {
+          const dbUser = await convex.query(api.users.getUserByClerkUserId, {
+            clerkUserId: userId,
+          })
+          if (!dbUser) return 'User not found. Please sign in to create schedules.'
+
+          const nextRunAt = getNextRunAt(
+            input.cronExpression,
+            input.timezone ?? 'America/New_York'
+          )
+
+          const scheduleId = await convex.mutation(api.schedules.create, {
+            tenantId: dbUser.tenantId,
+            userId: dbUser._id,
+            name: input.name,
+            description: input.description,
+            cronExpression: input.cronExpression,
+            timezone: input.timezone ?? 'America/New_York',
+            action: {
+              type: 'agent_prompt',
+              agentPrompt: input.agentPrompt,
+            },
+            isEnabled: true,
+            autoApprove: input.autoApprove ?? false,
+            nextRunAt,
+          })
+
+          return `Schedule "${input.name}" created. It will run ${input.cronExpression} (${input.timezone ?? 'America/New_York'}). Next run: ${new Date(nextRunAt).toLocaleString()}.`
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Unknown error'
+          return `Failed to create schedule: ${message}`
+        }
+      },
+    }),
+
+    listSchedules: createTool({
+      id: 'list-schedules',
+      description: 'List all of the user\'s schedules. Use when the user asks to see their schedules, cron jobs, or automated tasks.',
+      inputSchema: z.object({}),
+      execute: async () => {
+        try {
+          const dbUser = await convex.query(api.users.getUserByClerkUserId, {
+            clerkUserId: userId,
+          })
+          if (!dbUser) return 'User not found. Please sign in to view schedules.'
+
+          const schedules = await convex.query(api.schedules.listByTenantId, {
+            tenantId: dbUser.tenantId,
+          })
+
+          if (schedules.length === 0) {
+            return 'No schedules configured. You can create one by saying something like "every morning at 9am check my channels and give me a brief".'
+          }
+
+          return schedules
+            .map(
+              (s) =>
+                `- **${s.name}** [ID: ${s._id}] (${s.isEnabled ? 'enabled' : 'disabled'}): ${s.cronExpression} ${s.timezone} | Next: ${s.nextRunAt ? new Date(s.nextRunAt).toLocaleString() : 'N/A'}`
+            )
+            .join('\n')
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Unknown error'
+          return `Failed to list schedules: ${message}`
+        }
+      },
+    }),
+
+    toggleSchedule: createTool({
+      id: 'toggle-schedule',
+      description: 'Enable or disable a schedule. Use when the user wants to turn a schedule on or off.',
+      inputSchema: z.object({
+        scheduleId: z.string().describe('The schedule ID (from listSchedules)'),
+        isEnabled: z.boolean().describe('true to enable, false to disable'),
+      }),
+      execute: async (input) => {
+        try {
+          const dbUser = await convex.query(api.users.getUserByClerkUserId, {
+            clerkUserId: userId,
+          })
+          if (!dbUser) return 'User not found.'
+
+          await convex.mutation(api.schedules.toggleEnabled, {
+            scheduleId: input.scheduleId as Id<'schedules'>,
+            isEnabled: input.isEnabled,
+          })
+          return `Schedule ${input.isEnabled ? 'enabled' : 'disabled'}.`
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Unknown error'
+          return `Failed to toggle schedule: ${message}`
+        }
+      },
+    }),
+
+    deleteSchedule: createTool({
+      id: 'delete-schedule',
+      description: 'Delete a schedule permanently. Use when the user wants to remove a schedule.',
+      inputSchema: z.object({
+        scheduleId: z.string().describe('The schedule ID (from listSchedules)'),
+      }),
+      execute: async (input) => {
+        try {
+          const dbUser = await convex.query(api.users.getUserByClerkUserId, {
+            clerkUserId: userId,
+          })
+          if (!dbUser) return 'User not found.'
+
+          await convex.mutation(api.schedules.remove, {
+            scheduleId: input.scheduleId as Id<'schedules'>,
+          })
+          return 'Schedule deleted.'
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Unknown error'
+          return `Failed to delete schedule: ${message}`
         }
       },
     }),

@@ -16,6 +16,8 @@ import {
   FolderOpen,
   ChevronRight,
   Store,
+  GitBranch,
+  Clock,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -68,6 +70,8 @@ const NAV_CONFIG: (NavItem | NavGroup)[] = [
     children: [
       { type: 'item', href: '/dashboard/chat', label: 'Chat', icon: MessageSquare },
       { type: 'item', href: '/dashboard/agents', label: 'Agents', icon: Bot },
+      { type: 'item', href: '/dashboard/workflows', label: 'Workflows', icon: GitBranch },
+      { type: 'item', href: '/dashboard/schedules', label: 'Schedules', icon: Clock },
     ],
   },
   { type: 'item', href: '/dashboard/prospects', label: 'Prospects', icon: Users },
@@ -106,7 +110,11 @@ function saveGroupState(state: Record<string, boolean>) {
 
 function getDefaultGroupState(pathname: string): Record<string, boolean> {
   return {
-    ai: pathname.startsWith('/dashboard/chat') || pathname.startsWith('/dashboard/agents'),
+    ai:
+      pathname.startsWith('/dashboard/chat') ||
+      pathname.startsWith('/dashboard/agents') ||
+      pathname.startsWith('/dashboard/workflows') ||
+      pathname.startsWith('/dashboard/schedules'),
     workspace:
       pathname.startsWith('/dashboard/context') ||
       pathname.startsWith('/dashboard/skills') ||

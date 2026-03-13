@@ -1,6 +1,6 @@
 import { defineSchema, defineTable } from 'convex/server'
 import { v } from 'convex/values'
-import { CONTEXT_DOC_CATEGORY, CREDIT_ACTION, CREDIT_TX_TYPE, CUSTOM_FIELD_TYPE, DRAFT_STATUS, INDEXES, INTEGRATION_STATUS, MESSAGE_ROLE, MESSAGE_SOURCE, OUTREACH_CHANNEL, PROSPECT_SOURCE, PROSPECT_STAGE, PROSPECT_STATUS, ROLE, SCOPE, SKILL_SOURCE, TABLES, TIER } from './constants'
+import { CONTEXT_DOC_CATEGORY, CREDIT_ACTION, CREDIT_TX_TYPE, CUSTOM_FIELD_TYPE, DRAFT_STATUS, INDEXES, INTEGRATION_STATUS, MESSAGE_ROLE, MESSAGE_SOURCE, OUTREACH_CHANNEL, PROSPECT_SOURCE, PROSPECT_STAGE, PROSPECT_STATUS, ROLE, SCHEDULE_ACTION_TYPE, SCHEDULE_LOG_STATUS, SCOPE, SKILL_SOURCE, TABLES, TIER, WORKFLOW_RUN_STATUS, WORKFLOW_STEP_STATUS } from './constants'
 
 export default defineSchema({
   [TABLES.TENANTS]: defineTable({
@@ -301,4 +301,111 @@ export default defineSchema({
   })
     .index(INDEXES.BY_PROSPECT_ID, ['prospectId'])
     .index(INDEXES.BY_TENANT_ID, ['tenantId']),
+
+  // ─── Schedules ──────────────────────────────────────────────────────────────
+
+  [TABLES.SCHEDULES]: defineTable({
+    tenantId: v.id(TABLES.TENANTS),
+    userId: v.id(TABLES.USERS),
+    name: v.string(),
+    description: v.optional(v.string()),
+    cronExpression: v.string(),
+    timezone: v.string(),
+    action: v.object({
+      type: v.union(
+        v.literal(SCHEDULE_ACTION_TYPE.WORKFLOW),
+        v.literal(SCHEDULE_ACTION_TYPE.AGENT_PROMPT)
+      ),
+      workflowId: v.optional(v.id(TABLES.WORKFLOW_DEFINITIONS)),
+      agentPrompt: v.optional(v.string()),
+      inputData: v.optional(v.any()),
+    }),
+    isEnabled: v.boolean(),
+    autoApprove: v.boolean(),
+    lastRunAt: v.optional(v.number()),
+    nextRunAt: v.optional(v.number()),
+    lastRunStatus: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index(INDEXES.BY_TENANT_ID, ['tenantId'])
+    .index(INDEXES.BY_USER_ID, ['userId'])
+    .index(INDEXES.BY_NEXT_RUN_AT, ['nextRunAt']),
+
+  [TABLES.SCHEDULE_LOGS]: defineTable({
+    scheduleId: v.id(TABLES.SCHEDULES),
+    tenantId: v.id(TABLES.TENANTS),
+    runId: v.optional(v.string()),
+    status: v.union(
+      v.literal(SCHEDULE_LOG_STATUS.RUNNING),
+      v.literal(SCHEDULE_LOG_STATUS.SUCCESS),
+      v.literal(SCHEDULE_LOG_STATUS.FAILED),
+      v.literal(SCHEDULE_LOG_STATUS.SUSPENDED)
+    ),
+    startedAt: v.number(),
+    completedAt: v.optional(v.number()),
+    error: v.optional(v.string()),
+    result: v.optional(v.any()),
+  })
+    .index(INDEXES.BY_SCHEDULE_ID, ['scheduleId'])
+    .index(INDEXES.BY_TENANT_ID, ['tenantId']),
+
+  // ─── Workflow Definitions & Runs ───────────────────────────────────────────
+
+  [TABLES.WORKFLOW_DEFINITIONS]: defineTable({
+    tenantId: v.id(TABLES.TENANTS),
+    userId: v.id(TABLES.USERS),
+    name: v.string(),
+    description: v.optional(v.string()),
+    definition: v.any(),
+    isPublished: v.boolean(),
+    version: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index(INDEXES.BY_TENANT_ID, ['tenantId'])
+    .index(INDEXES.BY_USER_ID, ['userId']),
+
+  [TABLES.WORKFLOW_RUNS]: defineTable({
+    workflowDefinitionId: v.id(TABLES.WORKFLOW_DEFINITIONS),
+    tenantId: v.id(TABLES.TENANTS),
+    userId: v.id(TABLES.USERS),
+    mastraRunId: v.optional(v.string()),
+    status: v.union(
+      v.literal(WORKFLOW_RUN_STATUS.PENDING),
+      v.literal(WORKFLOW_RUN_STATUS.RUNNING),
+      v.literal(WORKFLOW_RUN_STATUS.SUSPENDED),
+      v.literal(WORKFLOW_RUN_STATUS.SUCCESS),
+      v.literal(WORKFLOW_RUN_STATUS.FAILED)
+    ),
+    inputData: v.optional(v.any()),
+    result: v.optional(v.any()),
+    suspendedAt: v.optional(v.string()),
+    autoApprove: v.boolean(),
+    startedAt: v.number(),
+    completedAt: v.optional(v.number()),
+  })
+    .index(INDEXES.BY_WORKFLOW_DEFINITION_ID, ['workflowDefinitionId'])
+    .index(INDEXES.BY_TENANT_ID, ['tenantId'])
+    .index(INDEXES.BY_USER_ID, ['userId']),
+
+  [TABLES.WORKFLOW_RUN_STEPS]: defineTable({
+    runId: v.id(TABLES.WORKFLOW_RUNS),
+    stepId: v.string(),
+    status: v.union(
+      v.literal(WORKFLOW_STEP_STATUS.PENDING),
+      v.literal(WORKFLOW_STEP_STATUS.RUNNING),
+      v.literal(WORKFLOW_STEP_STATUS.SUCCESS),
+      v.literal(WORKFLOW_STEP_STATUS.FAILED),
+      v.literal(WORKFLOW_STEP_STATUS.SUSPENDED)
+    ),
+    inputData: v.optional(v.any()),
+    outputData: v.optional(v.any()),
+    suspendPayload: v.optional(v.any()),
+    resumeData: v.optional(v.any()),
+    startedAt: v.optional(v.number()),
+    completedAt: v.optional(v.number()),
+    error: v.optional(v.string()),
+  })
+    .index(INDEXES.BY_RUN_ID, ['runId']),
 })

@@ -1,5 +1,11 @@
 import { Mastra } from '@mastra/core'
+import { LibSQLStore } from '@mastra/libsql'
 import { workspace } from './workspace'
+
+const storage = new LibSQLStore({
+  id: 'mastra-storage',
+  url: process.env.MASTRA_STORAGE_URL ?? process.env.DATABASE_URL ?? 'file:./mastra.db',
+})
 
 /**
  * The Mastra instance is the registry for all agents and workflows.
@@ -10,8 +16,10 @@ import { workspace } from './workspace'
  * - Skill discovery from /skills via SKILL.md files (Mastra Workspace Skills)
  * - BM25 + vector (Qdrant) hybrid search over skill and context content
  * - Filesystem access for skill references, scripts, and assets
+ *
+ * Storage (when configured) enables workflow suspend/resume persistence.
  */
-export const mastra = new Mastra({ workspace })
+export const mastra = new Mastra({ workspace, storage })
 
 export {
   createOrchestratorAgent,

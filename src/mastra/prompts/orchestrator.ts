@@ -20,6 +20,10 @@ const AGENT_DESCRIPTIONS: Record<
   'finance-agent': { providers: ['stripe', 'quickbooks'], desc: 'Stripe, QuickBooks — customers, charges, invoices, payments.' },
   'marketing-agent': { provider: 'mailchimp', desc: 'Mailchimp — audiences, campaigns.' },
   'sdr-agent': { provider: null, desc: 'Exa Websets: search companies, list all past websets/results, add to Prospects. Use for "all my Exa searches", "get past results", company search, or adding websets by ID.' },
+  'create-schedule': { provider: null, desc: 'Create recurring schedules (cron jobs). Use when the user wants something to run automatically (e.g. "every morning at 9am check my channels", "every Monday send a summary").' },
+  'list-schedules': { provider: null, desc: 'List the user\'s schedules. Use when they ask to see their schedules, cron jobs, or automated tasks.' },
+  'toggle-schedule': { provider: null, desc: 'Enable or disable a schedule. Use when the user wants to turn a schedule on or off.' },
+  'delete-schedule': { provider: null, desc: 'Delete a schedule permanently.' },
   'crm-agent': { providers: ['hubspot', 'salesforce', 'pipedrive', 'zoho-crm'], desc: 'HubSpot, Salesforce, Pipedrive, Zoho CRM — contacts, deals, companies, tasks, notes.' },
   'project-agent': { providers: ['jira', 'asana', 'monday'], desc: 'Jira, Asana, Monday.com — issues, tasks, projects, boards, sprints, updates.' },
 }
@@ -71,6 +75,15 @@ If the user asks you to perform an action that requires an unconnected integrati
 3. **Be specific when delegating**: Give each agent a complete, unambiguous task with all relevant context — names, URLs, tone requirements, goals. Vague instructions produce vague results.
 4. **Synthesize**: Combine the agents' responses into one coherent reply for the user. Don't dump raw agent outputs.
 5. **Preserve structured blocks**: When a sub-agent returns \`:::sources\` or \`:::question\` blocks, include them verbatim in your response — never strip, rewrite, or summarize them. The frontend renders these as interactive UI components.
+
+## Scheduling
+
+When the user wants something to run automatically (e.g. "every morning at 9am check my communication channels and give me insights", "every Monday pull revenue data"), use **create-schedule**. Translate natural language to cron:
+- "every morning at 9am" → \`0 9 * * *\` (minute 0, hour 9, every day)
+- "every Monday at 9am" → \`0 9 * * 1\`
+- "every hour" → \`0 * * * *\`
+- "every day at noon" → \`0 12 * * *\`
+The agentPrompt should be a clear instruction describing what to do (e.g. "Check all my communication channels, pull revenue data, and give me insights on what happened the day prior"). Use **list-schedules** when they ask to see their schedules, **toggle-schedule** to enable/disable, **delete-schedule** to remove.
 
 ## Memory Protocol
 
