@@ -16,6 +16,11 @@ export const TABLES = {
   PROSPECT_FIELD_DEFINITIONS: 'prospectFieldDefinitions',
   PROSPECT_RESEARCH_SNAPSHOTS: 'prospectResearchSnapshots',
   OUTREACH_DRAFTS: 'outreachDrafts',
+  SCHEDULES: 'schedules',
+  SCHEDULE_LOGS: 'scheduleLogs',
+  WORKFLOW_DEFINITIONS: 'workflowDefinitions',
+  WORKFLOW_RUNS: 'workflowRuns',
+  WORKFLOW_RUN_STEPS: 'workflowRunSteps',
 } as const
 
 // ─── Index Names ─────────────────────────────────────────────────────────────
@@ -38,6 +43,10 @@ export const INDEXES = {
   BY_TENANT_STAGE: 'by_tenantId_stage',
   BY_OWNER_ID: 'by_ownerId',
   BY_TENANT_SKILL_NAME: 'by_tenantId_skillName',
+  BY_SCHEDULE_ID: 'by_scheduleId',
+  BY_NEXT_RUN_AT: 'by_nextRunAt',
+  BY_WORKFLOW_DEFINITION_ID: 'by_workflowDefinitionId',
+  BY_RUN_ID: 'by_runId',
 } as const
 
 // ─── Enum Values ─────────────────────────────────────────────────────────────
@@ -172,4 +181,36 @@ export const CUSTOM_FIELD_TYPE = {
   DATE: 'date',
   URL: 'url',
   BOOLEAN: 'boolean',
+} as const
+
+// ─── Schedule System ──────────────────────────────────────────────────────────
+
+export const SCHEDULE_ACTION_TYPE = {
+  WORKFLOW: 'workflow',
+  AGENT_PROMPT: 'agent_prompt',
+} as const
+
+export const SCHEDULE_LOG_STATUS = {
+  RUNNING: 'running',
+  SUCCESS: 'success',
+  FAILED: 'failed',
+  SUSPENDED: 'suspended',
+} as const
+
+// ─── Workflow System ──────────────────────────────────────────────────────────
+
+export const WORKFLOW_RUN_STATUS = {
+  PENDING: 'pending',
+  RUNNING: 'running',
+  SUSPENDED: 'suspended',
+  SUCCESS: 'success',
+  FAILED: 'failed',
+} as const
+
+export const WORKFLOW_STEP_STATUS = {
+  PENDING: 'pending',
+  RUNNING: 'running',
+  SUCCESS: 'success',
+  FAILED: 'failed',
+  SUSPENDED: 'suspended',
 } as const

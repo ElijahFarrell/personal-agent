@@ -12,6 +12,13 @@ export const getUserByClerkUserId = query({
   },
 })
 
+export const getUserById = query({
+  args: { userId: v.id(TABLES.USERS) },
+  handler: async (ctx, { userId }) => {
+    return await ctx.db.get(userId)
+  },
+})
+
 export const getUsersByTenantId = query({
   args: { tenantId: v.id(TABLES.TENANTS) },
   handler: async (ctx, { tenantId }) => {
