@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { Suspense, useCallback, useEffect, useState } from 'react'
 import { useUser } from '@clerk/nextjs'
 import { useQuery } from 'convex/react'
 import { useSearchParams } from 'next/navigation'
@@ -128,7 +128,7 @@ const initialNodes: Node[] = [
 
 const initialEdges: Edge[] = []
 
-export default function WorkflowBuilderPage() {
+function WorkflowBuilderContent() {
   const searchParams = useSearchParams()
   const editId = searchParams.get('id') as Id<'workflowDefinitions'> | null
 
@@ -544,5 +544,13 @@ export default function WorkflowBuilderPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function WorkflowBuilderPage() {
+  return (
+    <Suspense fallback={<div className="flex h-[calc(100vh-4rem)] items-center justify-center">Loading...</div>}>
+      <WorkflowBuilderContent />
+    </Suspense>
   )
 }

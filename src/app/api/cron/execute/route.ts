@@ -5,6 +5,7 @@ import { config } from '@/lib/config'
 import { createOrchestratorAgent } from '@/mastra/agents/orchestrator'
 import { executeSchedule, getNextRunAt } from '@/services/scheduleService'
 import type { ScheduleRecord } from '@/services/scheduleService'
+import type { WorkflowDefinition } from '@/services/workflowCompilerService'
 import { SCHEDULE_LOG_STATUS, WORKFLOW_RUN_STATUS } from '@convex/constants'
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
@@ -105,7 +106,7 @@ export async function GET(req: NextRequest) {
               })
               const { compileWorkflow } = await import('@/services/workflowCompilerService')
               const workflow = await compileWorkflow(
-                workflowDef.definition as { nodes: unknown[]; edges: unknown[] },
+                workflowDef.definition as WorkflowDefinition,
                 {
                   userId: clerkUserId,
                   tenantId: clerkTenantId,

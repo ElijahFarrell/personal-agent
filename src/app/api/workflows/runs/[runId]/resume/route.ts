@@ -3,7 +3,10 @@ import { ConvexHttpClient } from 'convex/browser'
 import { api } from '@convex/_generated/api'
 import type { Id } from '@convex/_generated/dataModel'
 import { getTenantContext } from '@/middleware/tenantContext'
-import { compileWorkflow } from '@/services/workflowCompilerService'
+import {
+  compileWorkflow,
+  type WorkflowDefinition,
+} from '@/services/workflowCompilerService'
 import { WORKFLOW_RUN_STATUS } from '@convex/constants'
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
@@ -63,7 +66,7 @@ export async function POST(
     }
 
     const workflow = await compileWorkflow(
-      workflowDef.definition as { nodes: unknown[]; edges: unknown[] },
+      workflowDef.definition as WorkflowDefinition,
       {
         userId: String(dbUser.clerkUserId),
         tenantId: String(dbUser.tenantId),

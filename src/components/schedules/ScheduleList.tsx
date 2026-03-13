@@ -91,7 +91,7 @@ export function ScheduleList() {
     }
   }
 
-  const openEdit = (schedule: (typeof schedules)[0]) => {
+  const openEdit = (schedule: NonNullable<typeof schedules>[number]) => {
     setEditId(schedule._id)
     setFormOpen(true)
   }
