@@ -21,7 +21,11 @@ import {
   Home,
   CreditCard,
   Megaphone,
+  Lock,
 } from 'lucide-react'
+import { useOrgConfig } from '@/hooks/useOrgConfig'
+import { isAgentAllowed } from '@/constants/featureGating'
+import { cn } from '@/lib/utils'
 
 // ─── Agent Catalog ────────────────────────────────────────────────────────────
 
@@ -323,6 +327,7 @@ function saveInstructions(instructions: Record<string, string>) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function AgentsPage() {
+  const { config } = useOrgConfig()
   const [customInstructions, setCustomInstructions] = useState<Record<string, string>>({})
   const [selectedAgent, setSelectedAgent] = useState<AgentDef | null>(null)
   const [draftInstructions, setDraftInstructions] = useState('')
@@ -332,7 +337,8 @@ export default function AgentsPage() {
     setCustomInstructions(loadInstructions())
   }, [])
 
-  function openAgent(agent: AgentDef) {
+  function openAgent(agent: AgentDef, locked?: boolean) {
+    if (locked) return
     setSelectedAgent(agent)
     setDraftInstructions(customInstructions[agent.id] ?? '')
     setSaved(false)
@@ -437,10 +443,14 @@ export default function AgentsPage() {
               {AGENTS.filter((a) => !a.isOrchestrator).map((agent) => {
                 const Icon = agent.icon
                 const hasInstructions = Boolean(customInstructions[agent.id])
+                const locked = !isAgentAllowed(config, agent.id)
                 return (
                   <li
                     key={agent.id}
-                    className="flex items-center justify-between gap-4 px-5 py-4 transition-colors hover:bg-accent/50"
+                    className={cn(
+                      'flex items-center justify-between gap-4 px-5 py-4 transition-colors',
+                      locked ? 'opacity-60' : 'hover:bg-accent/50'
+                    )}
                   >
                     <div className="flex min-w-0 items-center gap-3">
                       <span
@@ -452,7 +462,13 @@ export default function AgentsPage() {
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
                           <p className="text-sm font-medium text-white">{agent.name}</p>
-                          {hasInstructions && (
+                          {locked && (
+                            <span className="flex items-center gap-1 rounded-full bg-gray-600/20 px-1.5 py-0.5 text-[10px] font-medium text-gray-400">
+                              <Lock className="h-2.5 w-2.5" />
+                              Locked
+                            </span>
+                          )}
+                          {hasInstructions && !locked && (
                             <span className="rounded-full bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-400">
                               Customized
                             </span>
@@ -463,11 +479,18 @@ export default function AgentsPage() {
                     </div>
                     <button
                       type="button"
-                      onClick={() => openAgent(agent)}
-                      className="flex shrink-0 items-center gap-1.5 rounded-lg border border-border bg-transparent px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-border hover:bg-accent/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                      onClick={() => openAgent(agent, locked)}
+                      disabled={locked}
+                      title={locked ? 'Contact your admin to request access' : undefined}
+                      className={cn(
+                        'flex shrink-0 items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500',
+                        locked
+                          ? 'cursor-not-allowed border-border bg-transparent text-muted-foreground'
+                          : 'border-border bg-transparent text-muted-foreground hover:border-border hover:bg-accent/60 hover:text-foreground'
+                      )}
                     >
-                      Configure
-                      <ChevronRight className="h-3 w-3" />
+                      {locked ? 'Contact admin' : 'Configure'}
+                      {!locked && <ChevronRight className="h-3 w-3" />}
                     </button>
                   </li>
                 )

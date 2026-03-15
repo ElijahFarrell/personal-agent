@@ -1,7 +1,9 @@
 import { auth } from '@clerk/nextjs/server'
 import { ConvexHttpClient } from 'convex/browser'
 import { api } from '@convex/_generated/api'
+import type { Id } from '@convex/_generated/dataModel'
 import type { TenantContext, PlanTier } from '@/types'
+import { DEFAULT_CONFIG } from '@/constants/featureGating'
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
 
@@ -10,6 +12,7 @@ export const PERSONAL_CONTEXT: TenantContext = {
   tenantId: 'personal',
   userId: process.env.TELEGRAM_OWNER_ID ?? 'owner',
   tier: 'pro',
+  config: DEFAULT_CONFIG,
 }
 
 /**
@@ -38,6 +41,27 @@ async function resolveTier(clerkOrgOrUserId: string): Promise<PlanTier> {
 }
 
 /**
+ * Resolve org config from Convex. Falls back to DEFAULT_CONFIG when none exists.
+ */
+async function resolveConfig(tenantConvexId: Id<'tenants'>) {
+  try {
+    const config = await convex.query(api.tenantConfigs.getByTenantId, {
+      tenantId: tenantConvexId,
+    })
+    if (!config) return DEFAULT_CONFIG
+    return {
+      allowedAgents: config.allowedAgents,
+      allowedIntegrations: config.allowedIntegrations,
+      features: config.features,
+      limits: config.limits,
+      billingModel: config.billingModel,
+    }
+  } catch {
+    return DEFAULT_CONFIG
+  }
+}
+
+/**
  * Extract tenant context from an authenticated Clerk session.
  * Falls back to personal context if Clerk is not configured.
  */
@@ -48,12 +72,26 @@ export async function getTenantContext(): Promise<TenantContext> {
     if (!userId) return PERSONAL_CONTEXT
 
     const tenantKey = orgId ?? userId
+    const tenant = await convex.query(api.tenants.getTenantByClerkOrgId, {
+      clerkOrgId: tenantKey,
+    })
+    if (!tenant) {
+      return {
+        tenantId: tenantKey,
+        userId,
+        tier: 'free',
+        config: DEFAULT_CONFIG,
+      }
+    }
+
     const tier = await resolveTier(tenantKey)
+    const config = await resolveConfig(tenant._id)
 
     return {
       tenantId: tenantKey,
       userId,
       tier,
+      config,
     }
   } catch {
     return PERSONAL_CONTEXT

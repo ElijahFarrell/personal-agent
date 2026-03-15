@@ -33,6 +33,10 @@ import { api } from '@convex/_generated/api'
 import type { Id } from '@convex/_generated/dataModel'
 import { AGENT_BY_ID, type AgentId } from '@/constants/agents'
 import { CHAT_CREDIT_ACTION, CHAT_LIMITS, CHAT_ROLES } from '@/constants/chat'
+import {
+  isAgentAllowed,
+  isFeatureEnabled,
+} from '@/constants/featureGating'
 
 // Exa Websets can take 5–10 min for complex searches; allow long-running SDR tool calls
 export const maxDuration = 300
@@ -95,7 +99,26 @@ export async function POST(req: NextRequest) {
     console.log('[Chat API] Extracted message:', message.slice(0, 100))
 
     const tenantCtx = await getTenantContext()
-    const { userId, tenantId } = tenantCtx
+    const { userId, tenantId, config } = tenantCtx
+
+    if (targetAgent && !isAgentAllowed(config, targetAgent)) {
+      return NextResponse.json(
+        {
+          error: `Agent "${targetAgent}" is not available for your organization. Contact your admin to request access.`,
+        },
+        { status: 403 }
+      )
+    }
+
+    if (deepResearch && !isFeatureEnabled(config, 'deepResearch')) {
+      return NextResponse.json(
+        {
+          error:
+            'Deep research is not available for your organization. Contact your admin to request access.',
+        },
+        { status: 403 }
+      )
+    }
 
     console.log(`[Chat API] tenantId=${tenantId} | userId=${userId} | threadId=${threadId ?? 'none'}`)
 

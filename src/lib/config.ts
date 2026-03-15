@@ -68,4 +68,10 @@ export const config = {
     url: optionalEnv('NEXT_PUBLIC_APP_URL', 'http://localhost:3000'),
     isDev: process.env.NODE_ENV === 'development',
   },
+  admin: {
+    /** Clerk userId of the super admin (server). Only this user can access /api/admin/* */
+    superAdminUserId: optionalEnv('SUPER_ADMIN_USER_ID'),
+    /** Same value, for client-side checks (e.g. Admin nav link). Set both. */
+    superAdminUserIdPublic: optionalEnv('NEXT_PUBLIC_SUPER_ADMIN_USER_ID'),
+  },
 } as const

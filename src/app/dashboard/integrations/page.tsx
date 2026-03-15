@@ -6,6 +6,9 @@ import { api } from '@convex/_generated/api'
 import { ConnectButton } from '@/components/ConnectButton'
 import { TelegramConnectButton } from '@/components/TelegramConnectButton'
 import type { IntegrationProvider } from '@/types'
+import { useOrgConfig } from '@/hooks/useOrgConfig'
+import { isIntegrationAllowed } from '@/constants/featureGating'
+import { Lock } from 'lucide-react'
 import {
   Mail,
   Calendar,
@@ -257,6 +260,7 @@ const TELEGRAM_ENTRY = {
 
 export default function IntegrationsPage() {
   const { user } = useUser()
+  const { config } = useOrgConfig()
 
   const dbUser = useQuery(
     api.users.getUserByClerkUserId,
@@ -298,10 +302,13 @@ export default function IntegrationsPage() {
       >
         {INTEGRATIONS.map(({ id, name, description, provider, Icon, iconBg, iconColor }) => {
           const isConnected = connectedProviders.has(provider)
+          const locked = !isIntegrationAllowed(config, provider)
           return (
             <div
               key={id}
-              className="flex flex-col rounded-xl border border-gray-800/60 bg-gray-900/40 p-5 transition-colors hover:border-gray-700/60"
+              className={`flex flex-col rounded-xl border border-gray-800/60 bg-gray-900/40 p-5 transition-colors ${
+                locked ? 'opacity-60' : 'hover:border-gray-700/60'
+              }`}
             >
               <div className="flex min-w-0 items-start gap-4">
                 <span
@@ -311,16 +318,31 @@ export default function IntegrationsPage() {
                   <Icon className={`h-5 w-5 ${iconColor}`} />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-white">{name}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium text-white">{name}</p>
+                    {locked && (
+                      <span className="flex items-center gap-1 rounded-full bg-gray-600/20 px-1.5 py-0.5 text-[10px] font-medium text-gray-400">
+                        <Lock className="h-2.5 w-2.5" />
+                        Locked
+                      </span>
+                    )}
+                  </div>
                   <p className="mt-0.5 text-xs text-gray-500 line-clamp-2">{description}</p>
                 </div>
               </div>
               <div className="mt-4">
-                <ConnectButton
-                  integrationId={id}
-                  provider={provider}
-                  isConnected={isConnected}
-                />
+                {locked ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-lg border border-gray-700 bg-gray-800/50 px-3 py-2 text-xs text-gray-500">
+                    <Lock className="h-3.5 w-3.5" />
+                    Contact admin to request access
+                  </span>
+                ) : (
+                  <ConnectButton
+                    integrationId={id}
+                    provider={provider}
+                    isConnected={isConnected}
+                  />
+                )}
               </div>
             </div>
           )

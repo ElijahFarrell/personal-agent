@@ -1,6 +1,6 @@
 import { defineSchema, defineTable } from 'convex/server'
 import { v } from 'convex/values'
-import { CONTEXT_DOC_CATEGORY, CREDIT_ACTION, CREDIT_TX_TYPE, CUSTOM_FIELD_TYPE, DRAFT_STATUS, INDEXES, INTEGRATION_STATUS, MESSAGE_ROLE, MESSAGE_SOURCE, OUTREACH_CHANNEL, PROSPECT_SOURCE, PROSPECT_STAGE, PROSPECT_STATUS, ROLE, SCHEDULE_ACTION_TYPE, SCHEDULE_LOG_STATUS, SCOPE, SKILL_SOURCE, TABLES, TIER, WORKFLOW_RUN_STATUS, WORKFLOW_STEP_STATUS } from './constants'
+import { BILLING_MODEL, CONTEXT_DOC_CATEGORY, CREDIT_ACTION, CREDIT_TX_TYPE, CUSTOM_FIELD_TYPE, DRAFT_STATUS, INDEXES, INTEGRATION_STATUS, MESSAGE_ROLE, MESSAGE_SOURCE, OUTREACH_CHANNEL, PROSPECT_SOURCE, PROSPECT_STAGE, PROSPECT_STATUS, ROLE, SCHEDULE_ACTION_TYPE, SCHEDULE_LOG_STATUS, SCOPE, SKILL_SOURCE, SUBSCRIPTION_STATUS, TABLES, TIER, WORKFLOW_RUN_STATUS, WORKFLOW_STEP_STATUS } from './constants'
 
 export default defineSchema({
   [TABLES.TENANTS]: defineTable({
@@ -13,6 +13,43 @@ export default defineSchema({
     ),
     createdAt: v.number(),
   }).index(INDEXES.BY_CLERK_ORG_ID, ['clerkOrgId']),
+
+  [TABLES.TENANT_CONFIGS]: defineTable({
+    tenantId: v.id(TABLES.TENANTS),
+    allowedAgents: v.union(v.literal('all'), v.array(v.string())),
+    allowedIntegrations: v.union(v.literal('all'), v.array(v.string())),
+    features: v.object({
+      customWorkflows: v.boolean(),
+      deepResearch: v.boolean(),
+      outreachCampaigns: v.boolean(),
+      prospectTable: v.boolean(),
+      exaWebsets: v.boolean(),
+      crmSync: v.boolean(),
+      customSkills: v.boolean(),
+      voiceMode: v.boolean(),
+      workflowBuilder: v.boolean(),
+      scheduledTasks: v.boolean(),
+    }),
+    limits: v.object({
+      maxMembers: v.number(),
+      maxProspectsPerMonth: v.number(),
+      maxWorkflows: v.number(),
+      maxSchedules: v.number(),
+      maxSkills: v.number(),
+      monthlyCredits: v.number(),
+    }),
+    billingModel: v.union(
+      v.literal(BILLING_MODEL.UNLIMITED),
+      v.literal(BILLING_MODEL.FLAT),
+      v.literal(BILLING_MODEL.USAGE),
+      v.literal(BILLING_MODEL.FLAT_PLUS_USAGE),
+      v.literal(BILLING_MODEL.TRIAL),
+      v.literal(BILLING_MODEL.FRIEND)
+    ),
+    adminNotes: v.optional(v.string()),
+    updatedAt: v.number(),
+    updatedBy: v.string(),
+  }).index(INDEXES.BY_TENANT_ID, ['tenantId']),
 
   [TABLES.USERS]: defineTable({
     clerkUserId: v.string(),
@@ -152,9 +189,23 @@ export default defineSchema({
     unlimitedCredits: v.optional(v.boolean()),
     trialStartedAt: v.optional(v.number()),
     trialEndsAt: v.optional(v.number()),
+    stripeCustomerId: v.optional(v.string()),
+    stripeSubscriptionId: v.optional(v.string()),
+    subscriptionStatus: v.optional(
+      v.union(
+        v.literal(SUBSCRIPTION_STATUS.ACTIVE),
+        v.literal(SUBSCRIPTION_STATUS.CANCELED),
+        v.literal(SUBSCRIPTION_STATUS.PAST_DUE),
+        v.literal(SUBSCRIPTION_STATUS.TRIALING)
+      )
+    ),
+    currentPeriodEnd: v.optional(v.number()),
+    monthlyBasePrice: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
-  }).index(INDEXES.BY_TENANT_ID, ['tenantId']),
+  })
+    .index(INDEXES.BY_TENANT_ID, ['tenantId'])
+    .index(INDEXES.BY_STRIPE_CUSTOMER_ID, ['stripeCustomerId']),
 
   [TABLES.TELEGRAM_LINK_TOKENS]: defineTable({
     token: v.string(),
@@ -408,4 +459,28 @@ export default defineSchema({
     error: v.optional(v.string()),
   })
     .index(INDEXES.BY_RUN_ID, ['runId']),
+
+  // ─── Dashboard & Daily Todos ───────────────────────────────────────────────
+
+  [TABLES.DAILY_TODOS]: defineTable({
+    userId: v.id(TABLES.USERS),
+    date: v.string(),
+    items: v.array(
+      v.object({
+        id: v.string(),
+        text: v.string(),
+        completed: v.boolean(),
+        order: v.number(),
+        source: v.optional(v.string()),
+      })
+    ),
+    updatedAt: v.number(),
+  }).index(INDEXES.BY_USER_ID_DATE, ['userId', 'date']),
+
+  [TABLES.USER_DASHBOARD_PREFERENCES]: defineTable({
+    userId: v.id(TABLES.USERS),
+    enabledWidgets: v.array(v.string()),
+    widgetOrder: v.optional(v.array(v.number())),
+    updatedAt: v.number(),
+  }).index(INDEXES.BY_USER_ID, ['userId']),
 })

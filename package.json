@@ -84,6 +84,7 @@
     "recharts": "^2.15.4",
     "shiki": "^4.0.1",
     "streamdown": "^2.4.0",
+    "stripe": "^20.4.1",
     "tailwind-merge": "^3.5.0",
     "tailwindcss-animate": "^1.0.7",
     "telegraf": "^4.16.3",
