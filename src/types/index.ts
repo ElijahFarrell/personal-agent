@@ -1,10 +1,13 @@
 // ─── Tenant & User ───────────────────────────────────────────────────────────
 
+import type { TenantConfig } from '@/constants/featureGating'
+
 export interface TenantContext {
   tenantId: string
   userId: string
   userEmail?: string
   tier: 'free' | 'pro' | 'enterprise'
+  config: TenantConfig
 }
 
 export type PlanTier = 'free' | 'pro' | 'enterprise'

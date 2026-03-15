@@ -2,6 +2,7 @@
 
 export const TABLES = {
   TENANTS: 'tenants',
+  TENANT_CONFIGS: 'tenantConfigs',
   USERS: 'users',
   USER_INTEGRATIONS: 'userIntegrations',
   TENANT_SKILLS: 'tenantSkills',
@@ -21,6 +22,8 @@ export const TABLES = {
   WORKFLOW_DEFINITIONS: 'workflowDefinitions',
   WORKFLOW_RUNS: 'workflowRuns',
   WORKFLOW_RUN_STEPS: 'workflowRunSteps',
+  DAILY_TODOS: 'dailyTodos',
+  USER_DASHBOARD_PREFERENCES: 'userDashboardPreferences',
 } as const
 
 // ─── Index Names ─────────────────────────────────────────────────────────────
@@ -47,6 +50,8 @@ export const INDEXES = {
   BY_NEXT_RUN_AT: 'by_nextRunAt',
   BY_WORKFLOW_DEFINITION_ID: 'by_workflowDefinitionId',
   BY_RUN_ID: 'by_runId',
+  BY_STRIPE_CUSTOMER_ID: 'by_stripeCustomerId',
+  BY_USER_ID_DATE: 'by_userId_date',
 } as const
 
 // ─── Enum Values ─────────────────────────────────────────────────────────────
@@ -213,4 +218,36 @@ export const WORKFLOW_STEP_STATUS = {
   SUCCESS: 'success',
   FAILED: 'failed',
   SUSPENDED: 'suspended',
+} as const
+
+// ─── Tenant Config / Billing Model ───────────────────────────────────────────
+
+export const BILLING_MODEL = {
+  UNLIMITED: 'unlimited',
+  FLAT: 'flat',
+  USAGE: 'usage',
+  FLAT_PLUS_USAGE: 'flat_plus_usage',
+  TRIAL: 'trial',
+  FRIEND: 'friend',
+} as const
+
+export const SUBSCRIPTION_STATUS = {
+  ACTIVE: 'active',
+  CANCELED: 'canceled',
+  PAST_DUE: 'past_due',
+  TRIALING: 'trialing',
+} as const
+
+/** Feature flag keys for tenant config */
+export const FEATURE_FLAGS = {
+  CUSTOM_WORKFLOWS: 'customWorkflows',
+  DEEP_RESEARCH: 'deepResearch',
+  OUTREACH_CAMPAIGNS: 'outreachCampaigns',
+  PROSPECT_TABLE: 'prospectTable',
+  EXA_WEBSETS: 'exaWebsets',
+  CRM_SYNC: 'crmSync',
+  CUSTOM_SKILLS: 'customSkills',
+  VOICE_MODE: 'voiceMode',
+  WORKFLOW_BUILDER: 'workflowBuilder',
+  SCHEDULED_TASKS: 'scheduledTasks',
 } as const
