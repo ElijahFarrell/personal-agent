@@ -24,6 +24,7 @@ export const TABLES = {
   WORKFLOW_RUN_STEPS: 'workflowRunSteps',
   DAILY_TODOS: 'dailyTodos',
   USER_DASHBOARD_PREFERENCES: 'userDashboardPreferences',
+  CONTENT_DRAFTS: 'contentDrafts',
 } as const
 
 // ─── Index Names ─────────────────────────────────────────────────────────────
@@ -52,6 +53,7 @@ export const INDEXES = {
   BY_RUN_ID: 'by_runId',
   BY_STRIPE_CUSTOMER_ID: 'by_stripeCustomerId',
   BY_USER_ID_DATE: 'by_userId_date',
+  BY_TENANT_PLATFORM: 'by_tenantId_platform',
 } as const
 
 // ─── Enum Values ─────────────────────────────────────────────────────────────
@@ -128,6 +130,23 @@ export const CONTEXT_DOC_CATEGORY = {
 export const SCOPE = {
   ORG: 'org',
   USER: 'user',
+} as const
+
+// ─── Content Drafts ───────────────────────────────────────────────────────────
+
+export const CONTENT_PLATFORM = {
+  LINKEDIN: 'linkedin',
+  X: 'x',
+  YOUTUBE: 'youtube',
+  INSTAGRAM: 'instagram',
+  TIKTOK: 'tiktok',
+} as const
+
+export const CONTENT_DRAFT_STATUS = {
+  DRAFT: 'draft',
+  READY: 'ready',
+  POSTED: 'posted',
+  SCHEDULED: 'scheduled',
 } as const
 
 export const SKILL_SOURCE = {

@@ -10,6 +10,7 @@
 
 import type * as billing from "../billing.js";
 import type * as constants from "../constants.js";
+import type * as contentDrafts from "../contentDrafts.js";
 import type * as contextDocs from "../contextDocs.js";
 import type * as credits from "../credits.js";
 import type * as dailyTodos from "../dailyTodos.js";
@@ -38,6 +39,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   billing: typeof billing;
   constants: typeof constants;
+  contentDrafts: typeof contentDrafts;
   contextDocs: typeof contextDocs;
   credits: typeof credits;
   dailyTodos: typeof dailyTodos;

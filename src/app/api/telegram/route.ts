@@ -12,6 +12,7 @@ import {
 import { retrieveRelevantContext, buildContextBlock } from '@/services/contextService'
 import { config } from '@/lib/config'
 import { api } from '@convex/_generated/api'
+import { CHAT_ROLES } from '@/constants/chat'
 
 type TextContext = NarrowedContext<Context<Update>, Update.MessageUpdate<Message.TextMessage>>
 
@@ -156,7 +157,7 @@ async function persistTelegramMessages(
     await convex.mutation(api.messages.saveMessage, {
       userId: convexUser._id,
       tenantId: convexUser.tenantId,
-      role: 'user',
+      role: CHAT_ROLES.USER,
       source: 'telegram',
       content: userMessage,
       threadId,
@@ -164,7 +165,7 @@ async function persistTelegramMessages(
     await convex.mutation(api.messages.saveMessage, {
       userId: convexUser._id,
       tenantId: convexUser.tenantId,
-      role: 'assistant',
+      role: CHAT_ROLES.ASSISTANT,
       source: 'telegram',
       content: assistantMessage,
       threadId,

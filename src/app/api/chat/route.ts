@@ -32,7 +32,7 @@ import { getTenantContext } from '@/middleware/tenantContext'
 import { api } from '@convex/_generated/api'
 import type { Id } from '@convex/_generated/dataModel'
 import { AGENT_BY_ID, type AgentId } from '@/constants/agents'
-import { CHAT_CREDIT_ACTION, CHAT_LIMITS, CHAT_ROLES } from '@/constants/chat'
+import { CHAT_CREDIT_ACTION, CHAT_LIMITS, CHAT_ROLES, type AgentMessage } from '@/constants/chat'
 import {
   isAgentAllowed,
   isFeatureEnabled,
@@ -61,7 +61,7 @@ function extractUserMessage(body: Record<string, unknown>): string | null {
 
   if (!messages?.length) return null
 
-  const lastUser = [...messages].reverse().find((m) => m.role === 'user')
+  const lastUser = [...messages].reverse().find((m) => m.role === CHAT_ROLES.USER)
   if (!lastUser) return null
 
   if (lastUser.parts) {
@@ -250,7 +250,7 @@ export async function POST(req: NextRequest) {
     const skillsContext = buildSkillsSystemContext(resolvedSkills)
     const contextBlock = buildContextBlock(relevantContext)
 
-    const agentMessages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }> = []
+    const agentMessages: AgentMessage[] = []
 
     const systemParts = [skillsContext, contextBlock, prospectsContext].filter(Boolean)
     if (systemParts.length > 0) {
@@ -259,7 +259,7 @@ export async function POST(req: NextRequest) {
 
     for (const doc of historyDocs) {
       if (doc.content === message && doc.role === CHAT_ROLES.USER) continue
-      agentMessages.push({ role: doc.role as 'user' | 'assistant', content: doc.content })
+      agentMessages.push({ role: doc.role as AgentMessage['role'], content: doc.content })
     }
 
     agentMessages.push({ role: CHAT_ROLES.USER, content: message })
@@ -305,8 +305,13 @@ export async function POST(req: NextRequest) {
         const createFn = createFns[agentId as (typeof mcpAgentIds)[number]]
         if (createFn) {
           const { agent, toolsets } = await createFn(userId, connectedProviders)
+          const agentMessagesWithTask = [...agentMessages]
+          const lastIdx = agentMessagesWithTask.length - 1
+          if (lastIdx >= 0 && agentMessagesWithTask[lastIdx]?.role === CHAT_ROLES.USER) {
+            agentMessagesWithTask[lastIdx] = { role: CHAT_ROLES.USER, content: taskWithInstructions }
+          }
           stream = await agent.stream(
-            [{ role: 'user' as const, content: taskWithInstructions }],
+            agentMessagesWithTask as Parameters<typeof agent.stream>[0],
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             { toolsets } as any
           )
@@ -322,8 +327,16 @@ export async function POST(req: NextRequest) {
         }
         const createFn = createFns[agentId as (typeof simpleAgentIds)[number]]
         if (createFn) {
-          const agent = createFn(userId) as Agent
-          stream = await agent.stream([{ role: 'user' as const, content: taskWithInstructions }])
+          const agent =
+            agentId === 'content'
+              ? createContentAgent(userId, skillScope)
+              : (createFn(userId) as Agent)
+          const agentMessagesWithTask = [...agentMessages]
+          const lastIdx = agentMessagesWithTask.length - 1
+          if (lastIdx >= 0 && agentMessagesWithTask[lastIdx]?.role === CHAT_ROLES.USER) {
+            agentMessagesWithTask[lastIdx] = { role: CHAT_ROLES.USER, content: taskWithInstructions }
+          }
+          stream = await agent.stream(agentMessagesWithTask as Parameters<typeof agent.stream>[0])
         }
       }
     }
@@ -340,7 +353,10 @@ export async function POST(req: NextRequest) {
         convexTenantId ?? tenantId,
         agentInstructions,
         connectedProviders,
-        model
+        model,
+        skillScope
+          ? { scope: skillScope, preferences: skillPreferences }
+          : undefined
       )
       stream = await agent.stream(agentMessages as Parameters<typeof agent.stream>[0])
     }
