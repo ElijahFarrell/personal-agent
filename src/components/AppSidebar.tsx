@@ -19,6 +19,8 @@ import {
   GitBranch,
   Clock,
   Shield,
+  PenLine,
+  FileEdit,
 } from 'lucide-react'
 import { useOrgConfig } from '@/hooks/useOrgConfig'
 import { isSuperAdmin } from '@/middleware/adminGuard'
@@ -82,6 +84,15 @@ const NAV_CONFIG: (NavItem | NavGroup)[] = [
   },
   {
     type: 'group',
+    label: 'Content',
+    icon: PenLine,
+    storageKey: 'content',
+    children: [
+      { type: 'item', href: '/dashboard/content/drafts', label: 'Drafts', icon: FileEdit },
+    ],
+  },
+  {
+    type: 'group',
     label: 'Workspace',
     icon: FolderOpen,
     storageKey: 'workspace',
@@ -120,6 +131,8 @@ function getDefaultGroupState(pathname: string): Record<string, boolean> {
       pathname.startsWith('/dashboard/agents') ||
       pathname.startsWith('/dashboard/workflows') ||
       pathname.startsWith('/dashboard/schedules'),
+    content:
+      pathname.startsWith('/dashboard/content'),
     workspace:
       pathname.startsWith('/dashboard/context') ||
       pathname.startsWith('/dashboard/skills') ||

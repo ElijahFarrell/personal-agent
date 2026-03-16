@@ -9,6 +9,12 @@ export const CHAT_ROLES = {
 
 export type ChatRole = (typeof CHAT_ROLES)[keyof typeof CHAT_ROLES]
 
+/** Message shape for agent prompts (system, user, assistant). */
+export interface AgentMessage {
+  role: ChatRole
+  content: string
+}
+
 export const CHAT_SOURCES = {
   WEB: 'web',
   TELEGRAM: 'telegram',

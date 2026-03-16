@@ -1,6 +1,6 @@
 import { defineSchema, defineTable } from 'convex/server'
 import { v } from 'convex/values'
-import { BILLING_MODEL, CONTEXT_DOC_CATEGORY, CREDIT_ACTION, CREDIT_TX_TYPE, CUSTOM_FIELD_TYPE, DRAFT_STATUS, INDEXES, INTEGRATION_STATUS, MESSAGE_ROLE, MESSAGE_SOURCE, OUTREACH_CHANNEL, PROSPECT_SOURCE, PROSPECT_STAGE, PROSPECT_STATUS, ROLE, SCHEDULE_ACTION_TYPE, SCHEDULE_LOG_STATUS, SCOPE, SKILL_SOURCE, SUBSCRIPTION_STATUS, TABLES, TIER, WORKFLOW_RUN_STATUS, WORKFLOW_STEP_STATUS } from './constants'
+import { BILLING_MODEL, CONTEXT_DOC_CATEGORY, CONTENT_DRAFT_STATUS, CONTENT_PLATFORM, CREDIT_ACTION, CREDIT_TX_TYPE, CUSTOM_FIELD_TYPE, DRAFT_STATUS, INDEXES, INTEGRATION_STATUS, MESSAGE_ROLE, MESSAGE_SOURCE, OUTREACH_CHANNEL, PROSPECT_SOURCE, PROSPECT_STAGE, PROSPECT_STATUS, ROLE, SCHEDULE_ACTION_TYPE, SCHEDULE_LOG_STATUS, SCOPE, SKILL_SOURCE, SUBSCRIPTION_STATUS, TABLES, TIER, WORKFLOW_RUN_STATUS, WORKFLOW_STEP_STATUS } from './constants'
 
 export default defineSchema({
   [TABLES.TENANTS]: defineTable({
@@ -352,6 +352,36 @@ export default defineSchema({
   })
     .index(INDEXES.BY_PROSPECT_ID, ['prospectId'])
     .index(INDEXES.BY_TENANT_ID, ['tenantId']),
+
+  [TABLES.CONTENT_DRAFTS]: defineTable({
+    tenantId: v.id(TABLES.TENANTS),
+    userId: v.id(TABLES.USERS),
+    scope: v.union(v.literal(SCOPE.ORG), v.literal(SCOPE.USER)),
+    platform: v.union(
+      v.literal(CONTENT_PLATFORM.LINKEDIN),
+      v.literal(CONTENT_PLATFORM.X),
+      v.literal(CONTENT_PLATFORM.YOUTUBE),
+      v.literal(CONTENT_PLATFORM.INSTAGRAM),
+      v.literal(CONTENT_PLATFORM.TIKTOK)
+    ),
+    content: v.string(),
+    title: v.optional(v.string()),
+    status: v.union(
+      v.literal(CONTENT_DRAFT_STATUS.DRAFT),
+      v.literal(CONTENT_DRAFT_STATUS.READY),
+      v.literal(CONTENT_DRAFT_STATUS.POSTED),
+      v.literal(CONTENT_DRAFT_STATUS.SCHEDULED)
+    ),
+    scheduledFor: v.optional(v.number()),
+    postedAt: v.optional(v.number()),
+    externalIntegrationId: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index(INDEXES.BY_TENANT_ID, ['tenantId'])
+    .index(INDEXES.BY_USER_ID, ['userId'])
+    .index(INDEXES.BY_TENANT_SCOPE, ['tenantId', 'scope'])
+    .index(INDEXES.BY_TENANT_PLATFORM, ['tenantId', 'platform']),
 
   // ─── Schedules ──────────────────────────────────────────────────────────────
 

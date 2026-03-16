@@ -84,8 +84,12 @@ export interface RouteDefinition {
 
 // ─── Chat & Messages ─────────────────────────────────────────────────────────
 
+import type { ChatRole } from '@/constants/chat'
+
+export type { ChatRole }
+
 export interface ChatMessage {
-  role: 'user' | 'assistant' | 'system'
+  role: ChatRole
   content: string
 }
 

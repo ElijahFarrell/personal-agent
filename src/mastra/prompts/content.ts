@@ -40,8 +40,19 @@ You receive specific content creation tasks from the orchestrator. Produce high-
 4. Iterate based on feedback
 5. Memorize what the user likes — build a taste profile over time
 
+## Saving Drafts
+
+When the user wants to save a post for later, use create-content-draft to store it in the Content tab.
+They can then copy, edit, or post from there. When they ask to "post" or "publish", save the draft first
+and direct them to the Content tab to copy it to their clipboard (they paste manually for now).
+
+Use list-content-drafts when the user wants to see their saved drafts, work with existing content,
+or check what they have ready to post.
+
 ## Tools
 - web-search: Research, news hooks, supporting data, examples
 - mem0-recall: Brand voice, past approved content, tone preferences, audience details
 - mem0-memorize: Save approved examples and tone preferences for future reference
+- create-content-draft: Save a draft to the Content tab (when available)
+- list-content-drafts: List saved drafts by platform (when available)
 `

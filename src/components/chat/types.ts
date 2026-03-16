@@ -1,7 +1,9 @@
+import type { ChatRole } from '@/constants/chat'
+
 /** Unified message shape used across all chat components */
 export interface ChatMessage {
   id: string
-  role: 'user' | 'assistant'
+  role: Extract<ChatRole, 'user' | 'assistant'>
   content: string
   source: 'web' | 'telegram'
   createdAt: number
