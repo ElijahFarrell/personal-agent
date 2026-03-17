@@ -1,26 +1,40 @@
 import { Mastra } from '@mastra/core'
+import { MastraCompositeStore } from '@mastra/core/storage'
 import { LibSQLStore } from '@mastra/libsql'
 import { workspace } from './workspace'
+import { ConvexWorkflowsStorage } from './storage/convexWorkflowsStorage'
+import { FallbackWorkflowsStorage } from './storage/fallbackWorkflowsStorage'
 
 /**
- * Storage for workflow suspend/resume. On Vercel/serverless, file:./mastra.db fails
- * (read-only FS). Use Turso (libsql://...) + TURSO_AUTH_TOKEN in production.
- * Fallback: :memory: in production (no persistence), file:./mastra.db locally.
+ * Storage for workflow suspend/resume.
+ * - When NEXT_PUBLIC_CONVEX_URL is set: use Convex with :memory: fallback on error.
+ * - Else when MASTRA_STORAGE_URL/Turso: use LibSQL remote.
+ * - Else on serverless: :memory: (no persistence).
+ * - Else locally: file:./mastra.db.
  */
 function createStorage() {
-  const url = process.env.MASTRA_STORAGE_URL ?? process.env.DATABASE_URL
+  const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL
+  const tursoUrl = process.env.MASTRA_STORAGE_URL ?? process.env.DATABASE_URL
   const authToken = process.env.TURSO_AUTH_TOKEN
   const isServerless = process.env.VERCEL === '1'
 
-  if (url) {
+  if (convexUrl) {
+    return new MastraCompositeStore({
+      id: 'mastra-storage',
+      domains: {
+        workflows: new FallbackWorkflowsStorage(new ConvexWorkflowsStorage()),
+      },
+    })
+  }
+
+  if (tursoUrl) {
     return new LibSQLStore({
       id: 'mastra-storage',
-      url,
+      url: tursoUrl,
       ...(authToken && { authToken }),
     })
   }
 
-  // Serverless without remote DB: use in-memory to avoid ConnectionFailed
   if (isServerless) {
     return new LibSQLStore({
       id: 'mastra-storage',

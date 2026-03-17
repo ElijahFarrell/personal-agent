@@ -513,4 +513,17 @@ export default defineSchema({
     widgetOrder: v.optional(v.array(v.number())),
     updatedAt: v.number(),
   }).index(INDEXES.BY_USER_ID, ['userId']),
+
+  // ─── Mastra Workflow Storage ───────────────────────────────────────────────
+
+  [TABLES.WORKFLOW_SNAPSHOTS]: defineTable({
+    runId: v.string(),
+    workflowName: v.string(),
+    resourceId: v.optional(v.string()),
+    snapshot: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index(INDEXES.BY_SNAPSHOT_RUN_ID, ['runId'])
+    .index(INDEXES.BY_WORKFLOW_RUN, ['workflowName', 'runId']),
 })

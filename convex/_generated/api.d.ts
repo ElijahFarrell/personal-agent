@@ -29,6 +29,7 @@ import type * as userDashboardPreferences from "../userDashboardPreferences.js";
 import type * as users from "../users.js";
 import type * as workflowDefinitions from "../workflowDefinitions.js";
 import type * as workflowRuns from "../workflowRuns.js";
+import type * as workflowSnapshots from "../workflowSnapshots.js";
 
 import type {
   ApiFromModules,
@@ -58,6 +59,7 @@ declare const fullApi: ApiFromModules<{
   users: typeof users;
   workflowDefinitions: typeof workflowDefinitions;
   workflowRuns: typeof workflowRuns;
+  workflowSnapshots: typeof workflowSnapshots;
 }>;
 
 /**
