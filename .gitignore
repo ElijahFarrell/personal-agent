@@ -31,3 +31,8 @@ next-env.d.ts
 
 # vercel
 .vercel
+
+# mastra local sqlite
+mastra.db
+mastra.db-shm
+mastra.db-wal

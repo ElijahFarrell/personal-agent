@@ -25,6 +25,7 @@ export const TABLES = {
   DAILY_TODOS: 'dailyTodos',
   USER_DASHBOARD_PREFERENCES: 'userDashboardPreferences',
   CONTENT_DRAFTS: 'contentDrafts',
+  WORKFLOW_SNAPSHOTS: 'workflowSnapshots',
 } as const
 
 // ─── Index Names ─────────────────────────────────────────────────────────────
@@ -54,6 +55,8 @@ export const INDEXES = {
   BY_STRIPE_CUSTOMER_ID: 'by_stripeCustomerId',
   BY_USER_ID_DATE: 'by_userId_date',
   BY_TENANT_PLATFORM: 'by_tenantId_platform',
+  BY_WORKFLOW_RUN: 'by_workflowName_runId',
+  BY_SNAPSHOT_RUN_ID: 'by_snapshot_runId',
 } as const
 
 // ─── Enum Values ─────────────────────────────────────────────────────────────
