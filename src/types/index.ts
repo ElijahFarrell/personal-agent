@@ -352,7 +352,7 @@ export type ProspectSource =
   | 'crm_import'
   | 'csv_import'
 
-export type OutreachChannel = 'linkedin' | 'email' | 'instagram'
+export type OutreachChannel = 'linkedin' | 'email' | 'outlook' | 'instagram'
 
 export type DraftStatus = 'pending_review' | 'approved' | 'rejected' | 'sent' | 'failed'
 

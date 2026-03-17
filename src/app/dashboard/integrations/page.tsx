@@ -4,6 +4,7 @@ import { useUser } from '@clerk/nextjs'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { ConnectButton } from '@/components/ConnectButton'
+import { ComposioConnectButton } from '@/components/ComposioConnectButton'
 import { TelegramConnectButton } from '@/components/TelegramConnectButton'
 import type { IntegrationProvider } from '@/types'
 import { useOrgConfig } from '@/hooks/useOrgConfig'
@@ -29,7 +30,11 @@ import {
   Home,
   CreditCard,
   Calculator,
+  Target,
+  Inbox,
 } from 'lucide-react'
+import { API_ROUTES } from '@/constants/api'
+import { useCallback, useEffect, useState } from 'react'
 
 const INTEGRATIONS: Array<{
   id: string
@@ -249,6 +254,35 @@ const INTEGRATIONS: Array<{
   },
 ]
 
+const COMPOSIO_INTEGRATIONS: Array<{
+  id: string
+  name: string
+  description: string
+  provider: 'apollo' | 'outlook'
+  Icon: React.ElementType
+  iconBg: string
+  iconColor: string
+}> = [
+  {
+    id: 'apollo',
+    name: 'Apollo',
+    description: 'Lead search, enrichment, and sequences',
+    provider: 'apollo',
+    Icon: Target,
+    iconBg: 'bg-violet-500/10',
+    iconColor: 'text-violet-400',
+  },
+  {
+    id: 'outlook',
+    name: 'Outlook',
+    description: 'Send and read emails from your Outlook',
+    provider: 'outlook',
+    Icon: Inbox,
+    iconBg: 'bg-blue-500/10',
+    iconColor: 'text-blue-400',
+  },
+]
+
 const TELEGRAM_ENTRY = {
   id: 'telegram',
   name: 'Telegram',
@@ -261,6 +295,10 @@ const TELEGRAM_ENTRY = {
 export default function IntegrationsPage() {
   const { user } = useUser()
   const { config } = useOrgConfig()
+  const [composioStatus, setComposioStatus] = useState<{
+    apollo: boolean
+    outlook: boolean
+  } | null>(null)
 
   const dbUser = useQuery(
     api.users.getUserByClerkUserId,
@@ -272,6 +310,25 @@ export default function IntegrationsPage() {
     dbUser ? { userId: dbUser._id } : 'skip'
   )
 
+  const refreshComposioStatus = useCallback(() => {
+    fetch(API_ROUTES.composioStatus)
+      .then((r) => r.json())
+      .then((data) => setComposioStatus(data))
+      .catch(() => setComposioStatus({ apollo: false, outlook: false }))
+  }, [])
+
+  useEffect(() => {
+    refreshComposioStatus()
+  }, [refreshComposioStatus])
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('composio') === 'connected') {
+      refreshComposioStatus()
+      window.history.replaceState({}, '', '/dashboard/integrations')
+    }
+  }, [refreshComposioStatus])
+
   const connectedProviders = new Set(
     (connections ?? [])
       .filter((c) => c.status === 'active')
@@ -279,7 +336,10 @@ export default function IntegrationsPage() {
   )
 
   const telegramConnected = !!dbUser?.telegramId
-  const connectedCount = connectedProviders.size + (telegramConnected ? 1 : 0)
+  const composioConnected =
+    (composioStatus?.apollo ? 1 : 0) + (composioStatus?.outlook ? 1 : 0)
+  const connectedCount =
+    connectedProviders.size + (telegramConnected ? 1 : 0) + composioConnected
 
   return (
     <div className="flex min-w-0 flex-1 flex-col overflow-y-auto p-8">
@@ -291,7 +351,7 @@ export default function IntegrationsPage() {
         <p className="mt-1 text-[15px] text-gray-400">
           Connect your accounts to power your AI assistant.{' '}
           <span className="tabular-nums text-gray-500">
-            {connectedCount} of {INTEGRATIONS.length + 1} connected
+            {connectedCount} of {INTEGRATIONS.length + COMPOSIO_INTEGRATIONS.length + 1} connected
           </span>
         </p>
       </div>
@@ -347,6 +407,60 @@ export default function IntegrationsPage() {
             </div>
           )
         })}
+        {COMPOSIO_INTEGRATIONS.map(
+          ({ id, name, description, provider, Icon, iconBg, iconColor }) => {
+            const isConnected =
+              provider === 'apollo'
+                ? composioStatus?.apollo
+                : composioStatus?.outlook
+            const locked = !isIntegrationAllowed(config, provider)
+            return (
+              <div
+                key={id}
+                className={`flex flex-col rounded-xl border border-gray-800/60 bg-gray-900/40 p-5 transition-colors ${
+                  locked ? 'opacity-60' : 'hover:border-gray-700/60'
+                }`}
+              >
+                <div className="flex min-w-0 items-start gap-4">
+                  <span
+                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${iconBg}`}
+                    aria-hidden="true"
+                  >
+                    <Icon className={`h-5 w-5 ${iconColor}`} />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium text-white">{name}</p>
+                      {locked && (
+                        <span className="flex items-center gap-1 rounded-full bg-gray-600/20 px-1.5 py-0.5 text-[10px] font-medium text-gray-400">
+                          <Lock className="h-2.5 w-2.5" />
+                          Locked
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-0.5 text-xs text-gray-500 line-clamp-2">
+                      {description}
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-4">
+                  {locked ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-lg border border-gray-700 bg-gray-800/50 px-3 py-2 text-xs text-gray-500">
+                      <Lock className="h-3.5 w-3.5" />
+                      Contact admin to request access
+                    </span>
+                  ) : (
+                    <ComposioConnectButton
+                      provider={provider}
+                      isConnected={!!isConnected}
+                      onSuccess={refreshComposioStatus}
+                    />
+                  )}
+                </div>
+              </div>
+            )
+          }
+        )}
         <div
           key={TELEGRAM_ENTRY.id}
           className="flex flex-col rounded-xl border border-gray-800/60 bg-gray-900/40 p-5 transition-colors hover:border-gray-700/60"

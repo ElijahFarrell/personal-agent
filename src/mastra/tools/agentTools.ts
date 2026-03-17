@@ -29,6 +29,7 @@ import { createRealEstateAgent } from '../agents/realEstateAgent'
 import { createFinanceAgent } from '../agents/financeAgent'
 import { createMarketingAgent } from '../agents/marketingAgent'
 import { createSDRAgent } from '../agents/sdrAgent'
+import { createLeadAgent } from '../agents/leadAgent'
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
 
@@ -410,19 +411,20 @@ export function createAgentTools(
     sdrAgent: createTool({
       id: 'sdr-agent',
       description:
-        'Delegate company search to the SDR Agent. Use Exa Websets to find companies matching a complex query. ' +
-        'Progressive flow: 5 samples first, then offer 15-20 more. Display as table. Add to Prospects when user approves.',
+        'Delegate lead generation to the Lead Agent. Use for: Exa company search, Apollo lead search/enrichment/sequences, Outlook email. ' +
+        'When user says "find 50-100 CEOs", "research leads", "personalize outreach", "add to sequence" — use this agent. ' +
+        'Exa: search companies, add to Prospects. Apollo: search people, enrich, create contacts, add to sequences. Outlook: send emails.',
       inputSchema: taskSchema,
       execute: async (input) => {
         try {
           const taskWithInstructions = withCustomInstructions(input.task, agentInstructions?.sdr)
           const inputForAgent = await getInputForAgent(input.task, taskWithInstructions)
-          const agent = createSDRAgent(userId, tenantId)
+          const agent = await createLeadAgent(userId, tenantId)
           const result = await agent.generate(inputForAgent)
           return result.text
         } catch (error) {
           const message = error instanceof Error ? error.message : 'Unknown error'
-          return `SDR agent error: ${message}`
+          return `Lead agent error: ${message}`
         }
       },
     }),

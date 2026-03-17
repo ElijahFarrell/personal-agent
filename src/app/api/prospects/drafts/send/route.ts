@@ -5,6 +5,7 @@ import { api } from '@convex/_generated/api'
 import type { Id } from '@convex/_generated/dataModel'
 import { sendDM as sendLinkedInDM } from '@/services/linkedinService'
 import { send as sendEmail } from '@/services/gmailService'
+import { sendOutlookEmail } from '@/services/outlookService'
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
 
@@ -58,6 +59,17 @@ export async function POST(req: NextRequest) {
             throw new Error('No email address on prospect')
           }
           await sendEmail(tenantCtx.userId, {
+            to: prospect.email,
+            subject: draft.subject ?? 'Hey',
+            body: draft.body,
+          })
+          break
+        }
+        case 'outlook': {
+          if (!prospect.email) {
+            throw new Error('No email address on prospect')
+          }
+          await sendOutlookEmail(tenantCtx.userId, {
             to: prospect.email,
             subject: draft.subject ?? 'Hey',
             body: draft.body,

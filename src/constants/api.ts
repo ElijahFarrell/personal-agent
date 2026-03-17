@@ -15,6 +15,8 @@ export const API_ROUTES = {
   skillsInstall: '/api/skills/install',
   skillsAuthor: '/api/skills/author',
   skillsBrowse: '/api/skills/browse',
+  composioAuthorize: '/api/composio/authorize',
+  composioStatus: '/api/composio/status',
   nangoSession: '/api/nango/session',
   nangoConfirm: '/api/nango/confirm',
   nangoDisconnect: '/api/nango/disconnect',

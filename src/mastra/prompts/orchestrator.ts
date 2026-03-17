@@ -19,7 +19,7 @@ const AGENT_DESCRIPTIONS: Record<
   'real-estate-agent': { providers: ['follow-up-boss', 'calendly'], desc: 'Follow Up Boss, Calendly — contacts, deals, tasks, event types, scheduling.' },
   'finance-agent': { providers: ['stripe', 'quickbooks'], desc: 'Stripe, QuickBooks — customers, charges, invoices, payments.' },
   'marketing-agent': { provider: 'mailchimp', desc: 'Mailchimp — audiences, campaigns.' },
-  'sdr-agent': { provider: null, desc: 'Exa Websets: search companies, list all past websets/results, add to Prospects. Use for "all my Exa searches", "get past results", company search, or adding websets by ID.' },
+  'sdr-agent': { provider: null, desc: 'Lead gen: Exa company search, Apollo (search/enrich/sequences when connected), Outlook (send when connected). Use for "find 50 CEOs", "research leads", "personalize outreach", "add to sequence". Connect Apollo/Outlook in Integrations for Apollo sequences.' },
   'create-schedule': { provider: null, desc: 'Create recurring schedules (cron jobs). Use when the user wants something to run automatically (e.g. "every morning at 9am check my channels", "every Monday send a summary").' },
   'list-schedules': { provider: null, desc: 'List the user\'s schedules. Use when they ask to see their schedules, cron jobs, or automated tasks.' },
   'toggle-schedule': { provider: null, desc: 'Enable or disable a schedule. Use when the user wants to turn a schedule on or off.' },

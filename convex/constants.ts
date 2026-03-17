@@ -190,6 +190,7 @@ export const PROSPECT_SOURCE = {
 export const OUTREACH_CHANNEL = {
   LINKEDIN: 'linkedin',
   EMAIL: 'email',
+  OUTLOOK: 'outlook',
   INSTAGRAM: 'instagram',
 } as const
 

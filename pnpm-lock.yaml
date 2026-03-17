@@ -14,6 +14,12 @@ importers:
       '@clerk/nextjs':
         specifier: ^6.38.3
         version: 6.38.3(next@15.5.12(@opentelemetry/api@1.9.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      '@composio/core':
+        specifier: ^0.6.5
+        version: 0.6.5(ws@8.19.0)(zod@3.25.76)
+      '@composio/mastra':
+        specifier: ^0.6.5
+        version: 0.6.5(@composio/core@0.6.5(ws@8.19.0)(zod@3.25.76))(@mastra/core@1.8.0(@cfworker/json-schema@4.1.1)(@standard-community/standard-json@0.3.5(@standard-schema/spec@1.1.0)(@types/json-schema@7.0.15)(quansync@0.2.11)(zod-to-json-schema@3.25.1(zod@3.25.76))(zod@3.25.76))(@standard-community/standard-openapi@0.2.9(@standard-community/standard-json@0.3.5(@standard-schema/spec@1.1.0)(@types/json-schema@7.0.15)(quansync@0.2.11)(zod-to-json-schema@3.25.1(zod@3.25.76))(zod@3.25.76))(@standard-schema/spec@1.1.0)(openapi-types@12.1.3)(zod@3.25.76))(@types/json-schema@7.0.15)(openapi-types@12.1.3)(zod@3.25.76))(zod@3.25.76)
       '@mastra/ai-sdk':
         specifier: ^1.1.0
         version: 1.1.0(@mastra/core@1.8.0(@cfworker/json-schema@4.1.1)(@standard-community/standard-json@0.3.5(@standard-schema/spec@1.1.0)(@types/json-schema@7.0.15)(quansync@0.2.11)(zod-to-json-schema@3.25.1(zod@3.25.76))(zod@3.25.76))(@standard-community/standard-openapi@0.2.9(@standard-community/standard-json@0.3.5(@standard-schema/spec@1.1.0)(@types/json-schema@7.0.15)(quansync@0.2.11)(zod-to-json-schema@3.25.1(zod@3.25.76))(zod@3.25.76))(@standard-schema/spec@1.1.0)(openapi-types@12.1.3)(zod@3.25.76))(@types/json-schema@7.0.15)(openapi-types@12.1.3)(zod@3.25.76))(zod@3.25.76)
@@ -28,7 +34,7 @@ importers:
         version: 1.0.3(@cfworker/json-schema@4.1.1)(@mastra/core@1.8.0(@cfworker/json-schema@4.1.1)(@standard-community/standard-json@0.3.5(@standard-schema/spec@1.1.0)(@types/json-schema@7.0.15)(quansync@0.2.11)(zod-to-json-schema@3.25.1(zod@3.25.76))(zod@3.25.76))(@standard-community/standard-openapi@0.2.9(@standard-community/standard-json@0.3.5(@standard-schema/spec@1.1.0)(@types/json-schema@7.0.15)(quansync@0.2.11)(zod-to-json-schema@3.25.1(zod@3.25.76))(zod@3.25.76))(@standard-schema/spec@1.1.0)(openapi-types@12.1.3)(zod@3.25.76))(@types/json-schema@7.0.15)(openapi-types@12.1.3)(zod@3.25.76))(@types/json-schema@7.0.15)(zod@3.25.76)
       '@mastra/mem0':
         specifier: ^0.1.12
-        version: 0.1.12(2002fb668f1542db5bf3fac06f39e6cd)
+        version: 0.1.12(483973edae4de3c46708bbc5693925a1)
       '@mastra/memory':
         specifier: ^1.5.2
         version: 1.5.2(@mastra/core@1.8.0(@cfworker/json-schema@4.1.1)(@standard-community/standard-json@0.3.5(@standard-schema/spec@1.1.0)(@types/json-schema@7.0.15)(quansync@0.2.11)(zod-to-json-schema@3.25.1(zod@3.25.76))(zod@3.25.76))(@standard-community/standard-openapi@0.2.9(@standard-community/standard-json@0.3.5(@standard-schema/spec@1.1.0)(@types/json-schema@7.0.15)(quansync@0.2.11)(zod-to-json-schema@3.25.1(zod@3.25.76))(zod@3.25.76))(@standard-schema/spec@1.1.0)(openapi-types@12.1.3)(zod@3.25.76))(@types/json-schema@7.0.15)(openapi-types@12.1.3)(zod@3.25.76))(zod@3.25.76)
@@ -178,7 +184,7 @@ importers:
         version: 4.18.0(react@19.2.4)
       mem0ai:
         specifier: ^2.2.3
-        version: 2.2.3(@anthropic-ai/sdk@0.40.1(encoding@0.1.13))(@azure/identity@4.13.0)(@azure/search-documents@12.2.0)(@cloudflare/workers-types@4.20260226.1)(@google/genai@1.43.0(@modelcontextprotocol/sdk@1.27.1(@cfworker/json-schema@4.1.1)(zod@3.25.76)))(@langchain/core@0.3.80(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.212.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.5.1(@opentelemetry/api@1.9.0))(openai@5.23.2(ws@8.19.0)(zod@3.25.76)))(@mistralai/mistralai@1.14.1)(@qdrant/js-client-rest@1.17.0(typescript@5.9.3))(@supabase/supabase-js@2.98.0)(@types/jest@29.5.14)(@types/pg@8.16.0)(@types/sqlite3@3.1.11)(cloudflare@4.5.0(encoding@0.1.13))(encoding@0.1.13)(groq-sdk@0.3.0(encoding@0.1.13))(neo4j-driver@5.28.3)(ollama@0.5.18)(pg@8.11.3)(redis@4.7.1)(sqlite3@5.1.7)(ws@8.19.0)
+        version: 2.2.3(@anthropic-ai/sdk@0.40.1(encoding@0.1.13))(@azure/identity@4.13.0)(@azure/search-documents@12.2.0)(@cloudflare/workers-types@4.20260226.1)(@google/genai@1.43.0(@modelcontextprotocol/sdk@1.27.1(@cfworker/json-schema@4.1.1)(zod@3.25.76)))(@langchain/core@0.3.80(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.212.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.5.1(@opentelemetry/api@1.9.0))(openai@6.31.0(ws@8.19.0)(zod@3.25.76)))(@mistralai/mistralai@1.14.1)(@qdrant/js-client-rest@1.17.0(typescript@5.9.3))(@supabase/supabase-js@2.98.0)(@types/jest@29.5.14)(@types/pg@8.16.0)(@types/sqlite3@3.1.11)(cloudflare@4.5.0(encoding@0.1.13))(encoding@0.1.13)(groq-sdk@0.3.0(encoding@0.1.13))(neo4j-driver@5.28.3)(ollama@0.5.18)(pg@8.11.3)(redis@4.7.1)(sqlite3@5.1.7)(ws@8.19.0)
       motion:
         specifier: ^12.35.0
         version: 12.35.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -545,6 +551,26 @@ packages:
 
   '@cloudflare/workers-types@4.20260226.1':
     resolution: {integrity: sha512-ci/3wgHBLs7QYemyPCJa8ooQd0f9mL9V8cXknZj5f9joX1Iuf6+isDbfjphn0o/bDHpt88vxabC9mXeIYvBVDw==}
+
+  '@composio/client@0.1.0-alpha.61':
+    resolution: {integrity: sha512-VSU20mTtMe0TIPHkBBRdCU4IYSy3886U9O69PURU8+ItLXCD2MjIN0S8VTDL8wpA4zFXamUFnvtwQyow11O2KA==}
+
+  '@composio/core@0.6.5':
+    resolution: {integrity: sha512-BHaw60KFkza5PDJDGG2ATaYlwaH5D4VhQinRYo5wLmqjiI/mdnzzXRYatsn24WTaakdqNrf3jY5sQ2WIyex6Ow==}
+    peerDependencies:
+      zod: ^3.25 || ^4
+
+  '@composio/json-schema-to-zod@0.1.20':
+    resolution: {integrity: sha512-d4V34itLrUWG/VBh7ciznKcxF/T22MBLHmuEzHoX0zsBOHsUmjYz5qtDh20S2p3FE+HHvLZxpXiv8yfdd4yI+Q==}
+    peerDependencies:
+      zod: '>=3.25.76 <5'
+
+  '@composio/mastra@0.6.5':
+    resolution: {integrity: sha512-7cPtAKvIBqiYggJ+FYOSoAdOyt4oLAiCd/0PevUPuM/QVZXLQOu5LUsGcnF3a1jo4I1A0dRtzRBZNZqBXITAVA==}
+    peerDependencies:
+      '@composio/core': 0.6.5
+      '@mastra/core': ^1.0.4
+      zod: ^3.25 || ^4
 
   '@crawlee/types@3.16.0':
     resolution: {integrity: sha512-CcIM+JDVx4gzQzMPl+9RJiEeqdzTrx2RLPA7y4IMJSyfZm3J/VrEunielKA3NQrk095j9OuvS/rQL2y8mBV1qw==}
@@ -5007,6 +5033,18 @@ packages:
       zod:
         optional: true
 
+  openai@6.31.0:
+    resolution: {integrity: sha512-iqEn3QY1NnVrDOynUWA2Fjs04gzZ0m7fbwR9xZVFmcN1cqQwslMQM2sjQBNkTVFK/rrSvV78SXiBgU+Pyqz1Aw==}
+    hasBin: true
+    peerDependencies:
+      ws: ^8.18.0
+      zod: ^3.25 || ^4.0
+    peerDependenciesMeta:
+      ws:
+        optional: true
+      zod:
+        optional: true
+
   openapi-types@12.1.3:
     resolution: {integrity: sha512-N4YtSYJqghVu4iek2ZUvcN/0aqH1kRDuNqzcycDxhOUpg7GdvLa2F3DgS6yBNhInhv2r/6I0Flkn7CqL8+nIcw==}
 
@@ -5306,6 +5344,9 @@ packages:
 
   pump@3.0.3:
     resolution: {integrity: sha512-todwxLMY7/heScKmntwQG8CXVkWUOdYxIvY2s0VWAAMh/nd8SoYiRaKjlr7+iCs984f2P8zvrfWcDDYVb73NfA==}
+
+  pusher-js@8.4.0:
+    resolution: {integrity: sha512-wp3HqIIUc1GRyu1XrP6m2dgyE9MoCsXVsWNlohj0rjSkLf+a0jLvEyVubdg58oMk7bhjBWnFClgp8jfAa6Ak4Q==}
 
   qs@6.14.2:
     resolution: {integrity: sha512-V/yCWTTF7VJ9hIh18Ugr2zhJMP01MY7c5kh4J870L7imm6/DIzBsNLTXzMwUA3yZ5b/KBqLx8Kp3uRvd7xSe3Q==}
@@ -5909,6 +5950,9 @@ packages:
 
   tunnel-agent@0.6.0:
     resolution: {integrity: sha512-McnNiV1l8RYeY8tBgEpuodCC1mLUdbSN+CYBL7kJsJNInOP8UjDDEwdk6Mw60vdLLrr5NHKZhMAOSrR2NZuQ+w==}
+
+  tweetnacl@1.0.3:
+    resolution: {integrity: sha512-6rt+RN7aOi1nGMyC4Xa5DdYiukl2UWCbcJft7YhxReBGQD7OAM8Pbxw6YMo4r2diNEA8FEmu32YOn9rhaiE5yw==}
 
   type-fest@4.41.0:
     resolution: {integrity: sha512-TeTSQ6H5YHvpqVwBRcnLDCBnDOHWYu7IvGbHT6N8AOymcr9PJGjc1GTtiWZTYg0NCgYwvnYWEkVChQAr9bjfwA==}
@@ -6602,6 +6646,33 @@ snapshots:
 
   '@cloudflare/workers-types@4.20260226.1': {}
 
+  '@composio/client@0.1.0-alpha.61': {}
+
+  '@composio/core@0.6.5(ws@8.19.0)(zod@3.25.76)':
+    dependencies:
+      '@composio/client': 0.1.0-alpha.61
+      '@composio/json-schema-to-zod': 0.1.20(zod@3.25.76)
+      '@types/json-schema': 7.0.15
+      chalk: 4.1.2
+      openai: 6.31.0(ws@8.19.0)(zod@3.25.76)
+      pusher-js: 8.4.0
+      semver: 7.7.4
+      zod: 3.25.76
+      zod-to-json-schema: 3.25.1(zod@3.25.76)
+    transitivePeerDependencies:
+      - ws
+
+  '@composio/json-schema-to-zod@0.1.20(zod@3.25.76)':
+    dependencies:
+      zod: 3.25.76
+
+  '@composio/mastra@0.6.5(@composio/core@0.6.5(ws@8.19.0)(zod@3.25.76))(@mastra/core@1.8.0(@cfworker/json-schema@4.1.1)(@standard-community/standard-json@0.3.5(@standard-schema/spec@1.1.0)(@types/json-schema@7.0.15)(quansync@0.2.11)(zod-to-json-schema@3.25.1(zod@3.25.76))(zod@3.25.76))(@standard-community/standard-openapi@0.2.9(@standard-community/standard-json@0.3.5(@standard-schema/spec@1.1.0)(@types/json-schema@7.0.15)(quansync@0.2.11)(zod-to-json-schema@3.25.1(zod@3.25.76))(zod@3.25.76))(@standard-schema/spec@1.1.0)(openapi-types@12.1.3)(zod@3.25.76))(@types/json-schema@7.0.15)(openapi-types@12.1.3)(zod@3.25.76))(zod@3.25.76)':
+    dependencies:
+      '@composio/core': 0.6.5(ws@8.19.0)(zod@3.25.76)
+      '@mastra/core': 1.8.0(@cfworker/json-schema@4.1.1)(@standard-community/standard-json@0.3.5(@standard-schema/spec@1.1.0)(@types/json-schema@7.0.15)(quansync@0.2.11)(zod-to-json-schema@3.25.1(zod@3.25.76))(zod@3.25.76))(@standard-community/standard-openapi@0.2.9(@standard-community/standard-json@0.3.5(@standard-schema/spec@1.1.0)(@types/json-schema@7.0.15)(quansync@0.2.11)(zod-to-json-schema@3.25.1(zod@3.25.76))(zod@3.25.76))(@standard-schema/spec@1.1.0)(openapi-types@12.1.3)(zod@3.25.76))(@types/json-schema@7.0.15)(openapi-types@12.1.3)(zod@3.25.76)
+      '@mastra/schema-compat': 1.1.3(zod@3.25.76)
+      zod: 3.25.76
+
   '@crawlee/types@3.16.0':
     dependencies:
       tslib: 2.8.1
@@ -6894,14 +6965,14 @@ snapshots:
 
   '@js-sdsl/ordered-map@4.4.2': {}
 
-  '@langchain/core@0.3.80(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.212.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.5.1(@opentelemetry/api@1.9.0))(openai@5.23.2(ws@8.19.0)(zod@3.25.76))':
+  '@langchain/core@0.3.80(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.212.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.5.1(@opentelemetry/api@1.9.0))(openai@6.31.0(ws@8.19.0)(zod@3.25.76))':
     dependencies:
       '@cfworker/json-schema': 4.1.1
       ansi-styles: 5.2.0
       camelcase: 6.3.0
       decamelize: 1.2.0
       js-tiktoken: 1.0.21
-      langsmith: 0.3.87(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.212.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.5.1(@opentelemetry/api@1.9.0))(openai@5.23.2(ws@8.19.0)(zod@3.25.76))
+      langsmith: 0.3.87(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.212.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.5.1(@opentelemetry/api@1.9.0))(openai@6.31.0(ws@8.19.0)(zod@3.25.76))
       mustache: 4.2.0
       p-queue: 6.6.2
       p-retry: 4.6.2
@@ -7046,10 +7117,10 @@ snapshots:
       - '@types/json-schema'
       - supports-color
 
-  '@mastra/mem0@0.1.12(2002fb668f1542db5bf3fac06f39e6cd)':
+  '@mastra/mem0@0.1.12(483973edae4de3c46708bbc5693925a1)':
     dependencies:
       '@mastra/core': 1.8.0(@cfworker/json-schema@4.1.1)(@standard-community/standard-json@0.3.5(@standard-schema/spec@1.1.0)(@types/json-schema@7.0.15)(quansync@0.2.11)(zod-to-json-schema@3.25.1(zod@3.25.76))(zod@3.25.76))(@standard-community/standard-openapi@0.2.9(@standard-community/standard-json@0.3.5(@standard-schema/spec@1.1.0)(@types/json-schema@7.0.15)(quansync@0.2.11)(zod-to-json-schema@3.25.1(zod@3.25.76))(zod@3.25.76))(@standard-schema/spec@1.1.0)(openapi-types@12.1.3)(zod@3.25.76))(@types/json-schema@7.0.15)(openapi-types@12.1.3)(zod@3.25.76)
-      mem0ai: 2.2.3(@anthropic-ai/sdk@0.40.1(encoding@0.1.13))(@azure/identity@4.13.0)(@azure/search-documents@12.2.0)(@cloudflare/workers-types@4.20260226.1)(@google/genai@1.43.0(@modelcontextprotocol/sdk@1.27.1(@cfworker/json-schema@4.1.1)(zod@3.25.76)))(@langchain/core@0.3.80(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.212.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.5.1(@opentelemetry/api@1.9.0))(openai@5.23.2(ws@8.19.0)(zod@3.25.76)))(@mistralai/mistralai@1.14.1)(@qdrant/js-client-rest@1.17.0(typescript@5.9.3))(@supabase/supabase-js@2.98.0)(@types/jest@29.5.14)(@types/pg@8.16.0)(@types/sqlite3@3.1.11)(cloudflare@4.5.0(encoding@0.1.13))(encoding@0.1.13)(groq-sdk@0.3.0(encoding@0.1.13))(neo4j-driver@5.28.3)(ollama@0.5.18)(pg@8.11.3)(redis@4.7.1)(sqlite3@5.1.7)(ws@8.19.0)
+      mem0ai: 2.2.3(@anthropic-ai/sdk@0.40.1(encoding@0.1.13))(@azure/identity@4.13.0)(@azure/search-documents@12.2.0)(@cloudflare/workers-types@4.20260226.1)(@google/genai@1.43.0(@modelcontextprotocol/sdk@1.27.1(@cfworker/json-schema@4.1.1)(zod@3.25.76)))(@langchain/core@0.3.80(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.212.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.5.1(@opentelemetry/api@1.9.0))(openai@6.31.0(ws@8.19.0)(zod@3.25.76)))(@mistralai/mistralai@1.14.1)(@qdrant/js-client-rest@1.17.0(typescript@5.9.3))(@supabase/supabase-js@2.98.0)(@types/jest@29.5.14)(@types/pg@8.16.0)(@types/sqlite3@3.1.11)(cloudflare@4.5.0(encoding@0.1.13))(encoding@0.1.13)(groq-sdk@0.3.0(encoding@0.1.13))(neo4j-driver@5.28.3)(ollama@0.5.18)(pg@8.11.3)(redis@4.7.1)(sqlite3@5.1.7)(ws@8.19.0)
       zod: 3.25.76
     transitivePeerDependencies:
       - '@anthropic-ai/sdk'
@@ -10953,7 +11024,7 @@ snapshots:
       vscode-languageserver-textdocument: 1.0.12
       vscode-uri: 3.1.0
 
-  langsmith@0.3.87(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.212.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.5.1(@opentelemetry/api@1.9.0))(openai@5.23.2(ws@8.19.0)(zod@3.25.76)):
+  langsmith@0.3.87(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.212.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.5.1(@opentelemetry/api@1.9.0))(openai@6.31.0(ws@8.19.0)(zod@3.25.76)):
     dependencies:
       '@types/uuid': 10.0.0
       chalk: 4.1.2
@@ -10965,7 +11036,7 @@ snapshots:
       '@opentelemetry/api': 1.9.0
       '@opentelemetry/exporter-trace-otlp-proto': 0.212.0(@opentelemetry/api@1.9.0)
       '@opentelemetry/sdk-trace-base': 2.5.1(@opentelemetry/api@1.9.0)
-      openai: 5.23.2(ws@8.19.0)(zod@3.25.76)
+      openai: 6.31.0(ws@8.19.0)(zod@3.25.76)
 
   layout-base@1.0.2: {}
 
@@ -11253,14 +11324,14 @@ snapshots:
 
   media-typer@1.1.0: {}
 
-  mem0ai@2.2.3(@anthropic-ai/sdk@0.40.1(encoding@0.1.13))(@azure/identity@4.13.0)(@azure/search-documents@12.2.0)(@cloudflare/workers-types@4.20260226.1)(@google/genai@1.43.0(@modelcontextprotocol/sdk@1.27.1(@cfworker/json-schema@4.1.1)(zod@3.25.76)))(@langchain/core@0.3.80(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.212.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.5.1(@opentelemetry/api@1.9.0))(openai@5.23.2(ws@8.19.0)(zod@3.25.76)))(@mistralai/mistralai@1.14.1)(@qdrant/js-client-rest@1.17.0(typescript@5.9.3))(@supabase/supabase-js@2.98.0)(@types/jest@29.5.14)(@types/pg@8.16.0)(@types/sqlite3@3.1.11)(cloudflare@4.5.0(encoding@0.1.13))(encoding@0.1.13)(groq-sdk@0.3.0(encoding@0.1.13))(neo4j-driver@5.28.3)(ollama@0.5.18)(pg@8.11.3)(redis@4.7.1)(sqlite3@5.1.7)(ws@8.19.0):
+  mem0ai@2.2.3(@anthropic-ai/sdk@0.40.1(encoding@0.1.13))(@azure/identity@4.13.0)(@azure/search-documents@12.2.0)(@cloudflare/workers-types@4.20260226.1)(@google/genai@1.43.0(@modelcontextprotocol/sdk@1.27.1(@cfworker/json-schema@4.1.1)(zod@3.25.76)))(@langchain/core@0.3.80(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.212.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.5.1(@opentelemetry/api@1.9.0))(openai@6.31.0(ws@8.19.0)(zod@3.25.76)))(@mistralai/mistralai@1.14.1)(@qdrant/js-client-rest@1.17.0(typescript@5.9.3))(@supabase/supabase-js@2.98.0)(@types/jest@29.5.14)(@types/pg@8.16.0)(@types/sqlite3@3.1.11)(cloudflare@4.5.0(encoding@0.1.13))(encoding@0.1.13)(groq-sdk@0.3.0(encoding@0.1.13))(neo4j-driver@5.28.3)(ollama@0.5.18)(pg@8.11.3)(redis@4.7.1)(sqlite3@5.1.7)(ws@8.19.0):
     dependencies:
       '@anthropic-ai/sdk': 0.40.1(encoding@0.1.13)
       '@azure/identity': 4.13.0
       '@azure/search-documents': 12.2.0
       '@cloudflare/workers-types': 4.20260226.1
       '@google/genai': 1.43.0(@modelcontextprotocol/sdk@1.27.1(@cfworker/json-schema@4.1.1)(zod@3.25.76))
-      '@langchain/core': 0.3.80(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.212.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.5.1(@opentelemetry/api@1.9.0))(openai@5.23.2(ws@8.19.0)(zod@3.25.76))
+      '@langchain/core': 0.3.80(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.212.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.5.1(@opentelemetry/api@1.9.0))(openai@6.31.0(ws@8.19.0)(zod@3.25.76))
       '@mistralai/mistralai': 1.14.1
       '@qdrant/js-client-rest': 1.17.0(typescript@5.9.3)
       '@supabase/supabase-js': 2.98.0
@@ -11824,6 +11895,11 @@ snapshots:
       ws: 8.19.0
       zod: 3.25.76
 
+  openai@6.31.0(ws@8.19.0)(zod@3.25.76):
+    optionalDependencies:
+      ws: 8.19.0
+      zod: 3.25.76
+
   openapi-types@12.1.3: {}
 
   ow@0.28.2:
@@ -12149,6 +12225,10 @@ snapshots:
     dependencies:
       end-of-stream: 1.4.5
       once: 1.4.0
+
+  pusher-js@8.4.0:
+    dependencies:
+      tweetnacl: 1.0.3
 
   qs@6.14.2:
     dependencies:
@@ -12963,6 +13043,8 @@ snapshots:
   tunnel-agent@0.6.0:
     dependencies:
       safe-buffer: 5.2.1
+
+  tweetnacl@1.0.3: {}
 
   type-fest@4.41.0: {}
 

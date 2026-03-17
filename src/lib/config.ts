@@ -68,6 +68,9 @@ export const config = {
     url: optionalEnv('NEXT_PUBLIC_APP_URL', 'http://localhost:3000'),
     isDev: process.env.NODE_ENV === 'development',
   },
+  composio: {
+    apiKey: optionalEnv('COMPOSIO_API_KEY'),
+  },
   admin: {
     /** Clerk userId of the super admin (server). Only this user can access /api/admin/* */
     superAdminUserId: optionalEnv('SUPER_ADMIN_USER_ID'),
