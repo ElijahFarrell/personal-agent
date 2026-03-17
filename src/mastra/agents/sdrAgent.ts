@@ -46,19 +46,14 @@ function formatResultsAsTable(results: ExaCompanyResult[]): string {
   )
 }
 
-/** Factory creates an SDR agent scoped to a user. */
-export function createSDRAgent(userId: string, tenantId: string) {
+/** SDR tools (Exa Websets). Exported for use in lead agent. */
+export function getSDRTools(userId: string, tenantId: string) {
   const convex =
     process.env.NEXT_PUBLIC_CONVEX_URL
       ? new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL)
       : null
 
-  return new Agent({
-    id: `sdr-${userId}`,
-    name: 'sdr',
-    instructions: SDR_PROMPT,
-    model: AgentModels.content(),
-    tools: {
+  return {
       runExaWebsetSearch: createTool({
         id: 'run-exa-webset-search',
         description:
@@ -166,6 +161,16 @@ export function createSDRAgent(userId: string, tenantId: string) {
           return `${idsBlock}**Combined results (${results.length} companies, deduplicated):**\n\n${table}\n\n---\nRaw results (for addExaResultsToProspects):\n\`\`\`json\n${json}\n\`\`\``
         },
       }),
-    },
+  }
+}
+
+/** Factory creates an SDR agent scoped to a user. */
+export function createSDRAgent(userId: string, tenantId: string) {
+  return new Agent({
+    id: `sdr-${userId}`,
+    name: 'sdr',
+    instructions: SDR_PROMPT,
+    model: AgentModels.content(),
+    tools: getSDRTools(userId, tenantId),
   })
 }

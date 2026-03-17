@@ -333,6 +333,7 @@ export default defineSchema({
     channel: v.union(
       v.literal(OUTREACH_CHANNEL.LINKEDIN),
       v.literal(OUTREACH_CHANNEL.EMAIL),
+      v.literal(OUTREACH_CHANNEL.OUTLOOK),
       v.literal(OUTREACH_CHANNEL.INSTAGRAM)
     ),
     subject: v.optional(v.string()),

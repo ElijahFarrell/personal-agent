@@ -36,7 +36,7 @@ export interface TenantConfig {
 /** Fallback when no tenantConfigs row exists (free-tier equivalent). */
 export const DEFAULT_CONFIG: TenantConfig = {
   allowedAgents: ['email', 'research', 'calendar', 'content'],
-  allowedIntegrations: ['gmail', 'google-calendar'],
+  allowedIntegrations: ['gmail', 'google-calendar', 'apollo', 'outlook'],
   features: {
     customWorkflows: false,
     deepResearch: false,
