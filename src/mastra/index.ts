@@ -2,10 +2,39 @@ import { Mastra } from '@mastra/core'
 import { LibSQLStore } from '@mastra/libsql'
 import { workspace } from './workspace'
 
-const storage = new LibSQLStore({
-  id: 'mastra-storage',
-  url: process.env.MASTRA_STORAGE_URL ?? process.env.DATABASE_URL ?? 'file:./mastra.db',
-})
+/**
+ * Storage for workflow suspend/resume. On Vercel/serverless, file:./mastra.db fails
+ * (read-only FS). Use Turso (libsql://...) + TURSO_AUTH_TOKEN in production.
+ * Fallback: :memory: in production (no persistence), file:./mastra.db locally.
+ */
+function createStorage() {
+  const url = process.env.MASTRA_STORAGE_URL ?? process.env.DATABASE_URL
+  const authToken = process.env.TURSO_AUTH_TOKEN
+  const isServerless = process.env.VERCEL === '1'
+
+  if (url) {
+    return new LibSQLStore({
+      id: 'mastra-storage',
+      url,
+      ...(authToken && { authToken }),
+    })
+  }
+
+  // Serverless without remote DB: use in-memory to avoid ConnectionFailed
+  if (isServerless) {
+    return new LibSQLStore({
+      id: 'mastra-storage',
+      url: ':memory:',
+    })
+  }
+
+  return new LibSQLStore({
+    id: 'mastra-storage',
+    url: 'file:./mastra.db',
+  })
+}
+
+const storage = createStorage()
 
 /**
  * The Mastra instance is the registry for all agents and workflows.
