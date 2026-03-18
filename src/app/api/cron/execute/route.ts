@@ -70,7 +70,7 @@ export async function GET(req: NextRequest) {
         const result = await executeSchedule(scheduleRecord, {
           executeAgentPrompt: async ({ userId: _uid, tenantId: _tid, prompt }) => {
             try {
-              const agent = createOrchestratorAgent(clerkUserId, clerkTenantId)
+              const agent = await createOrchestratorAgent(clerkUserId, clerkTenantId)
               const response = await agent.generate([
                 { role: 'user' as const, content: prompt },
               ])

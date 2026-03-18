@@ -1,4 +1,5 @@
 import { Agent } from '@mastra/core/agent'
+import type { Workspace } from '@mastra/core/workspace'
 import { AgentModels } from '@/constants/models'
 import { createMem0MemorizeTool } from '../tools/mem0Memorize'
 import { createMem0RecallTool } from '../tools/mem0Recall'
@@ -16,7 +17,8 @@ import { CONTENT_PROMPT } from '../prompts'
  */
 export function createContentAgent(
   userId: string,
-  scope?: ContentDraftScope
+  scope?: ContentDraftScope,
+  workspace?: Workspace
 ): Agent {
   const tools = scope
     ? {
@@ -37,6 +39,7 @@ export function createContentAgent(
     name: 'content',
     instructions: CONTENT_PROMPT,
     model: AgentModels.content(),
+    workspace,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     tools: tools as any,
   })

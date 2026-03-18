@@ -1,15 +1,10 @@
 import { createTool } from '@mastra/core/tools'
 import { z } from 'zod'
+import type { Workspace } from '@mastra/core/workspace'
 import { ConvexHttpClient } from 'convex/browser'
 import { api } from '@convex/_generated/api'
 import type { Id } from '@convex/_generated/dataModel'
 import { getNextRunAt } from '@/services/scheduleService'
-import {
-  resolveSkillsForMessage,
-  buildSkillsSystemContext,
-  type SkillPreference,
-} from '@/services/skillsService'
-import type { SkillLookupScope } from '@/services/skillsService'
 import {
   retrieveRelevantContext,
   buildContextBlock,
@@ -43,47 +38,33 @@ function withCustomInstructions(task: string, instructions: string | undefined):
   return `[Custom instructions for this agent: ${instructions.trim()}]\n\n${task}`
 }
 
-export interface AgentToolsSkillContext {
-  scope: SkillLookupScope
-  preferences: SkillPreference[]
-}
-
 /**
  * Creates all sub-agent tools scoped to a user.
  * Each tool wraps a specialized agent's generate() call so the orchestrator
  * can delegate work — and call multiple agents in parallel — via its tool interface.
  *
- * Custom instructions per agent are appended to each task when provided,
- * giving users control over individual agent behavior from the dashboard.
- * connectedProviders is used by MCP-based agents to load tools for connected integrations.
- * When skillContext is provided, sub-agents receive skills and context for progressive discovery.
+ * When workspace is provided, sub-agents receive skill_search, skill_read, and skill
+ * tools for progressive skill loading. Context docs are still injected for business context.
  */
 export function createAgentTools(
   userId: string,
   tenantId: string,
   agentInstructions?: Record<string, string>,
   connectedProviders: string[] = [],
-  skillContext?: AgentToolsSkillContext
+  workspace?: Workspace
 ) {
-  async function buildSubAgentContext(task: string): Promise<string> {
-    const scope = skillContext?.scope
-    if (!scope?.tenantId || !scope?.userId) return ''
-    const [resolvedSkills, relevantContext] = await Promise.all([
-      resolveSkillsForMessage(task, skillContext!.preferences, 5, scope).catch(() => []),
-      retrieveRelevantContext(task, scope.tenantId, scope.userId).catch(() => []),
-    ])
-    const skillsBlock = buildSkillsSystemContext(resolvedSkills)
-    const contextBlock = buildContextBlock(relevantContext)
-    return [skillsBlock, contextBlock].filter(Boolean).join('\n\n---\n\n')
-  }
-
   async function getInputForAgent(
     task: string,
     taskWithInstructions: string
   ): Promise<string> {
-    const contextBlock = await buildSubAgentContext(task)
+    const relevantContext = await retrieveRelevantContext(
+      task,
+      tenantId,
+      userId
+    ).catch(() => [])
+    const contextBlock = buildContextBlock(relevantContext)
     if (!contextBlock) return taskWithInstructions
-    return `## Relevant Skills and Context\n\n${contextBlock}\n\n---\n\n## Your Task\n\n${taskWithInstructions}`
+    return `## Relevant Context\n\n${contextBlock}\n\n---\n\n## Your Task\n\n${taskWithInstructions}`
   }
 
   return {
@@ -98,7 +79,7 @@ export function createAgentTools(
         try {
           const taskWithInstructions = withCustomInstructions(input.task, agentInstructions?.email)
           const inputForAgent = await getInputForAgent(input.task, taskWithInstructions)
-          const { agent } = await createEmailAgent(userId, connectedProviders)
+          const { agent } = await createEmailAgent(userId, connectedProviders, workspace)
           const result = await agent.generate(inputForAgent)
           return result.text
         } catch (error) {
@@ -119,7 +100,7 @@ export function createAgentTools(
         try {
           const taskWithInstructions = withCustomInstructions(input.task, agentInstructions?.research)
           const inputForAgent = await getInputForAgent(input.task, taskWithInstructions)
-          const agent = createResearchAgent(userId)
+          const agent = createResearchAgent(userId, workspace)
           const result = await agent.generate(inputForAgent)
           return result.text
         } catch (error) {
@@ -139,7 +120,7 @@ export function createAgentTools(
         try {
           const taskWithInstructions = withCustomInstructions(input.task, agentInstructions?.calendar)
           const inputForAgent = await getInputForAgent(input.task, taskWithInstructions)
-          const { agent, toolsets } = await createCalendarAgent(userId, connectedProviders)
+          const { agent, toolsets } = await createCalendarAgent(userId, connectedProviders, workspace)
           const result = await agent.generate(
             inputForAgent,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -164,7 +145,7 @@ export function createAgentTools(
         try {
           const taskWithInstructions = withCustomInstructions(input.task, agentInstructions?.linkedin)
           const inputForAgent = await getInputForAgent(input.task, taskWithInstructions)
-          const agent = createLinkedInAgent(userId)
+          const agent = createLinkedInAgent(userId, workspace)
           const result = await agent.generate(inputForAgent)
           return result.text
         } catch (error) {
@@ -185,11 +166,8 @@ export function createAgentTools(
         try {
           const taskWithInstructions = withCustomInstructions(input.task, agentInstructions?.content)
           const inputForAgent = await getInputForAgent(input.task, taskWithInstructions)
-          const draftScope =
-            skillContext?.scope?.tenantId && skillContext?.scope?.userId
-              ? { tenantId: skillContext.scope.tenantId, userId: skillContext.scope.userId }
-              : undefined
-          const agent = createContentAgent(userId, draftScope)
+          const draftScope = { tenantId, userId }
+          const agent = createContentAgent(userId, draftScope, workspace)
           const result = await agent.generate(inputForAgent)
           return result.text
         } catch (error) {
@@ -209,7 +187,7 @@ export function createAgentTools(
         try {
           const taskWithInstructions = withCustomInstructions(input.task, agentInstructions?.instagram)
           const inputForAgent = await getInputForAgent(input.task, taskWithInstructions)
-          const agent = createInstagramAgent(userId)
+          const agent = createInstagramAgent(userId, workspace)
           const result = await agent.generate(inputForAgent)
           return result.text
         } catch (error) {
@@ -230,7 +208,7 @@ export function createAgentTools(
         try {
           const taskWithInstructions = withCustomInstructions(input.task, agentInstructions?.browser)
           const inputForAgent = await getInputForAgent(input.task, taskWithInstructions)
-          const agent = createBrowserAgent(userId)
+          const agent = createBrowserAgent(userId, workspace)
           const result = await agent.generate(inputForAgent)
           return result.text
         } catch (error) {
@@ -250,7 +228,7 @@ export function createAgentTools(
         try {
           const taskWithInstructions = withCustomInstructions(input.task, agentInstructions?.messaging)
           const inputForAgent = await getInputForAgent(input.task, taskWithInstructions)
-          const { agent, toolsets } = await createMessagingAgent(userId, connectedProviders)
+          const { agent, toolsets } = await createMessagingAgent(userId, connectedProviders, workspace)
           const result = await agent.generate(
             inputForAgent,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -274,7 +252,7 @@ export function createAgentTools(
         try {
           const taskWithInstructions = withCustomInstructions(input.task, agentInstructions?.docs)
           const inputForAgent = await getInputForAgent(input.task, taskWithInstructions)
-          const { agent, toolsets } = await createDocsAgent(userId, connectedProviders)
+          const { agent, toolsets } = await createDocsAgent(userId, connectedProviders, workspace)
           const result = await agent.generate(
             inputForAgent,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -298,7 +276,7 @@ export function createAgentTools(
         try {
           const taskWithInstructions = withCustomInstructions(input.task, agentInstructions?.crm)
           const inputForAgent = await getInputForAgent(input.task, taskWithInstructions)
-          const { agent, toolsets } = await createCrmAgent(userId, connectedProviders)
+          const { agent, toolsets } = await createCrmAgent(userId, connectedProviders, workspace)
           const result = await agent.generate(
             inputForAgent,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -322,7 +300,7 @@ export function createAgentTools(
         try {
           const taskWithInstructions = withCustomInstructions(input.task, agentInstructions?.project)
           const inputForAgent = await getInputForAgent(input.task, taskWithInstructions)
-          const { agent, toolsets } = await createProjectAgent(userId, connectedProviders)
+          const { agent, toolsets } = await createProjectAgent(userId, connectedProviders, workspace)
           const result = await agent.generate(
             inputForAgent,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -346,7 +324,7 @@ export function createAgentTools(
         try {
           const taskWithInstructions = withCustomInstructions(input.task, agentInstructions?.realEstate)
           const inputForAgent = await getInputForAgent(input.task, taskWithInstructions)
-          const { agent, toolsets } = await createRealEstateAgent(userId, connectedProviders)
+          const { agent, toolsets } = await createRealEstateAgent(userId, connectedProviders, workspace)
           const result = await agent.generate(
             inputForAgent,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -370,7 +348,7 @@ export function createAgentTools(
         try {
           const taskWithInstructions = withCustomInstructions(input.task, agentInstructions?.finance)
           const inputForAgent = await getInputForAgent(input.task, taskWithInstructions)
-          const { agent, toolsets } = await createFinanceAgent(userId, connectedProviders)
+          const { agent, toolsets } = await createFinanceAgent(userId, connectedProviders, workspace)
           const result = await agent.generate(
             inputForAgent,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -394,7 +372,7 @@ export function createAgentTools(
         try {
           const taskWithInstructions = withCustomInstructions(input.task, agentInstructions?.marketing)
           const inputForAgent = await getInputForAgent(input.task, taskWithInstructions)
-          const { agent, toolsets } = await createMarketingAgent(userId, connectedProviders)
+          const { agent, toolsets } = await createMarketingAgent(userId, connectedProviders, workspace)
           const result = await agent.generate(
             inputForAgent,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -419,7 +397,7 @@ export function createAgentTools(
         try {
           const taskWithInstructions = withCustomInstructions(input.task, agentInstructions?.sdr)
           const inputForAgent = await getInputForAgent(input.task, taskWithInstructions)
-          const agent = await createLeadAgent(userId, tenantId)
+          const agent = await createLeadAgent(userId, tenantId, workspace)
           const result = await agent.generate(inputForAgent)
           return result.text
         } catch (error) {

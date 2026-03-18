@@ -3,6 +3,7 @@ import { auth } from '@clerk/nextjs/server'
 import { ConvexHttpClient } from 'convex/browser'
 import { api } from '@convex/_generated/api'
 import { workspace } from '@/mastra/workspace'
+import { invalidateAllWorkspaceCaches } from '@/mastra/createWorkspaceForTenant'
 import { listSkills } from '@/services/skillsService'
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
@@ -28,7 +29,11 @@ export async function POST() {
     )
   }
 
+  if (typeof workspace.init === 'function') {
+    await workspace.init()
+  }
   await workspace.skills?.refresh()
+  invalidateAllWorkspaceCaches()
 
   const skills = await listSkills({
     tenantId: String(dbUser.tenantId),

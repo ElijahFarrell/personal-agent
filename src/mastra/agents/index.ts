@@ -50,12 +50,12 @@ export interface AllAgents {
 /**
  * Create all agents for a user. Returns a keyed object for easy access.
  */
-export function createAllAgents(
+export async function createAllAgents(
   userId: string,
   tenantId: string
-): AllAgents {
+): Promise<AllAgents> {
   return {
-    orchestrator: createOrchestratorAgent(userId, tenantId),
+    orchestrator: await createOrchestratorAgent(userId, tenantId),
     email: createEmailAgentSync(userId),
     research: createResearchAgent(userId),
     calendar: createCalendarAgentSync(userId),

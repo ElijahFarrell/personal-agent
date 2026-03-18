@@ -1,4 +1,5 @@
 import { Agent } from '@mastra/core/agent'
+import type { Workspace } from '@mastra/core/workspace'
 import { AgentModels } from '@/constants/models'
 import { createMem0RecallTool } from '../tools/mem0Recall'
 import { createMem0MemorizeTool } from '../tools/mem0Memorize'
@@ -18,7 +19,8 @@ export interface CalendarAgentResult {
  */
 export async function createCalendarAgent(
   userId: string,
-  connectedProviders: string[]
+  connectedProviders: string[],
+  workspace?: Workspace
 ): Promise<CalendarAgentResult> {
   const activeProviders = CALENDAR_PROVIDERS.filter((p) =>
     connectedProviders.includes(p)
@@ -33,6 +35,7 @@ export async function createCalendarAgent(
     name: 'calendar',
     instructions: CALENDAR_PROMPT,
     model: AgentModels.calendar(),
+    workspace,
     tools: {
       ...composioTools,
       mem0Recall: createMem0RecallTool(userId),

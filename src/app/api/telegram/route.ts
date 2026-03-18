@@ -4,11 +4,6 @@ import type { NarrowedContext } from 'telegraf'
 import type { Message, Update } from 'telegraf/types'
 import { ConvexHttpClient } from 'convex/browser'
 import { createOrchestratorAgent } from '@/mastra'
-import {
-  resolveSkillsForMessage,
-  buildSkillsSystemContext,
-  type SkillPreference,
-} from '@/services/skillsService'
 import { retrieveRelevantContext, buildContextBlock } from '@/services/contextService'
 import { config } from '@/lib/config'
 import { api } from '@convex/_generated/api'
@@ -87,37 +82,19 @@ async function processMessage(ctx: TextContext, messageText: string): Promise<vo
   try {
     await ctx.sendChatAction('typing')
 
-    let skillPreferences: SkillPreference[] = []
-    try {
-      const prefs = await convex.query(api.skills.getSkillPreferences, {
-        tenantId: convexUser.tenantId,
-        userId: convexUser._id,
-      })
-      skillPreferences = prefs.map((p) => ({
-        skillName: p.skillName,
-        isEnabled: p.isEnabled,
-        isPinned: p.isPinned,
-      }))
-    } catch (err) {
-      console.warn('[Telegram] Skill preferences fetch failed:', (err as Error)?.message ?? err)
-    }
+    const relevantContext = await retrieveRelevantContext(
+      messageText,
+      tenantId,
+      dbUserId
+    ).catch((err) => {
+      console.warn('[Telegram] Context retrieval failed (continuing without):', err?.message ?? err)
+      return []
+    })
 
-    const [resolvedSkills, relevantContext] = await Promise.all([
-      resolveSkillsForMessage(messageText, skillPreferences, 5, skillScope).catch((err) => {
-        console.warn('[Telegram] Skill retrieval failed (continuing without context):', (err as Error)?.message ?? err)
-        return []
-      }),
-      retrieveRelevantContext(messageText, tenantId, dbUserId).catch((err) => {
-        console.warn('[Telegram] Context retrieval failed (continuing without):', err?.message ?? err)
-        return []
-      }),
-    ])
-
-    const skillsContext = buildSkillsSystemContext(resolvedSkills)
     const contextBlock = buildContextBlock(relevantContext)
-    const agent = createOrchestratorAgent(userId, tenantId)
+    const agent = await createOrchestratorAgent(userId, tenantId, undefined, [], undefined, skillScope)
 
-    const systemParts = [skillsContext, contextBlock].filter(Boolean)
+    const systemParts = [contextBlock].filter(Boolean)
     const fullMessage =
       systemParts.length > 0
         ? `${systemParts.join('\n\n---\n\n')}\n\nUser: ${messageText}`

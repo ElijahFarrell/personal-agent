@@ -1,4 +1,5 @@
 import { Agent } from '@mastra/core/agent'
+import type { Workspace } from '@mastra/core/workspace'
 import { AgentModels } from '@/constants/models'
 import { createMem0RecallTool } from '../tools/mem0Recall'
 import { createMem0MemorizeTool } from '../tools/mem0Memorize'
@@ -18,7 +19,8 @@ export interface FinanceAgentResult {
  */
 export async function createFinanceAgent(
   userId: string,
-  connectedProviders: string[]
+  connectedProviders: string[],
+  workspace?: Workspace
 ): Promise<FinanceAgentResult> {
   const activeProviders = FINANCE_PROVIDERS.filter((p) =>
     connectedProviders.includes(p)
@@ -33,6 +35,7 @@ export async function createFinanceAgent(
     name: 'finance',
     instructions: FINANCE_PROMPT,
     model: AgentModels.finance(),
+    workspace,
     tools: {
       ...composioTools,
       mem0Recall: createMem0RecallTool(userId),
