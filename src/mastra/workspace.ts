@@ -49,6 +49,7 @@ export const workspace = new Workspace({
   vectorStore: qdrantVector,
   embedder: embedText,
   autoIndexPaths: ['/skills/**/*.md'],
+  searchIndexName: 'personal_agent_skills',
 })
 
 /** Log skill source configuration on first load. */

@@ -21,12 +21,8 @@ import {
   createFinanceAgent,
   createMarketingAgent,
 } from '@/mastra'
-import {
-  resolveSkillsForMessage,
-  buildSkillsSystemContext,
-  type SkillPreference,
-} from '@/services/skillsService'
 import { retrieveRelevantContext, buildContextBlock } from '@/services/contextService'
+import { createWorkspaceForTenant } from '@/mastra/createWorkspaceForTenant'
 import { buildProspectsContext } from '@/services/prospectsContextService'
 import { getTenantContext } from '@/middleware/tenantContext'
 import { api } from '@convex/_generated/api'
@@ -162,52 +158,11 @@ export async function POST(req: NextRequest) {
         }
       : undefined
 
-    let skillPreferences: SkillPreference[] = []
-    if (dbUser) {
-      try {
-        const prefs = await convex.query(api.skills.getSkillPreferences, {
-          tenantId: dbUser.tenantId,
-          userId: dbUser._id,
-        })
-        skillPreferences = prefs.map((p) => ({
-          skillName: p.skillName,
-          isEnabled: p.isEnabled,
-          isPinned: p.isPinned,
-        }))
+    const workspace = skillScope
+      ? await createWorkspaceForTenant(skillScope.tenantId, skillScope.userId)
+      : undefined
 
-        if (pinnedSkillIds && pinnedSkillIds.length > 0) {
-          const pinnedLookup = new Set(pinnedSkillIds)
-          const allChatSkills = await convex.query(api.skills.getAllSkillsForChat, {
-            tenantId: dbUser.tenantId,
-            userId: dbUser._id,
-          })
-          for (const cs of allChatSkills) {
-            if (pinnedLookup.has(cs._id)) {
-              const existing = skillPreferences.find(
-                (p) => p.skillName.toLowerCase() === cs.name.toLowerCase()
-              )
-              if (existing) {
-                existing.isPinned = true
-              } else {
-                skillPreferences.push({
-                  skillName: cs.name,
-                  isEnabled: true,
-                  isPinned: true,
-                })
-              }
-            }
-          }
-        }
-      } catch (err) {
-        console.warn('[Chat API] Skill preferences fetch failed:', (err as Error)?.message ?? err)
-      }
-    }
-
-    const [resolvedSkills, relevantContext, historyDocs, prospectsContext] = await Promise.all([
-      resolveSkillsForMessage(message, skillPreferences, 5, skillScope).catch((err) => {
-        console.warn('[Chat API] Skill retrieval failed (continuing without context):', (err as Error)?.message ?? err)
-        return []
-      }),
+    const [relevantContext, historyDocs, prospectsContext] = await Promise.all([
       retrieveRelevantContext(message, tenantId, dbUserId).catch((err) => {
         console.warn('[Chat API] Context retrieval failed (continuing without):', err?.message ?? err)
         return []
@@ -229,9 +184,7 @@ export async function POST(req: NextRequest) {
     ])
 
     console.log(
-      `[Chat API] skills=${resolvedSkills.length > 0
-        ? resolvedSkills.map((s) => `${s.skill.name} (${s.score.toFixed(2)})`).join(', ')
-        : 'none'} | context=${relevantContext.length} docs | history=${historyDocs.length} msgs`
+      `[Chat API] workspace=${workspace ? 'yes' : 'no'} | context=${relevantContext.length} docs | history=${historyDocs.length} msgs`
     )
 
     let connectedProviders: string[] = []
@@ -248,12 +201,11 @@ export async function POST(req: NextRequest) {
 
     console.log(`[Chat API] connectedProviders=${connectedProviders.join(', ') || 'none'}`)
 
-    const skillsContext = buildSkillsSystemContext(resolvedSkills)
     const contextBlock = buildContextBlock(relevantContext)
 
     const agentMessages: AgentMessage[] = []
 
-    const systemParts = [skillsContext, contextBlock, prospectsContext].filter(Boolean)
+    const systemParts = [contextBlock, prospectsContext].filter(Boolean)
     if (systemParts.length > 0) {
       agentMessages.push({ role: CHAT_ROLES.SYSTEM, content: systemParts.join('\n\n---\n\n') })
     }
@@ -306,7 +258,7 @@ export async function POST(req: NextRequest) {
         }
         const createFn = createFns[agentId as (typeof composioAgentIds)[number]]
         if (createFn) {
-          const { agent, toolsets } = await createFn(userId, connectedProviders)
+          const { agent, toolsets } = await createFn(userId, connectedProviders, workspace)
           const agentMessagesWithTask = [...agentMessages]
           const lastIdx = agentMessagesWithTask.length - 1
           if (lastIdx >= 0 && agentMessagesWithTask[lastIdx]?.role === CHAT_ROLES.USER) {
@@ -319,26 +271,26 @@ export async function POST(req: NextRequest) {
           )
         }
       } else if (simpleAgentIds.includes(agentId as (typeof simpleAgentIds)[number])) {
-        const createFns = {
-          research: createResearchAgent,
-          linkedin: createLinkedInAgent,
-          content: createContentAgent,
-          instagram: createInstagramAgent,
-          browser: createBrowserAgent,
-        }
-        const createFn = createFns[agentId as (typeof simpleAgentIds)[number]]
-        if (createFn) {
-          const agent =
-            agentId === 'content'
-              ? createContentAgent(userId, skillScope)
-              : (createFn(userId) as Agent)
-          const agentMessagesWithTask = [...agentMessages]
-          const lastIdx = agentMessagesWithTask.length - 1
-          if (lastIdx >= 0 && agentMessagesWithTask[lastIdx]?.role === CHAT_ROLES.USER) {
-            agentMessagesWithTask[lastIdx] = { role: CHAT_ROLES.USER, content: taskWithInstructions }
+        const draftScope = skillScope ? { tenantId: skillScope.tenantId, userId: skillScope.userId } : undefined
+        let agent: Agent
+        if (agentId === 'content') {
+          agent = createContentAgent(userId, draftScope, workspace)
+        } else {
+          const createFns = {
+            research: createResearchAgent,
+            linkedin: createLinkedInAgent,
+            instagram: createInstagramAgent,
+            browser: createBrowserAgent,
           }
-          stream = await agent.stream(agentMessagesWithTask as Parameters<typeof agent.stream>[0])
+          const createFn = createFns[agentId as keyof typeof createFns]
+          agent = createFn(userId, workspace) as Agent
         }
+        const agentMessagesWithTask = [...agentMessages]
+        const lastIdx = agentMessagesWithTask.length - 1
+        if (lastIdx >= 0 && agentMessagesWithTask[lastIdx]?.role === CHAT_ROLES.USER) {
+          agentMessagesWithTask[lastIdx] = { role: CHAT_ROLES.USER, content: taskWithInstructions }
+        }
+        stream = await agent.stream(agentMessagesWithTask as Parameters<typeof agent.stream>[0])
       }
     }
 
@@ -349,15 +301,13 @@ export async function POST(req: NextRequest) {
     }
 
     if (stream === null) {
-      const agent = createOrchestratorAgent(
+      const agent = await createOrchestratorAgent(
         userId,
         convexTenantId ?? tenantId,
         agentInstructions,
         connectedProviders,
         model,
         skillScope
-          ? { scope: skillScope, preferences: skillPreferences }
-          : undefined
       )
       stream = await agent.stream(agentMessages as Parameters<typeof agent.stream>[0])
     }
@@ -369,14 +319,7 @@ export async function POST(req: NextRequest) {
       execute: async ({ writer }) => {
         writer.write({
           type: 'data-skills',
-          data: {
-            type: 'skills',
-            items: resolvedSkills.map(({ skill, score }) => ({
-              id: skill.name,
-              name: skill.name,
-              score,
-            })),
-          },
+          data: { type: 'skills', items: [] },
         })
         for await (const part of aiStream as AsyncIterable<{
           type?: string

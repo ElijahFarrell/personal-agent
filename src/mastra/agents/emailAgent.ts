@@ -1,4 +1,5 @@
 import { Agent } from '@mastra/core/agent'
+import type { Workspace } from '@mastra/core/workspace'
 import { AgentModels } from '@/constants/models'
 import { createMem0RecallTool } from '../tools/mem0Recall'
 import { createMem0MemorizeTool } from '../tools/mem0Memorize'
@@ -18,7 +19,8 @@ export interface EmailAgentResult {
  */
 export async function createEmailAgent(
   userId: string,
-  connectedProviders: string[]
+  connectedProviders: string[],
+  workspace?: Workspace
 ): Promise<EmailAgentResult> {
   const activeProviders = EMAIL_PROVIDERS.filter((p) =>
     connectedProviders.includes(p)
@@ -33,6 +35,7 @@ export async function createEmailAgent(
     name: 'email',
     instructions: EMAIL_PROMPT,
     model: AgentModels.email(),
+    workspace,
     tools: {
       ...composioTools,
       mem0Recall: createMem0RecallTool(userId),

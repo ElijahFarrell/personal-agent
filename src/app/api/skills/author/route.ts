@@ -3,6 +3,7 @@ import { ConvexHttpClient } from 'convex/browser'
 import { api } from '@convex/_generated/api'
 import { getTenantContext } from '@/middleware/tenantContext'
 import { workspace, convexSkillSource } from '@/mastra/workspace'
+import { invalidateWorkspaceCache } from '@/mastra/createWorkspaceForTenant'
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
 
@@ -61,6 +62,7 @@ export async function POST(request: NextRequest) {
     }
 
     convexSkillSource?.invalidateCache()
+    invalidateWorkspaceCache(String(dbUser.tenantId), scope === 'user' ? String(dbUser._id) : undefined)
     await workspace.skills?.refresh()
 
     return NextResponse.json({

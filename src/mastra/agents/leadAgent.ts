@@ -3,6 +3,7 @@
  * Handles: find leads, research, personalize, add to sequence.
  */
 import { Agent } from '@mastra/core/agent'
+import type { Workspace } from '@mastra/core/workspace'
 import { Composio } from '@composio/core'
 import { MastraProvider } from '@composio/mastra'
 import { config } from '@/lib/config'
@@ -17,7 +18,8 @@ import { LEAD_PROMPT } from '../prompts/lead'
  */
 export async function createLeadAgent(
   userId: string,
-  tenantId: string
+  tenantId: string,
+  workspace?: Workspace
 ): Promise<Agent> {
   const baseTools = getSDRTools(userId, tenantId)
 
@@ -27,6 +29,7 @@ export async function createLeadAgent(
       name: 'lead',
       instructions: LEAD_PROMPT,
       model: AgentModels.content(),
+      workspace,
       tools: baseTools,
     })
   }
@@ -41,6 +44,7 @@ export async function createLeadAgent(
       name: 'lead',
       instructions: LEAD_PROMPT,
       model: AgentModels.content(),
+      workspace,
       tools: baseTools,
     })
   }
@@ -67,6 +71,7 @@ export async function createLeadAgent(
     name: 'lead',
     instructions: LEAD_PROMPT,
     model: AgentModels.content(),
+    workspace,
     tools: mergedTools,
   })
 }

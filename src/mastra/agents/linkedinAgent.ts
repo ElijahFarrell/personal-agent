@@ -1,4 +1,5 @@
 import { Agent } from '@mastra/core/agent'
+import type { Workspace } from '@mastra/core/workspace'
 import { AgentModels } from '@/constants/models'
 import { createMem0MemorizeTool } from '../tools/mem0Memorize'
 import { createMem0RecallTool } from '../tools/mem0Recall'
@@ -11,12 +12,13 @@ import { LINKEDIN_PROMPT } from '../prompts'
 /**
  * Factory creates a LinkedIn agent scoped to a user for memory isolation.
  */
-export function createLinkedInAgent(userId: string): Agent {
+export function createLinkedInAgent(userId: string, workspace?: Workspace): Agent {
   return new Agent({
     id: 'linkedin',
     name: 'linkedin',
     instructions: LINKEDIN_PROMPT,
     model: AgentModels.linkedin(),
+    workspace,
     tools: {
       linkedinProfile: createLinkedInProfileTool(userId),
       linkedinDM: createLinkedInDMTool(userId),
