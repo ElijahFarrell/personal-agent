@@ -2,10 +2,11 @@ import { Agent } from '@mastra/core/agent'
 import { AgentModels } from '@/constants/models'
 import { createMem0RecallTool } from '../tools/mem0Recall'
 import { createMem0MemorizeTool } from '../tools/mem0Memorize'
-import { getNangoMCPToolsets } from '@/lib/nangoMcp'
+import { getComposioToolsForProviders } from '@/lib/composio'
 import { MARKETING_PROMPT } from '../prompts/marketing'
+import type { ComposioProvider } from '@/types'
 
-const MARKETING_PROVIDERS = ['mailchimp'] as const
+const MARKETING_PROVIDERS: ComposioProvider[] = ['mailchimp']
 
 export interface MarketingAgentResult {
   agent: Agent
@@ -13,7 +14,7 @@ export interface MarketingAgentResult {
 }
 
 /**
- * Creates the Marketing agent with MCP tools for Mailchimp.
+ * Creates the Marketing agent with Composio tools for Mailchimp.
  */
 export async function createMarketingAgent(
   userId: string,
@@ -22,9 +23,9 @@ export async function createMarketingAgent(
   const activeProviders = MARKETING_PROVIDERS.filter((p) =>
     connectedProviders.includes(p)
   )
-  const toolsets =
+  const composioTools =
     activeProviders.length > 0
-      ? await getNangoMCPToolsets(userId, [...activeProviders])
+      ? await getComposioToolsForProviders(userId, activeProviders)
       : {}
 
   const agent = new Agent({
@@ -33,10 +34,11 @@ export async function createMarketingAgent(
     instructions: MARKETING_PROMPT,
     model: AgentModels.marketing(),
     tools: {
+      ...composioTools,
       mem0Recall: createMem0RecallTool(userId),
       mem0Memorize: createMem0MemorizeTool(userId),
     },
   })
 
-  return { agent, toolsets }
+  return { agent, toolsets: {} }
 }

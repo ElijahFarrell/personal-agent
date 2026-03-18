@@ -2,10 +2,11 @@ import { Agent } from '@mastra/core/agent'
 import { AgentModels } from '@/constants/models'
 import { createMem0RecallTool } from '../tools/mem0Recall'
 import { createMem0MemorizeTool } from '../tools/mem0Memorize'
-import { getNangoMCPToolsets } from '@/lib/nangoMcp'
+import { getComposioToolsForProviders } from '@/lib/composio'
 import { CRM_PROMPT } from '../prompts/crm'
+import type { ComposioProvider } from '@/types'
 
-const CRM_PROVIDERS = ['hubspot', 'salesforce', 'pipedrive', 'zoho-crm'] as const
+const CRM_PROVIDERS: ComposioProvider[] = ['hubspot', 'salesforce', 'zoho-crm']
 
 export interface CrmAgentResult {
   agent: Agent
@@ -13,19 +14,18 @@ export interface CrmAgentResult {
 }
 
 /**
- * Creates the CRM agent with MCP tools for connected CRM integrations.
- * Returns both the agent and toolsets — pass toolsets to agent.generate(task, { toolsets }).
+ * Creates the CRM agent with Composio tools for HubSpot, Salesforce, Zoho CRM.
  */
 export async function createCrmAgent(
   userId: string,
   connectedProviders: string[]
 ): Promise<CrmAgentResult> {
-  const activeCrmProviders = CRM_PROVIDERS.filter((p) =>
+  const activeProviders = CRM_PROVIDERS.filter((p) =>
     connectedProviders.includes(p)
   )
-  const toolsets =
-    activeCrmProviders.length > 0
-      ? await getNangoMCPToolsets(userId, [...activeCrmProviders])
+  const composioTools =
+    activeProviders.length > 0
+      ? await getComposioToolsForProviders(userId, activeProviders)
       : {}
 
   const agent = new Agent({
@@ -34,10 +34,11 @@ export async function createCrmAgent(
     instructions: CRM_PROMPT,
     model: AgentModels.crm(),
     tools: {
+      ...composioTools,
       mem0Recall: createMem0RecallTool(userId),
       mem0Memorize: createMem0MemorizeTool(userId),
     },
   })
 
-  return { agent, toolsets }
+  return { agent, toolsets: {} }
 }

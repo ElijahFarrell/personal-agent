@@ -98,7 +98,7 @@ export function createAgentTools(
         try {
           const taskWithInstructions = withCustomInstructions(input.task, agentInstructions?.email)
           const inputForAgent = await getInputForAgent(input.task, taskWithInstructions)
-          const agent = createEmailAgent(userId)
+          const { agent } = await createEmailAgent(userId, connectedProviders)
           const result = await agent.generate(inputForAgent)
           return result.text
         } catch (error) {

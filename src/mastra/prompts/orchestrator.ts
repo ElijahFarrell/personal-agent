@@ -16,7 +16,7 @@ const AGENT_DESCRIPTIONS: Record<
   'browser-agent': { provider: null, desc: 'Navigate websites, extract page content, fill and submit forms. Confirms before submitting.' },
   'messaging-agent': { providers: ['slack', 'microsoft-teams', 'discord'], desc: 'Slack, Teams, Discord — list channels, send messages. Always confirms before sending.' },
   'docs-agent': { providers: ['google-docs', 'google-sheet', 'airtable', 'notion'], desc: 'Google Docs, Sheets, Airtable, Notion — search, read, create documents and records.' },
-  'real-estate-agent': { providers: ['follow-up-boss', 'calendly'], desc: 'Follow Up Boss, Calendly — contacts, deals, tasks, event types, scheduling.' },
+  'real-estate-agent': { providers: ['calendly'], desc: 'Calendly — event types, scheduled events, scheduling.' },
   'finance-agent': { providers: ['stripe', 'quickbooks'], desc: 'Stripe, QuickBooks — customers, charges, invoices, payments.' },
   'marketing-agent': { provider: 'mailchimp', desc: 'Mailchimp — audiences, campaigns.' },
   'sdr-agent': { provider: null, desc: 'Lead gen: Exa company search, Apollo (search/enrich/sequences when connected), Outlook (send when connected). Use for "find 50 CEOs", "research leads", "personalize outreach", "add to sequence". Connect Apollo/Outlook in Integrations for Apollo sequences.' },
@@ -24,8 +24,8 @@ const AGENT_DESCRIPTIONS: Record<
   'list-schedules': { provider: null, desc: 'List the user\'s schedules. Use when they ask to see their schedules, cron jobs, or automated tasks.' },
   'toggle-schedule': { provider: null, desc: 'Enable or disable a schedule. Use when the user wants to turn a schedule on or off.' },
   'delete-schedule': { provider: null, desc: 'Delete a schedule permanently.' },
-  'crm-agent': { providers: ['hubspot', 'salesforce', 'pipedrive', 'zoho-crm'], desc: 'HubSpot, Salesforce, Pipedrive, Zoho CRM — contacts, deals, companies, tasks, notes.' },
-  'project-agent': { providers: ['jira', 'asana', 'monday'], desc: 'Jira, Asana, Monday.com — issues, tasks, projects, boards, sprints, updates.' },
+  'crm-agent': { providers: ['hubspot', 'salesforce', 'zoho-crm'], desc: 'HubSpot, Salesforce, Zoho CRM — contacts, deals, companies, tasks, notes.' },
+  'project-agent': { providers: ['asana', 'monday'], desc: 'Asana, Monday.com — issues, tasks, projects, boards, sprints, updates.' },
 }
 
 export function buildOrchestratorPrompt(

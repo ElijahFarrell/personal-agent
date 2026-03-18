@@ -32,8 +32,8 @@ export async function createLeadAgent(
   }
 
   const status = await getComposioConnectionStatus(userId)
-  const hasApollo = status.APOLLO
-  const hasOutlook = status.OUTLOOK
+  const hasApollo = status.apollo
+  const hasOutlook = status.outlook
 
   if (!hasApollo && !hasOutlook) {
     return new Agent({

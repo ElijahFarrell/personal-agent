@@ -1,10 +1,12 @@
 import { Agent } from '@mastra/core/agent'
 import { AgentModels } from '@/constants/models'
-import { createCalendarListTool, createCalendarCreateTool } from '../tools/calendarTools'
 import { createMem0RecallTool } from '../tools/mem0Recall'
 import { createMem0MemorizeTool } from '../tools/mem0Memorize'
-import { getNangoMCPToolsets } from '@/lib/nangoMcp'
+import { getComposioToolsForProviders } from '@/lib/composio'
 import { CALENDAR_PROMPT } from '../prompts'
+import type { ComposioProvider } from '@/types'
+
+const CALENDAR_PROVIDERS: ComposioProvider[] = ['google-calendar']
 
 export interface CalendarAgentResult {
   agent: Agent
@@ -12,41 +14,36 @@ export interface CalendarAgentResult {
 }
 
 /**
- * Creates the Calendar agent with MCP tools for google-calendar (list) and custom create.
- * Use for orchestrator delegation with connectedProviders.
+ * Creates the Calendar agent with Composio Google Calendar tools.
  */
 export async function createCalendarAgent(
   userId: string,
   connectedProviders: string[]
 ): Promise<CalendarAgentResult> {
-  const useMcp = connectedProviders.includes('google-calendar')
-  const toolsets = useMcp
-    ? await getNangoMCPToolsets(userId, ['google-calendar'])
-    : {}
+  const activeProviders = CALENDAR_PROVIDERS.filter((p) =>
+    connectedProviders.includes(p)
+  )
+  const composioTools =
+    activeProviders.length > 0
+      ? await getComposioToolsForProviders(userId, activeProviders)
+      : {}
 
   const agent = new Agent({
     id: `calendar-${userId}`,
     name: 'calendar',
     instructions: CALENDAR_PROMPT,
     model: AgentModels.calendar(),
-    tools: useMcp
-      ? {
-          calendarCreate: createCalendarCreateTool(userId),
-          mem0Recall: createMem0RecallTool(userId),
-          mem0Memorize: createMem0MemorizeTool(userId),
-        }
-      : {
-          calendarList: createCalendarListTool(userId),
-          calendarCreate: createCalendarCreateTool(userId),
-          mem0Recall: createMem0RecallTool(userId),
-          mem0Memorize: createMem0MemorizeTool(userId),
-        },
+    tools: {
+      ...composioTools,
+      mem0Recall: createMem0RecallTool(userId),
+      mem0Memorize: createMem0MemorizeTool(userId),
+    },
   })
 
-  return { agent, toolsets }
+  return { agent, toolsets: {} }
 }
 
-/** Sync factory for createAllAgents — uses custom tools when MCP not available. */
+/** Sync factory for createAllAgents — returns agent with mem0 only (Composio tools require async + connectedProviders). */
 export function createCalendarAgentSync(userId: string): Agent {
   return new Agent({
     id: `calendar-${userId}`,
@@ -54,8 +51,6 @@ export function createCalendarAgentSync(userId: string): Agent {
     instructions: CALENDAR_PROMPT,
     model: AgentModels.calendar(),
     tools: {
-      calendarList: createCalendarListTool(userId),
-      calendarCreate: createCalendarCreateTool(userId),
       mem0Recall: createMem0RecallTool(userId),
       mem0Memorize: createMem0MemorizeTool(userId),
     },

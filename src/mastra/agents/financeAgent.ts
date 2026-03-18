@@ -2,10 +2,11 @@ import { Agent } from '@mastra/core/agent'
 import { AgentModels } from '@/constants/models'
 import { createMem0RecallTool } from '../tools/mem0Recall'
 import { createMem0MemorizeTool } from '../tools/mem0Memorize'
-import { getNangoMCPToolsets } from '@/lib/nangoMcp'
+import { getComposioToolsForProviders } from '@/lib/composio'
 import { FINANCE_PROMPT } from '../prompts/finance'
+import type { ComposioProvider } from '@/types'
 
-const FINANCE_PROVIDERS = ['stripe', 'quickbooks'] as const
+const FINANCE_PROVIDERS: ComposioProvider[] = ['stripe', 'quickbooks']
 
 export interface FinanceAgentResult {
   agent: Agent
@@ -13,7 +14,7 @@ export interface FinanceAgentResult {
 }
 
 /**
- * Creates the Finance agent with MCP tools for Stripe and QuickBooks.
+ * Creates the Finance agent with Composio tools for Stripe and QuickBooks.
  */
 export async function createFinanceAgent(
   userId: string,
@@ -22,9 +23,9 @@ export async function createFinanceAgent(
   const activeProviders = FINANCE_PROVIDERS.filter((p) =>
     connectedProviders.includes(p)
   )
-  const toolsets =
+  const composioTools =
     activeProviders.length > 0
-      ? await getNangoMCPToolsets(userId, [...activeProviders])
+      ? await getComposioToolsForProviders(userId, activeProviders)
       : {}
 
   const agent = new Agent({
@@ -33,10 +34,11 @@ export async function createFinanceAgent(
     instructions: FINANCE_PROMPT,
     model: AgentModels.finance(),
     tools: {
+      ...composioTools,
       mem0Recall: createMem0RecallTool(userId),
       mem0Memorize: createMem0MemorizeTool(userId),
     },
   })
 
-  return { agent, toolsets }
+  return { agent, toolsets: {} }
 }

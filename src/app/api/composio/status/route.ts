@@ -4,7 +4,7 @@ import { getComposioConnectionStatus } from '@/lib/composio'
 
 /**
  * GET /api/composio/status
- * Returns: { apollo: boolean, outlook: boolean }
+ * Returns: { [provider]: boolean } for all Composio-backed providers
  */
 export async function GET() {
   try {
@@ -13,15 +13,9 @@ export async function GET() {
 
     const status = await getComposioConnectionStatus(userId)
 
-    return NextResponse.json({
-      apollo: status.APOLLO,
-      outlook: status.OUTLOOK,
-    })
+    return NextResponse.json(status)
   } catch (error) {
     console.error('[Composio Status] Error:', error)
-    return NextResponse.json(
-      { apollo: false, outlook: false },
-      { status: 200 }
-    )
+    return NextResponse.json({}, { status: 200 })
   }
 }

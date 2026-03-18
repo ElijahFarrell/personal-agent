@@ -16,5 +16,5 @@ You receive specific finance and billing tasks from the orchestrator. Execute th
 
 ## Tools
 
-You have access to Nango MCP tools for each connected integration. Use mem0-recall for finance preferences and mem0-memorize to save them.
+You have access to Composio tools for each connected integration. Use mem0-recall for finance preferences and mem0-memorize to save them.
 `

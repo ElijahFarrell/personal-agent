@@ -124,9 +124,7 @@ export type IntegrationProvider =
   | 'notion'
   | 'hubspot'
   | 'salesforce'
-  | 'pipedrive'
   | 'zoho-crm'
-  | 'jira'
   | 'asana'
   | 'monday'
   | 'microsoft-teams'
@@ -134,11 +132,15 @@ export type IntegrationProvider =
   | 'google-docs'
   | 'google-sheet'
   | 'airtable'
-  | 'follow-up-boss'
   | 'calendly'
   | 'stripe'
   | 'quickbooks'
   | 'mailchimp'
+  | 'apollo'
+  | 'outlook'
+
+/** Composio-backed providers (excludes pipedrive, jira, follow-up-boss). */
+export type ComposioProvider = IntegrationProvider
 
 export interface UserIntegration {
   id: string

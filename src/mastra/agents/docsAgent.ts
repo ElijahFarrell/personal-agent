@@ -1,12 +1,12 @@
 import { Agent } from '@mastra/core/agent'
 import { AgentModels } from '@/constants/models'
-import { createNotionCreatePageTool } from '../tools/notionTools'
 import { createMem0RecallTool } from '../tools/mem0Recall'
 import { createMem0MemorizeTool } from '../tools/mem0Memorize'
-import { getNangoMCPToolsets } from '@/lib/nangoMcp'
+import { getComposioToolsForProviders } from '@/lib/composio'
 import { DOCS_PROMPT } from '../prompts/docs'
+import type { ComposioProvider } from '@/types'
 
-const DOCS_PROVIDERS = ['google-docs', 'google-sheet', 'airtable', 'notion'] as const
+const DOCS_PROVIDERS: ComposioProvider[] = ['google-docs', 'google-sheet', 'airtable', 'notion']
 
 export interface DocsAgentResult {
   agent: Agent
@@ -14,7 +14,7 @@ export interface DocsAgentResult {
 }
 
 /**
- * Creates the Docs agent with MCP tools for Google Docs/Sheets/Airtable and custom Notion create.
+ * Creates the Docs agent with Composio tools for Google Docs, Sheets, Airtable, Notion.
  */
 export async function createDocsAgent(
   userId: string,
@@ -23,29 +23,22 @@ export async function createDocsAgent(
   const activeProviders = DOCS_PROVIDERS.filter((p) =>
     connectedProviders.includes(p)
   )
-  const toolsets =
+  const composioTools =
     activeProviders.length > 0
-      ? await getNangoMCPToolsets(userId, [...activeProviders])
+      ? await getComposioToolsForProviders(userId, activeProviders)
       : {}
-
-  const baseTools = {
-    mem0Recall: createMem0RecallTool(userId),
-    mem0Memorize: createMem0MemorizeTool(userId),
-  }
 
   const agent = new Agent({
     id: `docs-${userId}`,
     name: 'docs',
     instructions: DOCS_PROMPT,
     model: AgentModels.docs(),
-    tools:
-      connectedProviders.includes('notion')
-        ? {
-            ...baseTools,
-            notionCreatePage: createNotionCreatePageTool(userId),
-          }
-        : baseTools,
+    tools: {
+      ...composioTools,
+      mem0Recall: createMem0RecallTool(userId),
+      mem0Memorize: createMem0MemorizeTool(userId),
+    },
   })
 
-  return { agent, toolsets }
+  return { agent, toolsets: {} }
 }

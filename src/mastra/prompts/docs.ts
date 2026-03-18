@@ -7,7 +7,7 @@ You receive specific document and spreadsheet tasks from the orchestrator. Execu
 - **Google Docs**: Search, read, and create documents
 - **Google Sheets**: Read, write, and create spreadsheets
 - **Airtable**: List bases, list records, create records
-- **Notion**: Create pages under a parent (custom tool with confirmation)
+- **Notion**: Search, read, create pages
 
 ## Rules
 
@@ -18,5 +18,5 @@ You receive specific document and spreadsheet tasks from the orchestrator. Execu
 
 ## Tools
 
-You have access to Nango MCP tools for Google Docs, Sheets, and Airtable, plus custom Notion create. Use mem0-recall for doc preferences and mem0-memorize to save them.
+You have access to Composio tools for Google Docs, Sheets, Airtable, and Notion. Use mem0-recall for doc preferences and mem0-memorize to save them.
 `

@@ -1,20 +1,56 @@
 import { Agent } from '@mastra/core/agent'
 import { AgentModels } from '@/constants/models'
-import { createNotionSearchTool, createNotionReadPageTool, createNotionCreatePageTool } from '../tools/notionTools'
 import { createMem0RecallTool } from '../tools/mem0Recall'
 import { createMem0MemorizeTool } from '../tools/mem0Memorize'
+import { getComposioToolsForProviders } from '@/lib/composio'
 import { NOTION_PROMPT } from '../prompts/notion'
+import type { ComposioProvider } from '@/types'
 
-export function createNotionAgent(userId: string) {
+const NOTION_PROVIDERS: ComposioProvider[] = ['notion']
+
+export interface NotionAgentResult {
+  agent: Agent
+  toolsets: Record<string, Record<string, unknown>>
+}
+
+/**
+ * Creates the Notion agent with Composio tools.
+ */
+export async function createNotionAgent(
+  userId: string,
+  connectedProviders: string[]
+): Promise<NotionAgentResult> {
+  const activeProviders = NOTION_PROVIDERS.filter((p) =>
+    connectedProviders.includes(p)
+  )
+  const composioTools =
+    activeProviders.length > 0
+      ? await getComposioToolsForProviders(userId, activeProviders)
+      : {}
+
+  const agent = new Agent({
+    id: `notion-${userId}`,
+    name: 'notion',
+    instructions: NOTION_PROMPT,
+    model: AgentModels.notion(),
+    tools: {
+      ...composioTools,
+      mem0Recall: createMem0RecallTool(userId),
+      mem0Memorize: createMem0MemorizeTool(userId),
+    },
+  })
+
+  return { agent, toolsets: {} }
+}
+
+/** Sync factory for createAllAgents — returns agent with mem0 only. */
+export function createNotionAgentSync(userId: string): Agent {
   return new Agent({
     id: `notion-${userId}`,
     name: 'notion',
     instructions: NOTION_PROMPT,
     model: AgentModels.notion(),
     tools: {
-      notionSearch: createNotionSearchTool(userId),
-      notionReadPage: createNotionReadPageTool(userId),
-      notionCreatePage: createNotionCreatePageTool(userId),
       mem0Recall: createMem0RecallTool(userId),
       mem0Memorize: createMem0MemorizeTool(userId),
     },

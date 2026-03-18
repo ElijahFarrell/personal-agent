@@ -15,5 +15,5 @@ You receive specific marketing and campaign tasks from the orchestrator. Execute
 
 ## Tools
 
-You have access to Nango MCP tools for Mailchimp. Use mem0-recall for marketing preferences and mem0-memorize to save them.
+You have access to Composio tools for Mailchimp. Use mem0-recall for marketing preferences and mem0-memorize to save them.
 `

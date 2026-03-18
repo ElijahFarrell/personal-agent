@@ -28,7 +28,7 @@ A personal AI operating system built with Next.js 15, Mastra, and TypeScript. It
           └───────────────────────────┼───────────────────────────┘
                                       ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
-│  Services: Gmail, Calendar, Search, LinkedIn, Instagram, Browser, Nango   │
+│  Services: Gmail, Calendar, Search, LinkedIn, Instagram, Browser, Composio  │
 └─────────────────────────────────────────────────────────────────────────┘
                                       │
                                       ▼
@@ -64,7 +64,7 @@ LINKEDAPI_KEY=                  # LinkedIn (linkedapi.io)
 IG_PAGE_ACCESS_TOKEN=            # Instagram (Meta Graph API)
 META_APP_SECRET=                 # Instagram webhook verification
 META_VERIFY_TOKEN=               # Instagram webhook verification
-NANGO_SECRET_KEY=               # OAuth (Gmail, Calendar)
+COMPOSIO_API_KEY=               # OAuth (Gmail, Calendar, Slack, etc.)
 ```
 
 ### Dev Commands
@@ -116,9 +116,9 @@ Skills are loaded at runtime and injected into the orchestrator context when rel
 
 ### Gmail & Google Calendar
 
-1. Configure Nango at [nango.dev](https://nango.dev)
-2. Set `NANGO_SECRET_KEY` and `NEXT_PUBLIC_NANGO_PUBLIC_KEY`
-3. Connect Gmail and Calendar via Nango dashboard
+1. Configure Composio at [platform.composio.dev](https://platform.composio.dev)
+2. Set `COMPOSIO_API_KEY` in env
+3. Connect Gmail and Calendar via the Integrations page
 
 ### LinkedIn
 
@@ -145,8 +145,8 @@ npx playwright install chromium
 | Phase | Scope |
 |-------|-------|
 | **Core** | Orchestrator, routing, memory, Telegram, web chat |
-| **Email** | Gmail read/send/reply via Nango |
-| **Calendar** | Google Calendar list/create via Nango |
+| **Email** | Gmail read/send/reply via Composio |
+| **Calendar** | Google Calendar list/create via Composio |
 | **Research** | Web search (Tavily, Exa), synthesis |
 | **LinkedIn** | Profile research, DM, search (linkedapi.io) |
 | **Content** | LinkedIn posts, newsletters, brand voice |
@@ -163,7 +163,7 @@ npx playwright install chromium
 | Memory | Mem0 |
 | Search | Tavily, Exa |
 | DB | Drizzle + Turso/Neon |
-| OAuth | Nango |
+| OAuth | Composio |
 | Messaging | Telegram, Instagram (Meta Graph API) |
 | Browser | Playwright |
 | Skills | Qdrant (embeddings) |

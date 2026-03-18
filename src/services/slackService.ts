@@ -1,24 +1,8 @@
-import { getConnection } from './nangoService'
-
-const SLACK_API = 'https://slack.com/api'
-
-async function slackFetch(endpoint: string, userId: string, body?: Record<string, unknown>) {
-  const creds = await getConnection('slack', userId)
-  if (!creds) throw new Error('Slack is not connected. Ask the user to connect Slack in Integrations.')
-
-  const res = await fetch(`${SLACK_API}/${endpoint}`, {
-    method: body ? 'POST' : 'GET',
-    headers: {
-      Authorization: `Bearer ${creds.accessToken}`,
-      'Content-Type': 'application/json; charset=utf-8',
-    },
-    ...(body && { body: JSON.stringify(body) }),
-  })
-
-  const data = await res.json()
-  if (!data.ok) throw new Error(`Slack API error: ${data.error}`)
-  return data
-}
+/**
+ * Slack operations via Composio.
+ * Uses Composio SLACK tools with the user's connected account.
+ */
+import { executeComposioTool } from '@/lib/composio'
 
 export interface SlackChannel {
   id: string
@@ -34,33 +18,80 @@ export interface SlackUser {
   isBot: boolean
 }
 
+/**
+ * Lists channels. Uses Composio SLACK_LIST_CHANNELS or similar.
+ * Fallback: returns empty if tool not available.
+ */
 export async function listChannels(userId: string): Promise<SlackChannel[]> {
-  const data = await slackFetch('conversations.list', userId)
-  return (data.channels ?? []).map((ch: Record<string, unknown>) => ({
-    id: ch.id as string,
-    name: ch.name as string,
-    topic: (ch.topic as { value?: string })?.value ?? '',
-    memberCount: ch.num_members as number ?? 0,
+  const result = await executeComposioTool<{ channels?: Array<Record<string, unknown>> }>(
+    userId,
+    'SLACK_LIST_CONVERSATIONS',
+    { types: 'public_channel,private_channel' }
+  )
+
+  const channels = result.data?.channels ?? (result.data as { channels?: Array<Record<string, unknown>> })?.channels
+  if (!result.successful || !channels) {
+    if (result.error) throw new Error(result.error)
+    return []
+  }
+
+  return channels.map((ch) => ({
+    id: (ch.id ?? ch.channel_id ?? '') as string,
+    name: (ch.name ?? '') as string,
+    topic: ((ch.topic as { value?: string })?.value ?? '') as string,
+    memberCount: (ch.num_members ?? ch.member_count ?? 0) as number,
   }))
 }
 
+/**
+ * Lists users. Uses Composio SLACK_LIST_USERS or similar.
+ */
 export async function listUsers(userId: string): Promise<SlackUser[]> {
-  const data = await slackFetch('users.list', userId)
-  return (data.members ?? [])
-    .filter((m: Record<string, unknown>) => !m.deleted)
-    .map((m: Record<string, unknown>) => ({
-      id: m.id as string,
-      name: m.name as string,
-      realName: (m.real_name as string) ?? '',
+  const result = await executeComposioTool<{ members?: Array<Record<string, unknown>> }>(
+    userId,
+    'SLACK_LIST_ALL_USERS',
+    {}
+  )
+
+  const members = result.data?.members ?? (result.data as { members?: Array<Record<string, unknown>> })?.members
+  if (!result.successful || !members) {
+    if (result.error) throw new Error(result.error)
+    return []
+  }
+
+  return members
+    .filter((m) => !m.deleted)
+    .map((m) => ({
+      id: (m.id ?? '') as string,
+      name: (m.name ?? '') as string,
+      realName: (m.real_name ?? '') as string,
       isBot: Boolean(m.is_bot),
     }))
 }
 
+/**
+ * Sends a message to a Slack channel.
+ */
 export async function sendMessage(
   userId: string,
   channel: string,
   text: string
 ): Promise<{ ts: string; channel: string }> {
-  const data = await slackFetch('chat.postMessage', userId, { channel, text })
-  return { ts: data.ts, channel: data.channel }
+  const result = await executeComposioTool<{ ts?: string; channel?: string }>(
+    userId,
+    'SLACK_SEND_MESSAGE',
+    {
+      channel,
+      text,
+    }
+  )
+
+  if (!result.successful && result.error) {
+    throw new Error(result.error)
+  }
+
+  return {
+    ts: result.data?.ts ?? '',
+    channel: result.data?.channel ?? channel,
+  }
 }

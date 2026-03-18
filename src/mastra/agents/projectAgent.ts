@@ -2,10 +2,11 @@ import { Agent } from '@mastra/core/agent'
 import { AgentModels } from '@/constants/models'
 import { createMem0RecallTool } from '../tools/mem0Recall'
 import { createMem0MemorizeTool } from '../tools/mem0Memorize'
-import { getNangoMCPToolsets } from '@/lib/nangoMcp'
+import { getComposioToolsForProviders } from '@/lib/composio'
 import { PROJECT_PROMPT } from '../prompts/project'
+import type { ComposioProvider } from '@/types'
 
-const PROJECT_PROVIDERS = ['jira', 'asana', 'monday'] as const
+const PROJECT_PROVIDERS: ComposioProvider[] = ['asana', 'monday']
 
 export interface ProjectAgentResult {
   agent: Agent
@@ -13,7 +14,7 @@ export interface ProjectAgentResult {
 }
 
 /**
- * Creates the Project agent with MCP tools for connected project management integrations.
+ * Creates the Project agent with Composio tools for Asana and Monday.com.
  */
 export async function createProjectAgent(
   userId: string,
@@ -22,9 +23,9 @@ export async function createProjectAgent(
   const activeProviders = PROJECT_PROVIDERS.filter((p) =>
     connectedProviders.includes(p)
   )
-  const toolsets =
+  const composioTools =
     activeProviders.length > 0
-      ? await getNangoMCPToolsets(userId, [...activeProviders])
+      ? await getComposioToolsForProviders(userId, activeProviders)
       : {}
 
   const agent = new Agent({
@@ -33,10 +34,11 @@ export async function createProjectAgent(
     instructions: PROJECT_PROMPT,
     model: AgentModels.project(),
     tools: {
+      ...composioTools,
       mem0Recall: createMem0RecallTool(userId),
       mem0Memorize: createMem0MemorizeTool(userId),
     },
   })
 
-  return { agent, toolsets }
+  return { agent, toolsets: {} }
 }

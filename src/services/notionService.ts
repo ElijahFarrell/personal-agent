@@ -1,33 +1,8 @@
-import { getConnection } from './nangoService'
-
-const NOTION_API = 'https://api.notion.com/v1'
-const NOTION_VERSION = '2022-06-28'
-
-async function notionFetch(
-  endpoint: string,
-  userId: string,
-  options?: { method?: string; body?: Record<string, unknown> }
-) {
-  const creds = await getConnection('notion', userId)
-  if (!creds) throw new Error('Notion is not connected. Ask the user to connect Notion in Integrations.')
-
-  const res = await fetch(`${NOTION_API}${endpoint}`, {
-    method: options?.method ?? 'GET',
-    headers: {
-      Authorization: `Bearer ${creds.accessToken}`,
-      'Notion-Version': NOTION_VERSION,
-      'Content-Type': 'application/json',
-    },
-    ...(options?.body && { body: JSON.stringify(options.body) }),
-  })
-
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ message: res.statusText }))
-    throw new Error(`Notion API error: ${error.message ?? res.statusText}`)
-  }
-
-  return res.json()
-}
+/**
+ * Notion operations via Composio.
+ * Uses Composio NOTION tools with the user's connected account.
+ */
+import { executeComposioTool } from '@/lib/composio'
 
 export interface NotionPage {
   id: string
@@ -49,17 +24,26 @@ function extractTitle(page: Record<string, unknown>): string {
   return 'Untitled'
 }
 
+/**
+ * Searches Notion pages by query.
+ */
 export async function searchPages(userId: string, query: string): Promise<NotionPage[]> {
-  const data = await notionFetch('/search', userId, {
-    method: 'POST',
-    body: {
+  const result = await executeComposioTool<{ results?: Record<string, unknown>[] }>(
+    userId,
+    'NOTION_SEARCH_NOTION_PAGE',
+    {
       query,
       filter: { value: 'page', property: 'object' },
       page_size: 10,
-    },
-  })
+    }
+  )
 
-  return (data.results ?? []).map((page: Record<string, unknown>) => ({
+  if (!result.successful || !result.data?.results) {
+    if (result.error) throw new Error(result.error)
+    return []
+  }
+
+  return result.data.results.map((page) => ({
     id: page.id as string,
     title: extractTitle(page),
     url: (page.url as string) ?? '',
@@ -67,10 +51,25 @@ export async function searchPages(userId: string, query: string): Promise<Notion
   }))
 }
 
+/**
+ * Gets page content by fetching block children and extracting text.
+ */
 export async function getPageContent(userId: string, pageId: string): Promise<string> {
-  const data = await notionFetch(`/blocks/${pageId}/children?page_size=100`, userId)
+  const result = await executeComposioTool<{ results?: Array<Record<string, unknown>> }>(
+    userId,
+    'NOTION_FETCH_BLOCK_CONTENTS',
+    {
+      block_id: pageId,
+      page_size: 100,
+    }
+  )
 
-  const blocks = (data.results ?? []) as Array<Record<string, unknown>>
+  if (!result.successful || !result.data) {
+    if (result.error) throw new Error(result.error)
+    return ''
+  }
+
+  const blocks = result.data.results ?? (result.data as { results?: Array<Record<string, unknown>> }).results ?? []
   const lines: string[] = []
 
   for (const block of blocks) {
@@ -98,35 +97,34 @@ export async function getPageContent(userId: string, pageId: string): Promise<st
   return lines.join('\n')
 }
 
+/**
+ * Creates a new Notion page under a parent.
+ */
 export async function createPage(
   userId: string,
   parentPageId: string,
   title: string,
   content: string
 ): Promise<NotionPage> {
-  const data = await notionFetch('/pages', userId, {
-    method: 'POST',
-    body: {
-      parent: { page_id: parentPageId },
-      properties: {
-        title: {
-          title: [{ text: { content: title } }],
-        },
-      },
-      children: [
-        {
-          object: 'block',
-          type: 'paragraph',
-          paragraph: {
-            rich_text: [{ text: { content } }],
-          },
-        },
-      ],
-    },
-  })
+  const result = await executeComposioTool<{ id?: string; url?: string; last_edited_time?: string }>(
+    userId,
+    'NOTION_CREATE_NOTION_PAGE',
+    {
+      parent_id: parentPageId,
+      title,
+      markdown: content,
+    }
+  )
+
+  if (!result.successful && result.error) {
+    throw new Error(result.error)
+  }
+
+  const data = result.data
+  if (!data) throw new Error('No page data returned')
 
   return {
-    id: data.id,
+    id: data.id ?? '',
     title,
     url: data.url ?? '',
     lastEdited: data.last_edited_time ?? '',
