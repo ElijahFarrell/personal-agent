@@ -37,6 +37,7 @@ import {
   isAgentAllowed,
   isFeatureEnabled,
 } from '@/constants/featureGating'
+import { getComposioConnectionStatus } from '@/lib/composio'
 
 // Exa Websets can take 5–10 min for complex searches; allow long-running SDR tool calls
 export const maxDuration = 300
@@ -236,12 +237,12 @@ export async function POST(req: NextRequest) {
     let connectedProviders: string[] = []
     if (dbUser) {
       try {
-        const integrations = await convex.query(api.integrations.getIntegrationsByUserId, { userId: dbUser._id })
-        connectedProviders = integrations
-          .filter((i) => i.status === 'active')
-          .map((i) => i.provider)
+        const composioStatus = await getComposioConnectionStatus(userId)
+        connectedProviders = (Object.entries(composioStatus) as [string, boolean][])
+          .filter(([, connected]) => connected)
+          .map(([provider]) => provider)
       } catch (err) {
-        console.warn('[Chat API] Integration fetch failed:', (err as Error)?.message ?? err)
+        console.warn('[Chat API] Composio status fetch failed:', (err as Error)?.message ?? err)
       }
     }
 
@@ -288,11 +289,12 @@ export async function POST(req: NextRequest) {
         ? `[Custom instructions: ${agentInstructionsForTarget.trim()}]\n\n${message}`
         : message
 
-      const mcpAgentIds = ['calendar', 'messaging', 'docs', 'crm', 'project', 'realEstate', 'finance', 'marketing'] as const
-      const simpleAgentIds = ['email', 'research', 'linkedin', 'content', 'instagram', 'browser'] as const
+      const composioAgentIds = ['email', 'calendar', 'messaging', 'docs', 'crm', 'project', 'realEstate', 'finance', 'marketing'] as const
+      const simpleAgentIds = ['research', 'linkedin', 'content', 'instagram', 'browser'] as const
 
-      if (mcpAgentIds.includes(agentId as (typeof mcpAgentIds)[number])) {
+      if (composioAgentIds.includes(agentId as (typeof composioAgentIds)[number])) {
         const createFns = {
+          email: createEmailAgent,
           calendar: createCalendarAgent,
           messaging: createMessagingAgent,
           docs: createDocsAgent,
@@ -302,7 +304,7 @@ export async function POST(req: NextRequest) {
           finance: createFinanceAgent,
           marketing: createMarketingAgent,
         }
-        const createFn = createFns[agentId as (typeof mcpAgentIds)[number]]
+        const createFn = createFns[agentId as (typeof composioAgentIds)[number]]
         if (createFn) {
           const { agent, toolsets } = await createFn(userId, connectedProviders)
           const agentMessagesWithTask = [...agentMessages]
@@ -318,7 +320,6 @@ export async function POST(req: NextRequest) {
         }
       } else if (simpleAgentIds.includes(agentId as (typeof simpleAgentIds)[number])) {
         const createFns = {
-          email: createEmailAgent,
           research: createResearchAgent,
           linkedin: createLinkedInAgent,
           content: createContentAgent,

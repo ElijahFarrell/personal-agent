@@ -28,8 +28,6 @@
     "@mastra/qdrant": "^1.0.1",
     "@mastra/voice-openai": "^0.12.1",
     "@mem0/vercel-ai-provider": "^2.0.5",
-    "@nangohq/frontend": "^0.69.38",
-    "@nangohq/node": "^0.69.38",
     "@qdrant/js-client-rest": "^1.17.0",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-alert-dialog": "^1.1.15",

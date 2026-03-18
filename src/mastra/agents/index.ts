@@ -2,16 +2,17 @@
  * Central agent registry — factory functions for all agents.
  */
 export { createOrchestratorAgent } from './orchestrator'
-export { createEmailAgent } from './emailAgent'
+export { createEmailAgent, createEmailAgentSync } from './emailAgent'
 export { createResearchAgent } from './researchAgent'
 export { createDeepResearchAgent } from './deepResearchAgent'
-export { createCalendarAgent } from './calendarAgent'
+export { createCalendarAgent, createCalendarAgentSync } from './calendarAgent'
 export { createLinkedInAgent } from './linkedinAgent'
 export { createContentAgent } from './contentAgent'
 export { createInstagramAgent } from './instagramAgent'
 export { createBrowserAgent } from './browserAgent'
+export { createSlackAgent, createSlackAgentSync } from './slackAgent'
 export { createMessagingAgent } from './messagingAgent'
-export { createNotionAgent } from './notionAgent'
+export { createNotionAgent, createNotionAgentSync } from './notionAgent'
 export { createDocsAgent } from './docsAgent'
 export { createCrmAgent } from './crmAgent'
 export { createProjectAgent } from './projectAgent'
@@ -21,15 +22,15 @@ export { createMarketingAgent } from './marketingAgent'
 export { createSDRAgent } from './sdrAgent'
 
 import { createOrchestratorAgent } from './orchestrator'
-import { createEmailAgent } from './emailAgent'
+import { createEmailAgent, createEmailAgentSync } from './emailAgent'
 import { createResearchAgent } from './researchAgent'
 import { createCalendarAgent, createCalendarAgentSync } from './calendarAgent'
 import { createLinkedInAgent } from './linkedinAgent'
 import { createContentAgent } from './contentAgent'
 import { createInstagramAgent } from './instagramAgent'
 import { createBrowserAgent } from './browserAgent'
-import { createSlackAgent } from './slackAgent'
-import { createNotionAgent } from './notionAgent'
+import { createSlackAgentSync } from './slackAgent'
+import { createNotionAgentSync } from './notionAgent'
 import { createDocsAgent } from './docsAgent'
 import type { Agent } from '@mastra/core/agent'
 
@@ -55,14 +56,14 @@ export function createAllAgents(
 ): AllAgents {
   return {
     orchestrator: createOrchestratorAgent(userId, tenantId),
-    email: createEmailAgent(userId),
+    email: createEmailAgentSync(userId),
     research: createResearchAgent(userId),
     calendar: createCalendarAgentSync(userId),
     linkedin: createLinkedInAgent(userId),
     content: createContentAgent(userId),
     instagram: createInstagramAgent(userId),
     browser: createBrowserAgent(userId),
-    slack: createSlackAgent(userId),
-    notion: createNotionAgent(userId),
+    slack: createSlackAgentSync(userId),
+    notion: createNotionAgentSync(userId),
   }
 }

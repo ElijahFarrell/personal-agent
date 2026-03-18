@@ -85,7 +85,7 @@ export interface CompileContext {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const AGENT_FACTORIES: Record<string, (userId: string, tenantId?: string) => Promise<any>> = {
-  email: async (userId) => createEmailAgent(userId),
+  email: async (userId) => (await createEmailAgent(userId, [])).agent,
   research: async (userId) => createResearchAgent(userId),
   calendar: async (userId) => (await createCalendarAgent(userId, [])).agent,
   linkedin: async (userId) => createLinkedInAgent(userId),

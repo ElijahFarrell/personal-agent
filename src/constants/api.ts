@@ -17,8 +17,5 @@ export const API_ROUTES = {
   skillsBrowse: '/api/skills/browse',
   composioAuthorize: '/api/composio/authorize',
   composioStatus: '/api/composio/status',
-  nangoSession: '/api/nango/session',
-  nangoConfirm: '/api/nango/confirm',
-  nangoDisconnect: '/api/nango/disconnect',
   telegramLink: '/api/telegram/link',
 } as const

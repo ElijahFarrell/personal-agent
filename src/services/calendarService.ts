@@ -1,58 +1,39 @@
-import { google } from 'googleapis'
-import { OAuth2Client } from 'google-auth-library'
+/**
+ * Google Calendar operations via Composio.
+ * Uses Composio GOOGLECALENDAR tools with the user's connected account.
+ */
 import type { CalendarEvent } from '@/types'
-import { getConnection } from './nangoService'
-
-const CALENDAR_PROVIDER = 'google-calendar' as const
-
-function createCalendarClient(accessToken: string) {
-  const oauth2Client = new OAuth2Client()
-  oauth2Client.setCredentials({ access_token: accessToken })
-  return google.calendar({ version: 'v3', auth: oauth2Client })
-}
+import { executeComposioTool } from '@/lib/composio'
 
 function toCalendarEvent(
-  item: {
-    id?: string | null
-    summary?: string | null
-    description?: string | null
-    start?: { dateTime?: string | null; date?: string | null }
-    end?: { dateTime?: string | null; date?: string | null }
-    attendees?: Array<{ email?: string | null }>
-    location?: string | null
-    hangoutLink?: string | null
-  }
+  item: Record<string, unknown>
 ): CalendarEvent {
-  const start = item.start?.dateTime ?? item.start?.date ?? ''
-  const end = item.end?.dateTime ?? item.end?.date ?? ''
-  const attendees =
-    item.attendees?.map((a) => a.email ?? '').filter(Boolean) ?? []
+  const start = (item.start as { dateTime?: string; date?: string })?.dateTime ??
+    (item.start as { dateTime?: string; date?: string })?.date ?? ''
+  const end = (item.end as { dateTime?: string; date?: string })?.dateTime ??
+    (item.end as { dateTime?: string; date?: string })?.date ?? ''
+  const attendees = ((item.attendees as Array<{ email?: string }>) ?? [])
+    .map((a) => a.email ?? '')
+    .filter(Boolean)
 
   return {
-    id: item.id ?? '',
-    title: item.summary ?? '',
-    description: item.description ?? undefined,
+    id: (item.id ?? '') as string,
+    title: (item.summary ?? '') as string,
+    description: item.description as string | undefined,
     startTime: start,
     endTime: end,
     attendees: attendees.length > 0 ? attendees : undefined,
-    location: item.location ?? undefined,
-    meetingLink: item.hangoutLink ?? undefined,
+    location: item.location as string | undefined,
+    meetingLink: (item.hangoutLink ?? (item.conferenceData as { entryPoints?: Array<{ uri?: string }> })?.entryPoints?.[0]?.uri) as string | undefined,
   }
 }
 
 /**
  * Lists today's calendar events for a user.
- *
- * @param userId - User/connection ID
- * @returns Array of calendar events for today
  */
 export async function listTodayEvents(
   userId: string
 ): Promise<CalendarEvent[]> {
-  const creds = await getConnection(CALENDAR_PROVIDER, userId)
-  if (!creds) throw new Error('Google Calendar not connected for user')
-
-  const calendar = createCalendarClient(creds.accessToken)
   const now = new Date()
   const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   const endOfDay = new Date(
@@ -61,96 +42,95 @@ export async function listTodayEvents(
     now.getDate() + 1
   )
 
-  const res = await calendar.events.list({
-    calendarId: 'primary',
-    timeMin: startOfDay.toISOString(),
-    timeMax: endOfDay.toISOString(),
-    singleEvents: true,
-    orderBy: 'startTime',
-  })
+  const result = await executeComposioTool<{ items?: Record<string, unknown>[] }>(
+    userId,
+    'GOOGLECALENDAR_EVENTS_LIST',
+    {
+      calendarId: 'primary',
+      timeMin: startOfDay.toISOString(),
+      timeMax: endOfDay.toISOString(),
+      singleEvents: true,
+      orderBy: 'startTime',
+    }
+  )
 
-  const items = res.data.items ?? []
+  if (!result.successful || !result.data) {
+    if (result.error) throw new Error(result.error)
+    return []
+  }
+
+  const items = result.data.items ?? (result.data as { items?: Record<string, unknown>[] }).items ?? []
   return items.map(toCalendarEvent)
 }
 
 /**
  * Lists upcoming calendar events for the next N days.
- *
- * @param userId - User/connection ID
- * @param days - Number of days ahead (default 7)
- * @returns Array of calendar events
  */
 export async function listUpcomingEvents(
   userId: string,
   days = 7
 ): Promise<CalendarEvent[]> {
-  const creds = await getConnection(CALENDAR_PROVIDER, userId)
-  if (!creds) throw new Error('Google Calendar not connected for user')
-
-  const calendar = createCalendarClient(creds.accessToken)
   const now = new Date()
   const timeMax = new Date(now)
   timeMax.setDate(timeMax.getDate() + days)
 
-  const res = await calendar.events.list({
-    calendarId: 'primary',
-    timeMin: now.toISOString(),
-    timeMax: timeMax.toISOString(),
-    singleEvents: true,
-    orderBy: 'startTime',
-  })
+  const result = await executeComposioTool<{ items?: Record<string, unknown>[] }>(
+    userId,
+    'GOOGLECALENDAR_EVENTS_LIST',
+    {
+      calendarId: 'primary',
+      timeMin: now.toISOString(),
+      timeMax: timeMax.toISOString(),
+      singleEvents: true,
+      orderBy: 'startTime',
+    }
+  )
 
-  const items = res.data.items ?? []
+  if (!result.successful || !result.data) {
+    if (result.error) throw new Error(result.error)
+    return []
+  }
+
+  const items = result.data.items ?? (result.data as { items?: Record<string, unknown>[] }).items ?? []
   return items.map(toCalendarEvent)
 }
 
 /**
- * Creates a calendar event. Partial event allows flexible input.
- *
- * @param userId - User/connection ID
- * @param event - Partial event (title, startTime, endTime required)
- * @returns Created calendar event with ID
+ * Creates a calendar event.
  */
 export async function createEvent(
   userId: string,
   event: Partial<CalendarEvent>
 ): Promise<CalendarEvent> {
-  const creds = await getConnection(CALENDAR_PROVIDER, userId)
-  if (!creds) throw new Error('Google Calendar not connected for user')
+  const result = await executeComposioTool<{ id?: string; summary?: string; start?: { dateTime?: string }; end?: { dateTime?: string }; attendees?: Array<{ email?: string }>; location?: string; hangoutLink?: string }>(
+    userId,
+    'GOOGLECALENDAR_CREATE_EVENT',
+    {
+      summary: event.title,
+      description: event.description,
+      start_datetime: event.startTime,
+      end_datetime: event.endTime,
+      location: event.location,
+      attendees: event.attendees,
+      timezone: 'UTC',
+    }
+  )
 
-  const calendar = createCalendarClient(creds.accessToken)
-
-  const body: {
-    summary?: string
-    description?: string
-    start: { dateTime?: string; date?: string }
-    end: { dateTime?: string; date?: string }
-    attendees?: Array<{ email: string }>
-    location?: string
-  } = {
-    start: {},
-    end: {},
+  if (!result.successful && result.error) {
+    throw new Error(result.error)
   }
 
-  if (event.title) body.summary = event.title
-  if (event.description) body.description = event.description
-  if (event.startTime) {
-    body.start.dateTime = event.startTime
-    body.start.date = undefined
-  }
-  if (event.endTime) {
-    body.end.dateTime = event.endTime
-    body.end.date = undefined
-  }
-  if (event.attendees?.length) {
-    body.attendees = event.attendees.map((email) => ({ email }))
-  }
-  if (event.location) body.location = event.location
+  const data = result.data
+  if (!data) throw new Error('No event data returned')
 
-  const res = await calendar.events.insert({
-    calendarId: 'primary',
-    requestBody: body,
-  })
-
-  return toCalendarEvent(res.data)
+  return {
+    id: data.id ?? '',
+    title: (data.summary ?? event.title) ?? '',
+    description: event.description,
+    startTime: event.startTime ?? data.start?.dateTime ?? '',
+    endTime: event.endTime ?? data.end?.dateTime ?? '',
+    attendees: event.attendees ?? data.attendees?.map((a) => a.email ?? '').filter(Boolean),
+    location: data.location ?? event.location,
+    meetingLink: data.hangoutLink,
+  }
 }

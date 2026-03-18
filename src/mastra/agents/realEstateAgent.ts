@@ -2,10 +2,11 @@ import { Agent } from '@mastra/core/agent'
 import { AgentModels } from '@/constants/models'
 import { createMem0RecallTool } from '../tools/mem0Recall'
 import { createMem0MemorizeTool } from '../tools/mem0Memorize'
-import { getNangoMCPToolsets } from '@/lib/nangoMcp'
+import { getComposioToolsForProviders } from '@/lib/composio'
 import { REAL_ESTATE_PROMPT } from '../prompts/realEstate'
+import type { ComposioProvider } from '@/types'
 
-const REAL_ESTATE_PROVIDERS = ['follow-up-boss', 'calendly'] as const
+const REAL_ESTATE_PROVIDERS: ComposioProvider[] = ['calendly']
 
 export interface RealEstateAgentResult {
   agent: Agent
@@ -13,7 +14,7 @@ export interface RealEstateAgentResult {
 }
 
 /**
- * Creates the Real Estate agent with MCP tools for Follow Up Boss and Calendly.
+ * Creates the Real Estate agent with Composio tools for Calendly.
  */
 export async function createRealEstateAgent(
   userId: string,
@@ -22,9 +23,9 @@ export async function createRealEstateAgent(
   const activeProviders = REAL_ESTATE_PROVIDERS.filter((p) =>
     connectedProviders.includes(p)
   )
-  const toolsets =
+  const composioTools =
     activeProviders.length > 0
-      ? await getNangoMCPToolsets(userId, [...activeProviders])
+      ? await getComposioToolsForProviders(userId, activeProviders)
       : {}
 
   const agent = new Agent({
@@ -33,10 +34,11 @@ export async function createRealEstateAgent(
     instructions: REAL_ESTATE_PROMPT,
     model: AgentModels.realEstate(),
     tools: {
+      ...composioTools,
       mem0Recall: createMem0RecallTool(userId),
       mem0Memorize: createMem0MemorizeTool(userId),
     },
   })
 
-  return { agent, toolsets }
+  return { agent, toolsets: {} }
 }

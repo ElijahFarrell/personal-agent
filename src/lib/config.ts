@@ -22,11 +22,6 @@ export const config = {
   mem0: {
     apiKey: optionalEnv('MEM0_API_KEY'),
   },
-  nango: {
-    secretKey: optionalEnv('NANGO_SECRET_KEY'),
-    webhookSecret: optionalEnv('NANGO_WEBHOOK_SECRET'),
-    publicKey: optionalEnv('NEXT_PUBLIC_NANGO_PUBLIC_KEY'),
-  },
   telegram: {
     botToken: optionalEnv('TELEGRAM_BOT_TOKEN'),
     botUsername: optionalEnv('TELEGRAM_BOT_USERNAME'),

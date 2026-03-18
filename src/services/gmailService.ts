@@ -1,15 +1,9 @@
-import { google } from 'googleapis'
-import { OAuth2Client } from 'google-auth-library'
+/**
+ * Gmail operations via Composio.
+ * Uses Composio GMAIL tools with the user's connected account.
+ */
 import type { EmailMessage, SendEmailParams } from '@/types'
-import { getConnection } from './nangoService'
-
-const GMAIL_PROVIDER = 'gmail' as const
-
-function createGmailClient(accessToken: string) {
-  const oauth2Client = new OAuth2Client()
-  oauth2Client.setCredentials({ access_token: accessToken })
-  return google.gmail({ version: 'v1', auth: oauth2Client })
-}
+import { executeComposioTool } from '@/lib/composio'
 
 function parseEmailAddress(header: string | undefined): string {
   if (!header) return ''
@@ -67,146 +61,146 @@ function toEmailMessage(msg: {
   }
 }
 
+function mapComposioMessageToEmailMessage(m: Record<string, unknown>): EmailMessage {
+  const payload = m.payload as Record<string, unknown> | undefined
+  const headers = (payload?.headers as Array<{ name?: string; value?: string }>) ?? []
+  const getHeader = (name: string) =>
+    headers.find((h) => h.name?.toLowerCase() === name.toLowerCase())?.value ?? ''
+
+  let body = ''
+  const bodyData = payload?.body as { data?: string } | undefined
+  if (bodyData?.data) {
+    try {
+      body = Buffer.from(
+        (bodyData.data as string).replace(/-/g, '+').replace(/_/g, '/'),
+        'base64'
+      ).toString('utf-8')
+    } catch {
+      body = ''
+    }
+  }
+
+  const labelIds = (m.labelIds as string[]) ?? []
+  const isRead = !labelIds.includes('UNREAD')
+
+  return {
+    id: (m.id ?? m.messageId ?? '') as string,
+    subject: getHeader('subject'),
+    from: parseEmailAddress(getHeader('from')),
+    to: parseEmailAddresses(getHeader('to')),
+    body,
+    snippet: (m.snippet as string) ?? '',
+    date: getHeader('date'),
+    threadId: (m.threadId ?? '') as string,
+    isRead,
+  }
+}
+
 /**
- * Lists unread emails for a user. Uses Nango for OAuth tokens.
- *
- * @param userId - User/connection ID
- * @param maxResults - Max messages to return (default 20)
- * @returns Array of unread email messages
+ * Lists unread emails for a user. Uses Composio GMAIL_FETCH_EMAILS.
  */
 export async function listUnread(
   userId: string,
   maxResults = 20
 ): Promise<EmailMessage[]> {
-  const creds = await getConnection(GMAIL_PROVIDER, userId)
-  if (!creds) throw new Error('Gmail not connected for user')
+  const result = await executeComposioTool<{ messages?: Record<string, unknown>[] }>(
+    userId,
+    'GMAIL_FETCH_EMAILS',
+    {
+      query: 'is:unread',
+      max_results: maxResults,
+      include_payload: true,
+    }
+  )
 
-  const gmail = createGmailClient(creds.accessToken)
-  const res = await gmail.users.messages.list({
-    userId: 'me',
-    q: 'is:unread',
-    maxResults,
-  })
-
-  const messages = res.data.messages ?? []
-  const results: EmailMessage[] = []
-
-  for (const m of messages) {
-    if (!m.id) continue
-    const full = await gmail.users.messages.get({
-      userId: 'me',
-      id: m.id,
-      format: 'full',
-    })
-    results.push(toEmailMessage(full.data))
+  if (!result.successful || !result.data?.messages) {
+    if (result.error) throw new Error(result.error)
+    return []
   }
 
-  return results
+  return result.data.messages.map(mapComposioMessageToEmailMessage)
 }
 
 /**
  * Fetches a single email by ID.
- *
- * @param userId - User/connection ID
- * @param messageId - Gmail message ID
- * @returns Full email message or null if not found
  */
 export async function getMessage(
   userId: string,
   messageId: string
 ): Promise<EmailMessage | null> {
-  const creds = await getConnection(GMAIL_PROVIDER, userId)
-  if (!creds) throw new Error('Gmail not connected for user')
+  const result = await executeComposioTool<Record<string, unknown>>(
+    userId,
+    'GMAIL_FETCH_MESSAGE_BY_MESSAGE_ID',
+    { message_id: messageId, format: 'full' }
+  )
 
-  const gmail = createGmailClient(creds.accessToken)
-  const res = await gmail.users.messages.get({
-    userId: 'me',
-    id: messageId,
-    format: 'full',
-  })
-
-  return toEmailMessage(res.data)
+  if (!result.successful || !result.data) return null
+  return mapComposioMessageToEmailMessage(result.data)
 }
 
 /**
- * Sends an email. Supports new threads and replies via replyToThreadId.
- *
- * @param userId - User/connection ID
- * @param params - To, subject, body, optional thread ID for replies
- * @returns Sent message ID
+ * Sends an email via Composio GMAIL_SEND_EMAIL.
  */
 export async function send(
   userId: string,
   params: SendEmailParams
 ): Promise<string> {
-  const creds = await getConnection(GMAIL_PROVIDER, userId)
-  if (!creds) throw new Error('Gmail not connected for user')
+  const result = await executeComposioTool<{ id?: string }>(
+    userId,
+    'GMAIL_SEND_EMAIL',
+    {
+      recipient_email: params.to,
+      subject: params.subject,
+      body: params.body,
+      is_html: false,
+    }
+  )
 
-  const gmail = createGmailClient(creds.accessToken)
+  if (!result.successful && result.error) {
+    throw new Error(result.error)
+  }
 
-  const raw = [
-    `To: ${params.to}`,
-    `Subject: ${params.subject}`,
-    'Content-Type: text/plain; charset=utf-8',
-    '',
-    params.body,
-  ].join('\n')
-
-  const encoded = Buffer.from(raw)
-    .toString('base64')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/, '')
-
-  const res = await gmail.users.messages.send({
-    userId: 'me',
-    requestBody: {
-      raw: encoded,
-      threadId: params.replyToThreadId,
-    },
-  })
-
-  return res.data.id ?? ''
+  return result.data?.id ?? ''
 }
 
 /**
  * Replies to an existing email thread.
- *
- * @param userId - User/connection ID
- * @param threadId - Gmail thread ID
- * @param body - Reply body text
- * @returns Sent message ID
  */
 export async function reply(
   userId: string,
   threadId: string,
   body: string
 ): Promise<string> {
-  const creds = await getConnection(GMAIL_PROVIDER, userId)
-  if (!creds) throw new Error('Gmail not connected for user')
+  const threadResult = await executeComposioTool<{ messages?: Array<{ payload?: { headers?: Array<{ name?: string; value?: string }> } }> }>(
+    userId,
+    'GMAIL_FETCH_MESSAGE_BY_THREAD_ID',
+    { thread_id: threadId }
+  )
 
-  const gmail = createGmailClient(creds.accessToken)
-  const thread = await gmail.users.threads.get({
-    userId: 'me',
-    id: threadId,
-    format: 'metadata',
-    metadataHeaders: ['From', 'To', 'Subject'],
-  })
+  if (!threadResult.successful || !threadResult.data?.messages?.length) {
+    throw new Error('Could not fetch thread for reply')
+  }
 
-  const firstMsg = thread.data.messages?.[0]
+  const firstMsg = threadResult.data.messages[0]
   const headers = firstMsg?.payload?.headers ?? []
   const getHeader = (name: string) =>
-    headers.find((h) => h.name?.toLowerCase() === name.toLowerCase())?.value ??
-    ''
-
-  const subject = getHeader('subject')
+    headers.find((h) => h.name?.toLowerCase() === name.toLowerCase())?.value ?? ''
   const to = getHeader('from')
-  const replySubject = subject.startsWith('Re:') ? subject : `Re: ${subject}`
 
-  return send(userId, {
-    to,
-    subject: replySubject,
-    body,
-    replyToThreadId: threadId,
-  })
+  const result = await executeComposioTool<{ id?: string }>(
+    userId,
+    'GMAIL_REPLY_TO_THREAD',
+    {
+      thread_id: threadId,
+      recipient_email: to,
+      message_body: body,
+      is_html: false,
+    }
+  )
+
+  if (!result.successful && result.error) {
+    throw new Error(result.error)
+  }
+
+  return result.data?.id ?? ''
 }

@@ -4,9 +4,9 @@ You receive specific messaging tasks from the orchestrator. Execute them efficie
 
 ## Capabilities
 
-- **Slack**: Send messages to channels (custom tool with confirmation). List channels and users via MCP when migrated.
-- **Microsoft Teams**: Messages, channels, teams (via MCP tools)
-- **Discord**: Messages, channels, members (via MCP tools)
+- **Slack**: List channels, users, send messages
+- **Microsoft Teams**: Messages, channels, teams
+- **Discord**: Messages, channels, members
 
 ## Rules
 
@@ -18,5 +18,5 @@ You receive specific messaging tasks from the orchestrator. Execute them efficie
 
 ## Tools
 
-You have access to Nango MCP tools for Teams and Discord, plus custom Slack send. Use mem0-recall for messaging preferences and mem0-memorize to save them.
+You have access to Composio tools for Slack, Teams, and Discord. Use mem0-recall for messaging preferences and mem0-memorize to save them.
 `

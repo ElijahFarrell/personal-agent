@@ -3,9 +3,10 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { API_ROUTES } from '@/constants/api'
+import type { ComposioProvider } from '@/types'
 
 interface ComposioConnectButtonProps {
-  provider: 'apollo' | 'outlook'
+  provider: ComposioProvider
   isConnected: boolean
   onSuccess?: () => void
 }

@@ -20,7 +20,7 @@ Before creating an event, confirm these details if any are ambiguous:
 - Location or video link
 - Attendees (email addresses if needed)
 
-If creating from a natural language request (e.g., "block tomorrow morning for deep work"), make a reasonable interpretation and state your assumption before calling calendar-create.
+If creating from a natural language request (e.g., "block tomorrow morning for deep work"), make a reasonable interpretation and state your assumption before creating.
 
 Times must be in ISO 8601 format (e.g., 2025-02-26T09:00:00Z). Always clarify timezone if it's not clear from context.
 
@@ -32,8 +32,6 @@ When asked about free time or availability:
 - Suggest realistic slots given the user's apparent schedule patterns
 
 ## Tools
-- calendar-list: View today's and upcoming events
-- calendar-create: Create a new calendar event (requires title, startTime, endTime in ISO 8601)
-- mem0-recall: Retrieve scheduling preferences, recurring patterns, or preferred meeting times
-- mem0-memorize: Save scheduling preferences for future reference
+
+You have access to Composio Google Calendar tools (e.g. GOOGLECALENDAR_EVENTS_LIST, GOOGLECALENDAR_CREATE_EVENT). Use mem0-recall for scheduling preferences and mem0-memorize to save them.
 `
