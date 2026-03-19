@@ -695,7 +695,7 @@ export default function ProspectsPage() {
                         className={`${tdClass} cursor-pointer text-gray-400`}
                         onClick={() => setDetailId(prospect._id)}
                       >
-                        {(prospect as typeof prospect & { lastName?: string }).lastName ?? prospect.name.split(' ').slice(1).join(' ') || '—'}
+                        {((prospect as typeof prospect & { lastName?: string }).lastName ?? prospect.name.split(' ').slice(1).join(' ')) || '—'}
                       </td>
                       <td className={`${tdClass} text-gray-400`}>{prospect.company ?? '—'}</td>
                       <td className={tdClass} onClick={(e) => e.stopPropagation()}>
