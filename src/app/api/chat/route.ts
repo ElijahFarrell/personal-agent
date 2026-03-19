@@ -1,39 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { ConvexHttpClient } from 'convex/browser'
+import { after } from 'next/server'
 import { toAISdkStream } from '@mastra/ai-sdk'
 import { createUIMessageStream, createUIMessageStreamResponse } from 'ai'
-import type { Agent } from '@mastra/core/agent'
-import {
-  createOrchestratorAgent,
-  createEmailAgent,
-  createResearchAgent,
-  createDeepResearchAgent,
-  createCalendarAgent,
-  createLinkedInAgent,
-  createContentAgent,
-  createInstagramAgent,
-  createBrowserAgent,
-  createMessagingAgent,
-  createDocsAgent,
-  createCrmAgent,
-  createProjectAgent,
-  createRealEstateAgent,
-  createFinanceAgent,
-  createMarketingAgent,
-} from '@/mastra'
-import { retrieveRelevantContext, buildContextBlock } from '@/services/contextService'
-import { createWorkspaceForTenant } from '@/mastra/createWorkspaceForTenant'
-import { buildProspectsContext } from '@/services/prospectsContextService'
+import { ConvexHttpClient } from 'convex/browser'
 import { getTenantContext } from '@/middleware/tenantContext'
 import { api } from '@convex/_generated/api'
 import type { Id } from '@convex/_generated/dataModel'
-import { AGENT_BY_ID, type AgentId } from '@/constants/agents'
-import { CHAT_CREDIT_ACTION, CHAT_LIMITS, CHAT_ROLES, type AgentMessage } from '@/constants/chat'
+import { CHAT_ROLES, CHAT_SOURCES } from '@/constants/chat'
+import { milestoneLineForTool } from '@/constants/chatToolUi'
 import {
   isAgentAllowed,
   isFeatureEnabled,
 } from '@/constants/featureGating'
-import { getComposioConnectionStatus } from '@/lib/composio'
+import {
+  prepareChatAgentStream,
+  consumeMastraStreamToResult,
+} from '@/services/chatPipeline'
+import { CHAT_CREDIT_ACTION } from '@/constants/chat'
+import { CHAT_JOB_STATUS } from '@convex/constants'
 
 // Exa Websets can take 5–10 min for complex searches; allow long-running SDR tool calls
 export const maxDuration = 300
@@ -75,7 +59,15 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
 
-    const { threadId, agentInstructions, pinnedSkillIds, targetAgent, deepResearch, model, messages: uiMessages } = body as {
+    const {
+      threadId,
+      agentInstructions,
+      targetAgent,
+      deepResearch,
+      model,
+      messages: uiMessages,
+      background,
+    } = body as {
       threadId?: string
       agentInstructions?: Record<string, string>
       pinnedSkillIds?: string[]
@@ -83,6 +75,7 @@ export async function POST(req: NextRequest) {
       deepResearch?: boolean
       model?: string
       messages?: unknown[]
+      background?: boolean
     }
 
     console.log('[Chat API] Body keys:', Object.keys(body), '| messages count:', uiMessages?.length ?? 0)
@@ -142,178 +135,89 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const dbUserId = dbUser?._id ? String(dbUser._id) : undefined
-    // Convex tenant ID (required for mutations); fallback: resolve Clerk org ID
-    const convexTenantId =
-      dbUser?.tenantId ??
-      (
-        await convex
-          .query(api.tenants.getTenantByClerkOrgId, { clerkOrgId: tenantId })
-          .catch(() => null)
-      )?._id
-    const skillScope = dbUser
-      ? {
-          tenantId: String(dbUser.tenantId),
-          userId: String(dbUser._id),
-        }
-      : undefined
+    const pipelineArgs = {
+      message,
+      threadId,
+      userId,
+      tenantId,
+      agentInstructions,
+      targetAgent,
+      deepResearch,
+      model,
+    }
 
-    const workspace = skillScope
-      ? await createWorkspaceForTenant(skillScope.tenantId, skillScope.userId)
-      : undefined
+    if (background) {
+      if (!dbUser || !threadId) {
+        return NextResponse.json(
+          { error: 'Background mode requires a saved thread and signed-in user.' },
+          { status: 400 }
+        )
+      }
 
-    const [relevantContext, historyDocs, prospectsContext] = await Promise.all([
-      retrieveRelevantContext(message, tenantId, dbUserId).catch((err) => {
-        console.warn('[Chat API] Context retrieval failed (continuing without):', err?.message ?? err)
-        return []
-      }),
-      threadId
-        ? convex
-            .query(api.messages.getMessagesByThreadId, { threadId, limit: CHAT_LIMITS.HISTORY_LIMIT })
-            .catch((err) => {
-              console.warn('[Chat API] History fetch failed:', err?.message ?? err)
-              return []
-            })
-        : Promise.resolve([]),
-      dbUser
-        ? buildProspectsContext(dbUser.tenantId, dbUserId).catch((err) => {
-            console.warn('[Chat API] Prospects context failed (continuing without):', (err as Error)?.message ?? err)
-            return ''
+      const jobId = await convex.mutation(api.chatJobs.create, {
+        threadId,
+        tenantId: dbUser.tenantId,
+        userId: dbUser._id,
+      })
+
+      await convex.mutation(api.chatJobs.updateStatus, {
+        jobId,
+        status: CHAT_JOB_STATUS.RUNNING,
+      })
+
+      const tenantIdStr = tenantId
+      const dbUserId = dbUser._id
+      const dbTenantId = dbUser.tenantId
+
+      after(async () => {
+        try {
+          const { mastraStream } = await prepareChatAgentStream(pipelineArgs)
+          const { text, toolCalls } = await consumeMastraStreamToResult(mastraStream)
+          await convex.mutation(api.messages.saveMessage, {
+            userId: dbUserId,
+            tenantId: dbTenantId,
+            role: CHAT_ROLES.ASSISTANT,
+            source: CHAT_SOURCES.WEB,
+            content: text || '(No text response)',
+            threadId,
+            metadata:
+              toolCalls.length > 0
+                ? {
+                    toolCalls: toolCalls.map((tc) => ({
+                      toolName: tc.toolName,
+                      state: tc.state,
+                      args: tc.args,
+                      result: tc.result,
+                    })),
+                  }
+                : undefined,
           })
-        : Promise.resolve(''),
-    ])
-
-    console.log(
-      `[Chat API] workspace=${workspace ? 'yes' : 'no'} | context=${relevantContext.length} docs | history=${historyDocs.length} msgs`
-    )
-
-    let connectedProviders: string[] = []
-    if (dbUser) {
-      try {
-        const composioStatus = await getComposioConnectionStatus(userId)
-        connectedProviders = (Object.entries(composioStatus) as [string, boolean][])
-          .filter(([, connected]) => connected)
-          .map(([provider]) => provider)
-      } catch (err) {
-        console.warn('[Chat API] Composio status fetch failed:', (err as Error)?.message ?? err)
-      }
-    }
-
-    console.log(`[Chat API] connectedProviders=${connectedProviders.join(', ') || 'none'}`)
-
-    const contextBlock = buildContextBlock(relevantContext)
-
-    const agentMessages: AgentMessage[] = []
-
-    const systemParts = [contextBlock, prospectsContext].filter(Boolean)
-    if (systemParts.length > 0) {
-      agentMessages.push({ role: CHAT_ROLES.SYSTEM, content: systemParts.join('\n\n---\n\n') })
-    }
-
-    for (const doc of historyDocs) {
-      if (doc.content === message && doc.role === CHAT_ROLES.USER) continue
-      agentMessages.push({ role: doc.role as AgentMessage['role'], content: doc.content })
-    }
-
-    agentMessages.push({ role: CHAT_ROLES.USER, content: message })
-
-    if (dbUser) {
-      convex
-        .mutation(api.credits.deductCredits, {
-          tenantId: dbUser.tenantId,
-          userId: dbUser._id as Id<'users'>,
-          action: CHAT_CREDIT_ACTION,
-        })
-        .catch((err) => {
-          console.warn('[Chat API] Credit deduction failed:', (err as Error)?.message ?? err)
-        })
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let stream: any = null
-    const instructions = agentInstructions ?? {}
-    const meta = targetAgent ? AGENT_BY_ID.get(targetAgent as AgentId) : undefined
-
-    if (meta) {
-      const agentId = meta.id
-      const agentInstructionsForTarget = instructions[agentId] ?? instructions[meta.toolId] ?? undefined
-      const taskWithInstructions = agentInstructionsForTarget?.trim()
-        ? `[Custom instructions: ${agentInstructionsForTarget.trim()}]\n\n${message}`
-        : message
-
-      const composioAgentIds = ['email', 'calendar', 'messaging', 'docs', 'crm', 'project', 'realEstate', 'finance', 'marketing'] as const
-      const simpleAgentIds = ['research', 'linkedin', 'content', 'instagram', 'browser'] as const
-
-      if (composioAgentIds.includes(agentId as (typeof composioAgentIds)[number])) {
-        const createFns = {
-          email: createEmailAgent,
-          calendar: createCalendarAgent,
-          messaging: createMessagingAgent,
-          docs: createDocsAgent,
-          crm: createCrmAgent,
-          project: createProjectAgent,
-          realEstate: createRealEstateAgent,
-          finance: createFinanceAgent,
-          marketing: createMarketingAgent,
+          await convex.mutation(api.threads.touchThread, { threadId: threadId as Id<'threads'> })
+          await convex.mutation(api.chatJobs.updateStatus, {
+            jobId,
+            status: CHAT_JOB_STATUS.COMPLETED,
+          })
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : 'Chat job failed'
+          console.error('[Chat API] Background job error:', err)
+          await convex.mutation(api.chatJobs.updateStatus, {
+            jobId,
+            status: CHAT_JOB_STATUS.FAILED,
+            error: msg,
+          })
         }
-        const createFn = createFns[agentId as (typeof composioAgentIds)[number]]
-        if (createFn) {
-          const { agent, toolsets } = await createFn(userId, connectedProviders, workspace)
-          const agentMessagesWithTask = [...agentMessages]
-          const lastIdx = agentMessagesWithTask.length - 1
-          if (lastIdx >= 0 && agentMessagesWithTask[lastIdx]?.role === CHAT_ROLES.USER) {
-            agentMessagesWithTask[lastIdx] = { role: CHAT_ROLES.USER, content: taskWithInstructions }
-          }
-          stream = await agent.stream(
-            agentMessagesWithTask as Parameters<typeof agent.stream>[0],
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            { toolsets } as any
-          )
-        }
-      } else if (simpleAgentIds.includes(agentId as (typeof simpleAgentIds)[number])) {
-        const draftScope = skillScope ? { tenantId: skillScope.tenantId, userId: skillScope.userId } : undefined
-        let agent: Agent
-        if (agentId === 'content') {
-          agent = createContentAgent(userId, draftScope, workspace)
-        } else {
-          const createFns = {
-            research: createResearchAgent,
-            linkedin: createLinkedInAgent,
-            instagram: createInstagramAgent,
-            browser: createBrowserAgent,
-          }
-          const createFn = createFns[agentId as keyof typeof createFns]
-          agent = createFn(userId, workspace) as Agent
-        }
-        const agentMessagesWithTask = [...agentMessages]
-        const lastIdx = agentMessagesWithTask.length - 1
-        if (lastIdx >= 0 && agentMessagesWithTask[lastIdx]?.role === CHAT_ROLES.USER) {
-          agentMessagesWithTask[lastIdx] = { role: CHAT_ROLES.USER, content: taskWithInstructions }
-        }
-        stream = await agent.stream(agentMessagesWithTask as Parameters<typeof agent.stream>[0])
-      }
+      })
+
+      return NextResponse.json({ jobId, status: 'running' })
     }
 
-    if (stream === null && deepResearch) {
-      console.log('[Chat API] Deep research mode enabled')
-      const agent = createDeepResearchAgent(userId)
-      stream = await agent.stream(agentMessages as Parameters<typeof agent.stream>[0])
-    }
-
-    if (stream === null) {
-      const agent = await createOrchestratorAgent(
-        userId,
-        convexTenantId ?? tenantId,
-        agentInstructions,
-        connectedProviders,
-        model,
-        skillScope
-      )
-      stream = await agent.stream(agentMessages as Parameters<typeof agent.stream>[0])
-    }
+    const { mastraStream } = await prepareChatAgentStream(pipelineArgs)
 
     let capturedUsage: { promptTokens?: number; completionTokens?: number } | null = null
-    const aiStream = toAISdkStream(stream!, { from: 'agent' })
+    const aiStream = toAISdkStream(
+      mastraStream as Parameters<typeof toAISdkStream>[0],
+      { from: 'agent' }
+    )
 
     const uiStream = createUIMessageStream({
       execute: async ({ writer }) => {
@@ -321,11 +225,24 @@ export async function POST(req: NextRequest) {
           type: 'data-skills',
           data: { type: 'skills', items: [] },
         })
+        writer.write({
+          type: 'data-chat-phase',
+          data: { phase: 'preparing', label: 'Preparing context and connections…' },
+        })
         for await (const part of aiStream as AsyncIterable<{
           type?: string
           usage?: { promptTokens?: number; completionTokens?: number }
         }>) {
           const p = part as Record<string, unknown>
+          if (p?.type === 'tool-input-start' && typeof p.toolName === 'string') {
+            const line = milestoneLineForTool(p.toolName)
+            if (line) {
+              writer.write({
+                type: 'data-chat-milestone',
+                data: { label: line, toolName: p.toolName },
+              })
+            }
+          }
           if (p?.type === 'finish' && p.usage && typeof p.usage === 'object') {
             const u = p.usage as { promptTokens?: number; completionTokens?: number }
             capturedUsage = {

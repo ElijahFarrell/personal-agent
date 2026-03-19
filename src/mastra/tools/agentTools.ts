@@ -394,6 +394,7 @@ export function createAgentTools(
         'Exa: search companies, add to Prospects. Apollo: search people, enrich, create contacts, add to sequences. Outlook: send emails.',
       inputSchema: taskSchema,
       execute: async (input) => {
+        // Apollo / Exa calls are slow; chat UI shows milestones + timers while this runs.
         try {
           const taskWithInstructions = withCustomInstructions(input.task, agentInstructions?.sdr)
           const inputForAgent = await getInputForAgent(input.task, taskWithInstructions)
