@@ -51,7 +51,7 @@ import { API_ROUTES } from '@/constants/api'
 import { DEFAULT_CHAT_MODEL_ID, DEFAULT_CONTEXT_WINDOW } from '@/constants/models'
 import { CHAT_LIMITS, CHAT_ROLES, CHAT_SOURCES } from '@/constants/chat'
 import { AGENT_BY_ID, type AgentId } from '@/constants/agents'
-import { Sparkles, X, Telescope } from 'lucide-react'
+import { Sparkles, X, Telescope, CloudOff, Loader2 } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -62,6 +62,50 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
+import { chatToolHint, chatToolTitle } from '@/constants/chatToolUi'
+import { CHAT_JOB_STATUS } from '@convex/constants'
+import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
+
+function isDataChatUiPart(part: { type: string }): boolean {
+  return part.type === 'data-chat-phase' || part.type === 'data-chat-milestone'
+}
+
+function extractStreamUiHints(messages: UIMessage[]) {
+  const last = messages.findLast((m) => m.role === CHAT_ROLES.ASSISTANT)
+  if (!last?.parts) return { phase: null as string | null, milestone: null as string | null }
+  let phase: string | null = null
+  let milestone: string | null = null
+  for (const part of last.parts) {
+    if (!isDataChatUiPart(part as { type: string })) continue
+    const p = part as { type: string; data?: { label?: string } }
+    if (p.type === 'data-chat-phase' && p.data?.label) phase = p.data.label
+    if (p.type === 'data-chat-milestone' && p.data?.label) milestone = p.data.label
+  }
+  return { phase, milestone }
+}
+
+function RunningToolTimer({ active }: { active: boolean }) {
+  const [sec, setSec] = useState(0)
+  useEffect(() => {
+    if (!active) {
+      setSec(0)
+      return
+    }
+    setSec(0)
+    const t = setInterval(() => setSec((s) => s + 1), 1000)
+    return () => clearInterval(t)
+  }, [active])
+  if (!active) return null
+  const m = Math.floor(sec / 60)
+  const s = sec % 60
+  return (
+    <span className="tabular-nums text-muted-foreground">
+      {m > 0 ? `${m}m ` : ''}
+      {s}s
+    </span>
+  )
+}
 
 function isToolPart(part: { type: string }): boolean {
   return part.type.startsWith('tool-') || part.type === 'tool-invocation'
@@ -121,6 +165,10 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
     api.messages.getMessagesByThreadId,
     threadId ? { threadId } : 'skip'
   )
+  const latestChatJob = useQuery(
+    api.chatJobs.getLatestForThread,
+    threadId ? { threadId } : 'skip'
+  )
   const saveMessage = useMutation(api.messages.saveMessage)
   const createThread = useMutation(api.threads.createThread)
   const updateThreadTitle = useMutation(api.threads.updateThreadTitle)
@@ -144,6 +192,9 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
   const [targetAgent, setTargetAgent] = useState<AgentId | null>(null)
   const [deepResearch, setDeepResearch] = useState(false)
   const [selectedModel, setSelectedModel] = useState<string>('auto')
+  const [runInBackground, setRunInBackground] = useState(false)
+  const [bgJobRunning, setBgJobRunning] = useState(false)
+  const bgJobIdRef = useRef<string | null>(null)
   const activeThreadRef = useRef<Id<'threads'> | null>(threadId)
   const targetAgentRef = useRef<AgentId | null>(null)
   const inputAreaRef = useRef<HTMLDivElement>(null)
@@ -216,6 +267,38 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
   const isLoading = status === 'submitted' || status === 'streaming'
   const isStreaming = status === 'streaming'
 
+  const { phase: phaseHint, milestone: milestoneHint } = useMemo(
+    () => extractStreamUiHints(chatMessages),
+    [chatMessages]
+  )
+
+  useEffect(() => {
+    if (!latestChatJob || !bgJobIdRef.current) return
+    if (latestChatJob._id !== bgJobIdRef.current) return
+    if (latestChatJob.status === CHAT_JOB_STATUS.FAILED && latestChatJob.error) {
+      setChatError(latestChatJob.error)
+    }
+    if (
+      latestChatJob.status === CHAT_JOB_STATUS.COMPLETED ||
+      latestChatJob.status === CHAT_JOB_STATUS.FAILED
+    ) {
+      bgJobIdRef.current = null
+      setBgJobRunning(false)
+    }
+  }, [latestChatJob])
+
+  useEffect(() => {
+    if (!isLoading || runInBackground) return
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault()
+      e.returnValue = ''
+    }
+    window.addEventListener('beforeunload', onBeforeUnload)
+    return () => window.removeEventListener('beforeunload', onBeforeUnload)
+  }, [isLoading, runInBackground])
+
+  const streamBusy = isLoading || bgJobRunning
+
   useEffect(() => {
     if (useChatError) {
       const msg = useChatError.message || 'Something went wrong'
@@ -244,6 +327,9 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
     setChatError(null)
     setCumulativeUsage({ inputTokens: 0, outputTokens: 0 })
     setActiveSkills([])
+    setRunInBackground(false)
+    setBgJobRunning(false)
+    bgJobIdRef.current = null
   }, [threadId, setMessages])
 
   useEffect(() => {
@@ -355,7 +441,7 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
 
   const handleSend = useCallback(
     async (text: string) => {
-      if (!dbUser || isLoading) return
+      if (!dbUser || streamBusy) return
 
       setCreditError(false)
       setChatError(null)
@@ -401,6 +487,49 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
         await updateThreadTitle({ threadId: activeThreadId!, title })
       }
 
+      if (runInBackground) {
+        try {
+          const res = await fetch(API_ROUTES.chat, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+              message: text,
+              threadId: activeThreadId!,
+              background: true,
+              agentInstructions: agentInstructionsRef.current,
+              targetAgent: targetAgentRef.current ?? undefined,
+              deepResearch: deepResearchRef.current || undefined,
+              model:
+                selectedModelRef.current !== 'auto'
+                  ? selectedModelRef.current
+                  : undefined,
+            }),
+          })
+          const data = (await res.json().catch(() => ({}))) as {
+            error?: string
+            jobId?: string
+          }
+          if (!res.ok) {
+            const msg = data.error ?? 'Background request failed'
+            if (res.status === 402 || msg.includes('credits')) setCreditError(true)
+            else setChatError(msg)
+            return
+          }
+          if (data.jobId) {
+            bgJobIdRef.current = data.jobId
+            setBgJobRunning(true)
+          }
+        } catch (e) {
+          setChatError(e instanceof Error ? e.message : 'Network error')
+        }
+        setTargetAgent(null)
+        if (isNewThread) {
+          pendingThreadIdRef.current = activeThreadId!
+        }
+        return
+      }
+
       sendMessage({ text })
       setTargetAgent(null)
 
@@ -408,7 +537,16 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
         pendingThreadIdRef.current = activeThreadId!
       }
     },
-    [dbUser, isLoading, createThread, saveMessage, updateThreadTitle, convexMessages?.length, sendMessage]
+    [
+      dbUser,
+      streamBusy,
+      runInBackground,
+      createThread,
+      saveMessage,
+      updateThreadTitle,
+      convexMessages?.length,
+      sendMessage,
+    ]
   )
 
   const prevStatusRef = useRef(status)
@@ -544,7 +682,7 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
                       key={prompt}
                       type="button"
                       onClick={() => handleSend(prompt)}
-                      disabled={!dbUser || creditError}
+                      disabled={!dbUser || creditError || streamBusy}
                       className="rounded-lg border border-border bg-card px-4 py-3 text-left text-base text-muted-foreground transition-colors hover:border-primary/40 hover:bg-accent hover:text-foreground"
                     >
                       &quot;{prompt}&quot;
@@ -555,6 +693,19 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
             </ConversationEmptyState>
           ) : (
             <>
+              {isStreaming && milestoneHint && (
+                <div className="flex w-full items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 shrink-0 animate-spin text-primary" />
+                  {milestoneHint}
+                </div>
+              )}
+              {bgJobRunning && (
+                <div className="flex w-full items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm text-muted-foreground">
+                  <CloudOff className="h-4 w-4 shrink-0" />
+                  Working in the background — you can leave this page. The reply will appear when it&apos;s
+                  ready.
+                </div>
+              )}
               {displayMessages.map((msg) => (
                 <Message key={msg.id} from={msg.role}>
                   <MessageContent className="text-base">
@@ -584,15 +735,29 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
                                   return <ChartRenderer key={`${toolName}-${i}`} spec={chartSpec} />
                                 }
 
+                                const fullToolId = part.type.startsWith('tool-')
+                                  ? part.type
+                                  : `tool-${toolName}`
+                                const hint = chatToolHint(fullToolId)
+                                const toolRunning =
+                                  mappedState === 'input-available' ||
+                                  mappedState === 'input-streaming'
+
                                 return (
                                   <Tool key={`${toolName}-${i}`}>
                                     <ToolHeader
                                       type="dynamic-tool"
                                       state={mappedState}
                                       toolName={toolName}
-                                      title={toolName.replace(/([A-Z])/g, ' $1').trim()}
+                                      title={chatToolTitle(fullToolId)}
                                     />
                                     <ToolContent>
+                                      {(hint || toolRunning) && (
+                                        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/50 pb-2 text-xs text-muted-foreground">
+                                          <span>{hint ?? '\u00a0'}</span>
+                                          <RunningToolTimer active={toolRunning} />
+                                        </div>
+                                      )}
                                       {args && Object.keys(args).length > 0 && (
                                         <ToolInput input={args} />
                                       )}
@@ -623,7 +788,7 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
                   <MessageContent>
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-primary" />
-                      Thinking…
+                      {phaseHint ?? 'Preparing context and connections…'}
                     </div>
                   </MessageContent>
                 </Message>
@@ -649,6 +814,18 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
             <AlertTitle>You&apos;ve run out of credits</AlertTitle>
             <AlertDescription>
               Upgrade your plan or contact your admin to get more credits and keep chatting.
+            </AlertDescription>
+          </Alert>
+        </div>
+      )}
+
+      {isLoading && !runInBackground && (
+        <div className="mx-4 mb-2">
+          <Alert className="border-muted bg-muted/30">
+            <AlertDescription className="text-xs text-muted-foreground">
+              Closing or refreshing this tab may interrupt the reply. Turn on{' '}
+              <strong className="font-medium text-foreground">Continue in background</strong> so the
+              assistant can finish after you leave.
             </AlertDescription>
           </Alert>
         </div>
@@ -743,6 +920,20 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
                   pinnedIds={pinnedSkillIds}
                   className="shrink-0"
                 />
+                <div className="flex items-center gap-2 rounded-md border border-border/60 px-2 py-1">
+                  <Switch
+                    id="chat-bg"
+                    checked={runInBackground}
+                    onCheckedChange={setRunInBackground}
+                    disabled={streamBusy}
+                  />
+                  <Label
+                    htmlFor="chat-bg"
+                    className="cursor-pointer text-xs text-muted-foreground max-w-[140px] leading-snug"
+                  >
+                    Continue in background
+                  </Label>
+                </div>
               </PromptInputTools>
               <div className="flex shrink-0 items-center gap-1">
                 <ModelSelector value={selectedModel} onChange={setSelectedModel} />
@@ -750,7 +941,7 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
                 <PromptInputSubmit
                   status={status}
                   onStop={stop}
-                  disabled={!dbUser || creditError}
+                  disabled={!dbUser || creditError || streamBusy}
                 />
               </div>
             </PromptInputFooter>
