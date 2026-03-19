@@ -37,3 +37,6 @@ vercel.json
 mastra.db
 mastra.db-shm
 mastra.db-wal
+
+# clerk configuration (can include secrets)
+/.clerk/
