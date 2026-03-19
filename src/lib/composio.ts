@@ -69,7 +69,11 @@ export async function getComposioConnectionStatus(
   }
 
   const session = await createComposioSession(userId)
-  const toolkits = await session.toolkits()
+  // Request our providers explicitly — default returns top 20 by popularity, Apollo may be excluded
+  const toolkitSlugs = COMPOSIO_PROVIDERS.map((p) => getToolkitForProvider(p)).filter(
+    (t): t is string => !!t
+  )
+  const toolkits = await session.toolkits({ toolkits: toolkitSlugs })
 
   const status: Record<string, boolean> = Object.fromEntries(
     COMPOSIO_PROVIDERS.map((p) => [p, false])
@@ -77,7 +81,9 @@ export async function getComposioConnectionStatus(
 
   for (const item of toolkits.items) {
     const provider = getProviderForToolkit(item.slug ?? '')
-    if (provider && item.connection?.connectedAccount) {
+    // connection.isActive is the canonical status; connectedAccount exists for OAuth, API key may omit it
+    const isConnected = item.connection?.isActive ?? !!item.connection?.connectedAccount ?? !!item.connection
+    if (provider && isConnected) {
       status[provider] = true
     }
   }
