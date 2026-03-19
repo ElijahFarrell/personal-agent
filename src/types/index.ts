@@ -365,6 +365,8 @@ export interface ProspectRecord {
   tenantId: string
   ownerId?: string
   name: string
+  firstName?: string
+  lastName?: string
   company?: string
   email?: string
   phone?: string

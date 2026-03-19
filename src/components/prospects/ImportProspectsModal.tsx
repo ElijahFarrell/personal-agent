@@ -17,7 +17,9 @@ import {
 } from '@/components/ui/select'
 
 const PROSPECT_FIELDS = [
-  { id: 'name', label: 'Name', required: true },
+  { id: 'name', label: 'Name (full)', required: false },
+  { id: 'firstName', label: 'First Name', required: false },
+  { id: 'lastName', label: 'Last Name', required: false },
   { id: 'company', label: 'Company', required: false },
   { id: 'email', label: 'Email', required: false },
   { id: 'phone', label: 'Phone', required: false },
@@ -35,6 +37,13 @@ const HEADER_ALIASES: Record<string, FieldId> = {
   fullname: 'name',
   full_name: 'name',
   contact: 'name',
+  firstname: 'firstName',
+  first_name: 'firstName',
+  first: 'firstName',
+  lastname: 'lastName',
+  last_name: 'lastName',
+  last: 'lastName',
+  surname: 'lastName',
   company: 'company',
   organization: 'company',
   org: 'company',
@@ -202,23 +211,38 @@ export function ImportProspectsModal({
     return out
   })
 
-  const validRows = mappedRows.filter((r) => r.name?.trim())
-  const hasNameColumn = headers.some((h) => columnMap[h] === 'name')
+  const validRows = mappedRows.filter((r) => {
+    const hasName = r.name?.trim()
+    const hasFirst = r.firstName?.trim()
+    const hasLast = r.lastName?.trim()
+    return hasName || hasFirst || hasLast
+  })
+  const hasNameColumn =
+    headers.some((h) => columnMap[h] === 'name') ||
+    headers.some((h) => columnMap[h] === 'firstName') ||
+    headers.some((h) => columnMap[h] === 'lastName')
 
   const handleImport = useCallback(async () => {
     if (!hasNameColumn || validRows.length === 0) return
     setImporting(true)
     setError('')
     try {
-      const toInsert = validRows.map((r) => ({
-        name: r.name!,
-        company: r.company || undefined,
-        email: r.email || undefined,
-        phone: r.phone || undefined,
-        linkedinUrl: r.linkedinUrl || undefined,
-        websiteUrl: r.websiteUrl || undefined,
-        notes: r.notes || undefined,
-      }))
+      const toInsert = validRows.map((r) => {
+        const firstName = r.firstName?.trim() || undefined
+        const lastName = r.lastName?.trim() || undefined
+        const name = r.name?.trim() || undefined
+        return {
+          name,
+          firstName,
+          lastName,
+          company: r.company || undefined,
+          email: r.email || undefined,
+          phone: r.phone || undefined,
+          linkedinUrl: r.linkedinUrl || undefined,
+          websiteUrl: r.websiteUrl || undefined,
+          notes: r.notes || undefined,
+        }
+      })
       const count = await importProspects({
         tenantId,
         ownerId,
@@ -297,7 +321,7 @@ export function ImportProspectsModal({
           {step === 'map' && (
             <div className="space-y-4">
               <p className="text-sm text-gray-400">
-                Map your columns to prospect fields. At least one column must be mapped to Name.
+                Map your columns to prospect fields. At least one of Name, First Name, or Last Name is required.
               </p>
               <div className="space-y-3">
                 {headers.map((header) => (
@@ -333,7 +357,7 @@ export function ImportProspectsModal({
               </div>
               <p className="text-xs text-gray-500">
                 {validRows.length} of {rows.length} rows will be imported
-                {!hasNameColumn && ' — map a column to Name to continue'}
+                {!hasNameColumn && ' — map a column to Name, First Name, or Last Name to continue'}
               </p>
             </div>
           )}

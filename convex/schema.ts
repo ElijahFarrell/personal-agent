@@ -245,6 +245,8 @@ export default defineSchema({
     tenantId: v.id(TABLES.TENANTS),
     ownerId: v.optional(v.id(TABLES.USERS)),
     name: v.string(),
+    firstName: v.optional(v.string()),
+    lastName: v.optional(v.string()),
     company: v.optional(v.string()),
     email: v.optional(v.string()),
     phone: v.optional(v.string()),
