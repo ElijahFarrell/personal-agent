@@ -4,18 +4,16 @@ import { getComposioConnectionStatus } from '@/lib/composio'
 
 /**
  * GET /api/composio/status
- * Returns: { [provider]: boolean } for all Composio-backed providers
+ * Returns connection status for all Composio-backed providers for the current user.
  */
 export async function GET() {
   try {
-    const tenantCtx = await getTenantContext()
-    const { userId } = tenantCtx
-
+    const { userId } = await getTenantContext()
     const status = await getComposioConnectionStatus(userId)
-
     return NextResponse.json(status)
   } catch (error) {
     console.error('[Composio Status] Error:', error)
-    return NextResponse.json({}, { status: 200 })
+    const message = error instanceof Error ? error.message : 'Internal server error'
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }

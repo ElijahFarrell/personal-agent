@@ -5,7 +5,7 @@
  */
 const AGENT_DESCRIPTIONS: Record<
   string,
-  { provider?: string | null; providers?: string[]; desc: string }
+  { provider?: string | null; providers?: string[]; desc: string; sdrProviders?: string[] }
 > = {
   'email-agent': { provider: 'gmail', desc: 'Read inbox, summarize emails, draft replies, send emails. Use for anything email-related.' },
   'research-agent': { provider: null, desc: 'Web search, fact-finding, market research, competitive analysis, news. Fast or deep search available.' },
@@ -19,7 +19,11 @@ const AGENT_DESCRIPTIONS: Record<
   'real-estate-agent': { providers: ['calendly'], desc: 'Calendly — event types, scheduled events, scheduling.' },
   'finance-agent': { providers: ['stripe', 'quickbooks'], desc: 'Stripe, QuickBooks — customers, charges, invoices, payments.' },
   'marketing-agent': { provider: 'mailchimp', desc: 'Mailchimp — audiences, campaigns.' },
-  'sdr-agent': { provider: null, desc: 'Lead gen: Exa company search, Apollo (search/enrich/sequences when connected), Outlook (send when connected). Use for "find 50 CEOs", "research leads", "personalize outreach", "add to sequence". Connect Apollo/Outlook in Integrations for Apollo sequences.' },
+  'sdr-agent': {
+    provider: null,
+    desc: 'Lead gen: Exa company search, Apollo (search/enrich/sequences), Outlook (send). Use for "find 50 CEOs", "research leads", "personalize outreach", "add to sequence".',
+    sdrProviders: ['apollo', 'outlook'],
+  },
   'create-schedule': { provider: null, desc: 'Create recurring schedules (cron jobs). Use when the user wants something to run automatically (e.g. "every morning at 9am check my channels", "every Monday send a summary").' },
   'list-schedules': { provider: null, desc: 'List the user\'s schedules. Use when they ask to see their schedules, cron jobs, or automated tasks.' },
   'toggle-schedule': { provider: null, desc: 'Enable or disable a schedule. Use when the user wants to turn a schedule on or off.' },
@@ -36,7 +40,7 @@ export function buildOrchestratorPrompt(
   const providerSet = new Set(connectedProviders)
 
   const agentLines = Object.entries(AGENT_DESCRIPTIONS)
-    .map(([name, { provider, providers, desc }]) => {
+    .map(([name, { provider, providers, desc, sdrProviders }]) => {
       const isConnected = provider
         ? providerSet.has(provider)
         : providers
@@ -46,7 +50,15 @@ export function buildOrchestratorPrompt(
         const providerList = providers?.join(', ') ?? provider ?? ''
         return `- **${name}**: *(not connected — user needs to connect ${providerList} in Integrations)*`
       }
-      return `- **${name}**: ${desc}`
+      // SDR agent: add explicit Apollo/Outlook availability when connected
+      let finalDesc = desc
+      if (name === 'sdr-agent' && sdrProviders?.length) {
+        const connected = sdrProviders.filter((p) => providerSet.has(p))
+        if (connected.length > 0) {
+          finalDesc += ` **Connected: ${connected.join(', ')}** — use for lead search, enrichment, sequences, and email sending.`
+        }
+      }
+      return `- **${name}**: ${finalDesc}`
     })
     .join('\n')
 
