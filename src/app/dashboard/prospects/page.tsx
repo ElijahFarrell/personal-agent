@@ -25,6 +25,7 @@ import {
   Copy,
   MessageSquare,
   FileUp,
+  Download,
 } from 'lucide-react'
 import { api } from '@convex/_generated/api'
 import type { Id } from '@convex/_generated/dataModel'
@@ -42,12 +43,13 @@ import {
 import { ChatPanel } from '@/components/chat/ChatPanel'
 import { ImportProspectsModal } from '@/components/prospects/ImportProspectsModal'
 
-type SortField = 'name' | 'company' | 'stage' | 'status' | 'updatedAt'
+type SortField = 'firstName' | 'lastName' | 'name' | 'company' | 'stage' | 'status' | 'updatedAt'
 type SortDir = 'asc' | 'desc'
 type OwnerFilter = 'all' | 'mine' | 'unassigned'
 
 interface ProspectFormData {
-  name: string
+  firstName: string
+  lastName: string
   company: string
   email: string
   phone: string
@@ -57,7 +59,14 @@ interface ProspectFormData {
 }
 
 const EMPTY_FORM: ProspectFormData = {
-  name: '', company: '', email: '', phone: '', linkedinUrl: '', websiteUrl: '', notes: '',
+  firstName: '',
+  lastName: '',
+  company: '',
+  email: '',
+  phone: '',
+  linkedinUrl: '',
+  websiteUrl: '',
+  notes: '',
 }
 
 // ─── Page Component ──────────────────────────────────────────────────────────
@@ -83,9 +92,10 @@ export default function ProspectsPage() {
   const [selectedIds, setSelectedIds] = useState<Set<Id<'prospects'>>>(new Set())
   const [detailId, setDetailId] = useState<Id<'prospects'> | null>(null)
   const [editing, setEditing] = useState(false)
-  const [editData, setEditData] = useState<ProspectFormData & { stage: ProspectStage }>(
-    { ...EMPTY_FORM, stage: 'new' }
-  )
+  const [editData, setEditData] = useState<ProspectFormData & { stage: ProspectStage }>({
+    ...EMPTY_FORM,
+    stage: 'new',
+  })
 
   // Actions
   const [deleting, setDeleting] = useState<Id<'prospects'> | null>(null)
@@ -149,19 +159,27 @@ export default function ProspectsPage() {
     if (ownerFilter === 'unassigned') list = list.filter((p) => !p.ownerId)
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase()
-      list = list.filter(
+      const pWithNames = list as Array<typeof list[0] & { firstName?: string; lastName?: string }>
+      list = pWithNames.filter(
         (p) =>
           p.name.toLowerCase().includes(q) ||
+          (p.firstName ?? '').toLowerCase().includes(q) ||
+          (p.lastName ?? '').toLowerCase().includes(q) ||
           (p.company ?? '').toLowerCase().includes(q) ||
           (p.email ?? '').toLowerCase().includes(q)
       )
     }
 
     const sorted = [...list]
+    const withNames = sorted as Array<typeof sorted[0] & { firstName?: string; lastName?: string }>
     sorted.sort((a, b) => {
+      const aP = a as typeof withNames[0]
+      const bP = b as typeof withNames[0]
       let aVal: string | number = ''
       let bVal: string | number = ''
       switch (sortField) {
+        case 'firstName': aVal = (aP.firstName ?? aP.name).toLowerCase(); bVal = (bP.firstName ?? bP.name).toLowerCase(); break
+        case 'lastName': aVal = (aP.lastName ?? '').toLowerCase(); bVal = (bP.lastName ?? '').toLowerCase(); break
         case 'name': aVal = a.name.toLowerCase(); bVal = b.name.toLowerCase(); break
         case 'company': aVal = (a.company ?? '').toLowerCase(); bVal = (b.company ?? '').toLowerCase(); break
         case 'stage': aVal = (a as { stage?: string }).stage ?? ''; bVal = (b as { stage?: string }).stage ?? ''; break
@@ -223,7 +241,10 @@ export default function ProspectsPage() {
   }
 
   async function handleSave() {
-    if (!formData.name.trim()) { setFormError('Name is required'); return }
+    if (!formData.firstName.trim() && !formData.lastName.trim()) {
+      setFormError('First name or last name is required')
+      return
+    }
     if (!dbUser) return
     setSaving(true)
     setFormError('')
@@ -231,7 +252,8 @@ export default function ProspectsPage() {
       await createProspect({
         tenantId: dbUser.tenantId,
         ownerId: dbUser._id,
-        name: formData.name.trim(),
+        firstName: formData.firstName.trim() || undefined,
+        lastName: formData.lastName.trim() || undefined,
         company: formData.company.trim() || undefined,
         email: formData.email.trim() || undefined,
         phone: formData.phone.trim() || undefined,
@@ -348,9 +370,10 @@ export default function ProspectsPage() {
 
   function startEditing() {
     if (!selectedProspect) return
-    const sp = selectedProspect as typeof selectedProspect & { stage?: ProspectStage }
+    const sp = selectedProspect as typeof selectedProspect & { stage?: ProspectStage; firstName?: string; lastName?: string }
     setEditData({
-      name: sp.name,
+      firstName: sp.firstName ?? sp.name.split(' ')[0] ?? '',
+      lastName: sp.lastName ?? sp.name.split(' ').slice(1).join(' ') ?? '',
       company: sp.company ?? '',
       email: sp.email ?? '',
       phone: sp.phone ?? '',
@@ -363,11 +386,12 @@ export default function ProspectsPage() {
   }
 
   async function handleEditSave() {
-    if (!selectedProspect || !editData.name.trim()) return
+    if (!selectedProspect || (!editData.firstName.trim() && !editData.lastName.trim())) return
     try {
       await updateProspectMut({
         prospectId: selectedProspect._id,
-        name: editData.name.trim(),
+        firstName: editData.firstName.trim() || undefined,
+        lastName: editData.lastName.trim() || undefined,
         company: editData.company.trim() || undefined,
         email: editData.email.trim() || undefined,
         phone: editData.phone.trim() || undefined,
@@ -407,6 +431,35 @@ export default function ProspectsPage() {
     setTimeout(() => setCopiedDraftId(null), 2000)
   }
 
+  function handleExport() {
+    const list = filteredProspects ?? []
+    if (list.length === 0) return
+    const headers = ['First Name', 'Last Name', 'Company', 'Email', 'Phone', 'LinkedIn URL', 'Website URL', 'Stage', 'Status', 'Notes']
+    const rows = list.map((p) => {
+      const sp = p as typeof p & { firstName?: string; lastName?: string; stage?: string }
+      return [
+        sp.firstName ?? '',
+        sp.lastName ?? '',
+        p.company ?? '',
+        p.email ?? '',
+        p.phone ?? '',
+        p.linkedinUrl ?? '',
+        p.websiteUrl ?? '',
+        sp.stage ?? 'new',
+        p.status,
+        p.notes ?? '',
+      ]
+    })
+    const csv = [headers.join(','), ...rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(','))].join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `prospects-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   const isLoading = prospects === undefined
 
   // ─── Render ──────────────────────────────────────────────────────────────────
@@ -438,6 +491,15 @@ export default function ProspectsPage() {
               >
                 <FileUp className="h-3.5 w-3.5" aria-hidden="true" />
                 Import
+              </button>
+              <button
+                type="button"
+                onClick={handleExport}
+                disabled={!filteredProspects?.length}
+                className="flex items-center gap-2 rounded-lg border border-gray-700 bg-gray-800/60 px-3 py-2 text-xs font-medium text-gray-300 transition-colors hover:border-gray-600 hover:bg-gray-800 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Download className="h-3.5 w-3.5" aria-hidden="true" />
+                Export
               </button>
               <button
                 type="button"
@@ -580,7 +642,7 @@ export default function ProspectsPage() {
               </p>
             </div>
           ) : (
-            <table className="w-full min-w-[700px]">
+            <table className="w-full min-w-[800px]">
               <thead className="sticky top-0 z-10 border-b border-gray-800/60 bg-gray-950">
                 <tr>
                   <th className="w-10 px-4 py-2.5">
@@ -591,7 +653,8 @@ export default function ProspectsPage() {
                       className="h-3.5 w-3.5 rounded border-gray-600 bg-gray-800 text-brand-500 focus:ring-brand-500/30"
                     />
                   </th>
-                  <th className={thClass} onClick={() => toggleSort('name')}>Name <SortIcon field="name" /></th>
+                  <th className={thClass} onClick={() => toggleSort('firstName')}>First Name <SortIcon field="firstName" /></th>
+                  <th className={thClass} onClick={() => toggleSort('lastName')}>Last Name <SortIcon field="lastName" /></th>
                   <th className={thClass} onClick={() => toggleSort('company')}>Company <SortIcon field="company" /></th>
                   <th className={thClass} onClick={() => toggleSort('stage')}>Stage <SortIcon field="stage" /></th>
                   <th className={thClass} onClick={() => toggleSort('status')}>Status <SortIcon field="status" /></th>
@@ -626,7 +689,13 @@ export default function ProspectsPage() {
                         className={`${tdClass} cursor-pointer font-medium text-white`}
                         onClick={() => setDetailId(prospect._id)}
                       >
-                        {prospect.name}
+                        {(prospect as typeof prospect & { firstName?: string }).firstName ?? prospect.name.split(' ')[0] ?? '—'}
+                      </td>
+                      <td
+                        className={`${tdClass} cursor-pointer text-gray-400`}
+                        onClick={() => setDetailId(prospect._id)}
+                      >
+                        {(prospect as typeof prospect & { lastName?: string }).lastName ?? prospect.name.split(' ').slice(1).join(' ') || '—'}
                       </td>
                       <td className={`${tdClass} text-gray-400`}>{prospect.company ?? '—'}</td>
                       <td className={tdClass} onClick={(e) => e.stopPropagation()}>
@@ -724,14 +793,29 @@ export default function ProspectsPage() {
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 {editing ? (
-                  <input
-                    type="text"
-                    value={editData.name}
-                    onChange={(e) => setEditData((p) => ({ ...p, name: e.target.value }))}
-                    className="w-full rounded-md border border-gray-700 bg-gray-800/60 px-2 py-1 text-lg font-semibold text-white outline-none focus:border-brand-500"
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={editData.firstName}
+                      onChange={(e) => setEditData((p) => ({ ...p, firstName: e.target.value }))}
+                      placeholder="First name"
+                      className="flex-1 rounded-md border border-gray-700 bg-gray-800/60 px-2 py-1 text-lg font-semibold text-white outline-none focus:border-brand-500"
+                    />
+                    <input
+                      type="text"
+                      value={editData.lastName}
+                      onChange={(e) => setEditData((p) => ({ ...p, lastName: e.target.value }))}
+                      placeholder="Last name"
+                      className="flex-1 rounded-md border border-gray-700 bg-gray-800/60 px-2 py-1 text-lg font-semibold text-white outline-none focus:border-brand-500"
+                    />
+                  </div>
                 ) : (
-                  <h2 className="text-xl font-semibold text-white">{selectedProspect.name}</h2>
+                  <h2 className="text-xl font-semibold text-white">
+                    {(selectedProspect as typeof selectedProspect & { firstName?: string; lastName?: string }).firstName ||
+                    (selectedProspect as typeof selectedProspect & { firstName?: string; lastName?: string }).lastName
+                      ? [(selectedProspect as typeof selectedProspect & { firstName?: string; lastName?: string }).firstName, (selectedProspect as typeof selectedProspect & { firstName?: string; lastName?: string }).lastName].filter(Boolean).join(' ')
+                      : selectedProspect.name}
+                  </h2>
                 )}
                 {editing ? (
                   <input
@@ -1123,9 +1207,15 @@ export default function ProspectsPage() {
                 <p className="rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-red-400" role="alert">{formError}</p>
               )}
 
-              <div>
-                <label htmlFor="prospect-name" className="mb-1.5 block text-sm font-medium text-gray-300">Name <span className="text-red-400">*</span></label>
-                <input id="prospect-name" type="text" value={formData.name} onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))} placeholder="Jane Smith" className="w-full rounded-lg border border-gray-700 bg-gray-800/60 px-3 py-2 text-sm text-white placeholder-gray-500 outline-none transition-colors focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50" />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="prospect-firstname" className="mb-1.5 block text-sm font-medium text-gray-300">First Name <span className="text-red-400">*</span></label>
+                  <input id="prospect-firstname" type="text" value={formData.firstName} onChange={(e) => setFormData((prev) => ({ ...prev, firstName: e.target.value }))} placeholder="Jane" className="w-full rounded-lg border border-gray-700 bg-gray-800/60 px-3 py-2 text-sm text-white placeholder-gray-500 outline-none transition-colors focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50" />
+                </div>
+                <div>
+                  <label htmlFor="prospect-lastname" className="mb-1.5 block text-sm font-medium text-gray-300">Last Name</label>
+                  <input id="prospect-lastname" type="text" value={formData.lastName} onChange={(e) => setFormData((prev) => ({ ...prev, lastName: e.target.value }))} placeholder="Smith" className="w-full rounded-lg border border-gray-700 bg-gray-800/60 px-3 py-2 text-sm text-white placeholder-gray-500 outline-none transition-colors focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50" />
+                </div>
               </div>
 
               <div>

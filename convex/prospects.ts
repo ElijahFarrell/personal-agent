@@ -68,7 +68,9 @@ const fieldTypeValidator = v.union(
 // ─── Prospect Mutations ──────────────────────────────────────────────────────
 
 const importRowValidator = v.object({
-  name: v.string(),
+  name: v.optional(v.string()),
+  firstName: v.optional(v.string()),
+  lastName: v.optional(v.string()),
   company: v.optional(v.string()),
   email: v.optional(v.string()),
   phone: v.optional(v.string()),
@@ -124,10 +126,23 @@ export const importProspects = mutation({
   handler: async (ctx, { rows, tenantId, ownerId }) => {
     const now = Date.now()
     for (const row of rows) {
+      const name =
+        row.firstName || row.lastName
+          ? [row.firstName, row.lastName].filter(Boolean).join(' ').trim()
+          : row.name ?? ''
+      if (!name) continue
       await ctx.db.insert(TABLES.PROSPECTS, {
         tenantId,
         ownerId,
-        ...row,
+        name,
+        firstName: row.firstName || undefined,
+        lastName: row.lastName || undefined,
+        company: row.company,
+        email: row.email,
+        phone: row.phone,
+        linkedinUrl: row.linkedinUrl,
+        websiteUrl: row.websiteUrl,
+        notes: row.notes,
         status: PROSPECT_STATUS.NEW,
         stage: PROSPECT_STAGE.NEW,
         source: PROSPECT_SOURCE.CSV_IMPORT,
@@ -143,7 +158,9 @@ export const createProspect = mutation({
   args: {
     tenantId: v.id(TABLES.TENANTS),
     ownerId: v.optional(v.id(TABLES.USERS)),
-    name: v.string(),
+    name: v.optional(v.string()),
+    firstName: v.optional(v.string()),
+    lastName: v.optional(v.string()),
     company: v.optional(v.string()),
     email: v.optional(v.string()),
     phone: v.optional(v.string()),
@@ -156,9 +173,17 @@ export const createProspect = mutation({
   },
   handler: async (ctx, args) => {
     const now = Date.now()
-    const { stage, ...rest } = args
+    const { stage, name, firstName, lastName, ...rest } = args
+    const displayName =
+      firstName || lastName
+        ? [firstName, lastName].filter(Boolean).join(' ').trim()
+        : (name ?? '').trim()
+    if (!displayName) throw new Error('Name or first name is required')
     return await ctx.db.insert(TABLES.PROSPECTS, {
       ...rest,
+      name: displayName,
+      firstName: firstName || undefined,
+      lastName: lastName || undefined,
       status: PROSPECT_STATUS.NEW,
       stage: stage ?? PROSPECT_STAGE.NEW,
       createdAt: now,
@@ -172,6 +197,8 @@ export const updateProspect = mutation({
     prospectId: v.id(TABLES.PROSPECTS),
     ownerId: v.optional(v.id(TABLES.USERS)),
     name: v.optional(v.string()),
+    firstName: v.optional(v.string()),
+    lastName: v.optional(v.string()),
     company: v.optional(v.string()),
     email: v.optional(v.string()),
     phone: v.optional(v.string()),
@@ -182,10 +209,21 @@ export const updateProspect = mutation({
     notes: v.optional(v.string()),
     customFields: v.optional(v.any()),
   },
-  handler: async (ctx, { prospectId, ...updates }) => {
+  handler: async (ctx, { prospectId, name, firstName, lastName, ...updates }) => {
     const filtered = Object.fromEntries(
       Object.entries(updates).filter(([, val]) => val !== undefined)
-    )
+    ) as Record<string, unknown>
+    if (firstName !== undefined || lastName !== undefined) {
+      const displayName =
+        firstName || lastName
+          ? [firstName ?? '', lastName ?? ''].filter(Boolean).join(' ').trim()
+          : undefined
+      if (displayName) filtered.name = displayName
+      filtered.firstName = firstName ?? undefined
+      filtered.lastName = lastName ?? undefined
+    } else if (name !== undefined) {
+      filtered.name = name
+    }
     await ctx.db.patch(prospectId, { ...filtered, updatedAt: Date.now() })
   },
 })
