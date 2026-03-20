@@ -9,6 +9,7 @@
  */
 
 import type * as billing from "../billing.js";
+import type * as chatJobs from "../chatJobs.js";
 import type * as constants from "../constants.js";
 import type * as contentDrafts from "../contentDrafts.js";
 import type * as contextDocs from "../contextDocs.js";
@@ -39,6 +40,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   billing: typeof billing;
+  chatJobs: typeof chatJobs;
   constants: typeof constants;
   contentDrafts: typeof contentDrafts;
   contextDocs: typeof contextDocs;
