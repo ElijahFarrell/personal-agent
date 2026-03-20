@@ -26,6 +26,7 @@ export const TABLES = {
   USER_DASHBOARD_PREFERENCES: 'userDashboardPreferences',
   CONTENT_DRAFTS: 'contentDrafts',
   WORKFLOW_SNAPSHOTS: 'workflowSnapshots',
+  CHAT_GENERATION_JOBS: 'chatGenerationJobs',
 } as const
 
 // ─── Index Names ─────────────────────────────────────────────────────────────
@@ -226,6 +227,13 @@ export const SCHEDULE_LOG_STATUS = {
 } as const
 
 // ─── Workflow System ──────────────────────────────────────────────────────────
+
+export const CHAT_JOB_STATUS = {
+  PENDING: 'pending',
+  RUNNING: 'running',
+  COMPLETED: 'completed',
+  FAILED: 'failed',
+} as const
 
 export const WORKFLOW_RUN_STATUS = {
   PENDING: 'pending',
