@@ -81,11 +81,9 @@ export async function getComposioConnectionStatus(
 
   for (const item of toolkits.items) {
     const provider = getProviderForToolkit(item.slug ?? '')
-    // connection.isActive is the canonical status; connectedAccount exists for OAuth, API key may omit it
+    // Only trust explicit connection signals — connection object can exist for unconnected toolkits
     const isConnected =
-      item.connection?.isActive === true ||
-      !!item.connection?.connectedAccount ||
-      !!item.connection
+      item.connection?.isActive === true || !!item.connection?.connectedAccount
     if (provider && isConnected) {
       status[provider] = true
     }
