@@ -114,7 +114,22 @@ export const createUser = mutation({
  *
  * When `orgId` is absent (personal account), `clerkUserId` is used as the
  * tenant key so each personal user gets their own isolated tenant as `owner`.
+ *
+ * If the user already exists but their active Clerk context (org vs personal)
+ * no longer matches `users.tenantId`, they are moved to the correct tenant.
  */
+function resolveRoleForTenant(
+  isOrgAccount: boolean,
+  tenantKey: string,
+  clerkUserId: string,
+  isNewTenant: boolean
+): typeof ROLE.OWNER | typeof ROLE.MEMBER {
+  if (!isOrgAccount && tenantKey === clerkUserId) {
+    return ROLE.OWNER
+  }
+  return isNewTenant ? ROLE.OWNER : ROLE.MEMBER
+}
+
 export const ensureUser = mutation({
   args: {
     clerkUserId: v.string(),
@@ -139,21 +154,34 @@ export const ensureUser = mutation({
       const isStale = storedId.startsWith('org_') || storedId.startsWith('user_')
 
       if (!isStale) {
-        return { userId: existingUser._id, tenantId: existingUser.tenantId }
+        const currentTenant = await ctx.db.get(existingUser.tenantId)
+        if (currentTenant?.clerkOrgId === tenantKey) {
+          return { userId: existingUser._id, tenantId: existingUser.tenantId }
+        }
+        // Session active org differs from stored tenant — move user to the tenant
+        // for the current Clerk context (org vs personal). Fall through.
+      } else {
+        // Repair: resolve the correct Convex tenant ID and patch the user record.
+        const correctTenant = await ctx.db
+          .query(TABLES.TENANTS)
+          .withIndex(INDEXES.BY_CLERK_ORG_ID, (q) => q.eq('clerkOrgId', tenantKey))
+          .unique()
+
+        if (correctTenant) {
+          await ctx.db.patch(existingUser._id, {
+            tenantId: correctTenant._id,
+            role: resolveRoleForTenant(
+              isOrgAccount,
+              tenantKey,
+              clerkUserId,
+              false
+            ),
+          })
+          return { userId: existingUser._id, tenantId: correctTenant._id }
+        }
+
+        // Tenant doesn't exist yet — create it and patch the existing user below.
       }
-
-      // Repair: resolve the correct Convex tenant ID and patch the user record.
-      const correctTenant = await ctx.db
-        .query(TABLES.TENANTS)
-        .withIndex(INDEXES.BY_CLERK_ORG_ID, (q) => q.eq('clerkOrgId', tenantKey))
-        .unique()
-
-      if (correctTenant) {
-        await ctx.db.patch(existingUser._id, { tenantId: correctTenant._id })
-        return { userId: existingUser._id, tenantId: correctTenant._id }
-      }
-
-      // Tenant doesn't exist yet — create it and patch the existing user below.
     }
 
     const existingTenant = await ctx.db
@@ -199,10 +227,20 @@ export const ensureUser = mutation({
       })
     }
 
+    const roleForInsert = resolveRoleForTenant(
+      isOrgAccount,
+      tenantKey,
+      clerkUserId,
+      isNewTenant
+    )
+
     // If existingUser had a stale tenantId and no tenant was found above,
     // patch them with the newly created tenant instead of inserting a duplicate.
     if (existingUser) {
-      await ctx.db.patch(existingUser._id, { tenantId })
+      await ctx.db.patch(existingUser._id, {
+        tenantId,
+        role: roleForInsert,
+      })
       return { userId: existingUser._id, tenantId }
     }
 
@@ -210,7 +248,7 @@ export const ensureUser = mutation({
       clerkUserId,
       tenantId,
       email,
-      role: isNewTenant ? ROLE.OWNER : ROLE.MEMBER,
+      role: roleForInsert,
       createdAt: now,
     })
 
