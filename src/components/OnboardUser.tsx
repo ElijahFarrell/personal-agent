@@ -17,11 +17,15 @@ export function OnboardUser() {
   const { user, isLoaded: userLoaded } = useUser()
   const { organization, isLoaded: orgLoaded } = useOrganization()
   const ensureUser = useMutation(api.users.ensureUser)
-  const hasRun = useRef(false)
+  /** `${clerkUserId}:${tenantKey}` so a new sign-in never skips ensureUser */
+  const lastSyncedKey = useRef<string | null>(null)
 
   useEffect(() => {
-    if (!userLoaded || !orgLoaded || !user || hasRun.current) return
-    hasRun.current = true
+    if (!userLoaded || !orgLoaded || !user) return
+    const tenantKey = organization?.id ?? user.id
+    const syncKey = `${user.id}:${tenantKey}`
+    if (lastSyncedKey.current === syncKey) return
+    lastSyncedKey.current = syncKey
 
     ensureUser({
       clerkUserId: user.id,
