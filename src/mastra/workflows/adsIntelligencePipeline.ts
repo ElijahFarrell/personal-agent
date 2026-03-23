@@ -101,6 +101,8 @@ const buildStep = createStep({
 
 export const adsIntelligenceWorkflow = createWorkflow({
   id: 'ads-intelligence',
+  description:
+    'End-to-end competitive ads pipeline: parallel ad-library search (Search API), analysis, and campaign brief. Requires Search API connected.',
   inputSchema: workflowInputSchema,
   outputSchema: AdsPipelineRunOutputSchema,
 })
