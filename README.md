@@ -76,6 +76,10 @@ pnpm build        # Production build
 pnpm db:migrate   # Run DB migrations
 ```
 
+### Convex (backend / realtime DB)
+
+- **Production cutover and copying dev data into prod:** [docs/convex-production-migration.md](docs/convex-production-migration.md)
+
 ## Adding a New Skill
 
 Create a `SKILL.md` file in `skills/<skillName>/`:
