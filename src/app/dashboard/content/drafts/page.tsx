@@ -43,7 +43,7 @@ const PLATFORM_META: Record<
   x: { label: 'X (Twitter)', icon: MessageCircle, color: 'text-gray-400 bg-gray-500/10', available: true },
   youtube: { label: 'YouTube', icon: Video, color: 'text-red-400 bg-red-500/10', available: false },
   instagram: { label: 'Instagram', icon: Camera, color: 'text-pink-400 bg-pink-500/10', available: false },
-  tiktok: { label: 'TikTok', icon: Music2, color: 'text-cyan-400 bg-cyan-500/10', available: false },
+  tiktok: { label: 'TikTok', icon: Music2, color: 'text-cyan-400 bg-cyan-500/10', available: true },
 }
 
 const AVAILABLE_PLATFORMS: PlatformTab[] = ['linkedin', 'x']

@@ -42,8 +42,8 @@ export function useOrgConfig(): UseOrgConfigResult {
     ? {
         allowedAgents: tenantConfig.allowedAgents,
         allowedIntegrations: tenantConfig.allowedIntegrations,
-        features: tenantConfig.features,
-        limits: tenantConfig.limits,
+        features: { ...DEFAULT_CONFIG.features, ...tenantConfig.features },
+        limits: { ...DEFAULT_CONFIG.limits, ...tenantConfig.limits },
         billingModel: tenantConfig.billingModel,
       }
     : DEFAULT_CONFIG

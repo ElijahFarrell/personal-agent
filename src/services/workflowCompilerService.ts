@@ -15,6 +15,7 @@ import {
   createRealEstateAgent,
   createFinanceAgent,
   createMarketingAgent,
+  createMetaAdsAgent,
   createSDRAgent,
 } from '@/mastra/agents'
 import { AGENT_BY_TOOL_ID, type AgentId } from '@/constants/agents'
@@ -89,7 +90,7 @@ const AGENT_FACTORIES: Record<string, (userId: string, tenantId?: string) => Pro
   research: async (userId) => createResearchAgent(userId),
   calendar: async (userId) => (await createCalendarAgent(userId, [])).agent,
   linkedin: async (userId) => createLinkedInAgent(userId),
-  content: async (userId) => createContentAgent(userId),
+  content: async (userId) => await createContentAgent(userId),
   instagram: async (userId) => createInstagramAgent(userId),
   browser: async (userId) => createBrowserAgent(userId),
   messaging: async (userId) => (await createMessagingAgent(userId, [])).agent,
@@ -99,6 +100,7 @@ const AGENT_FACTORIES: Record<string, (userId: string, tenantId?: string) => Pro
   realEstate: async (userId) => (await createRealEstateAgent(userId, [])).agent,
   finance: async (userId) => (await createFinanceAgent(userId, [])).agent,
   marketing: async (userId) => (await createMarketingAgent(userId, [])).agent,
+  metaAds: async (userId) => (await createMetaAdsAgent(userId, [])).agent,
   sdr: async (userId, tenantId) => createSDRAgent(userId, tenantId ?? ''),
 }
 

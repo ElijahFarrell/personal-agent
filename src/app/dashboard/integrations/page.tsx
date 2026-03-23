@@ -28,6 +28,9 @@ import {
   Calculator,
   Target,
   Inbox,
+  Music2,
+  LineChart,
+  Radar,
 } from 'lucide-react'
 import { API_ROUTES } from '@/constants/api'
 import { useCallback, useEffect, useState } from 'react'
@@ -47,6 +50,9 @@ const INTEGRATIONS: Array<{
   { id: 'slack', name: 'Slack', description: 'Send and read messages', provider: 'slack', Icon: MessageSquare, iconBg: 'bg-purple-500/10', iconColor: 'text-purple-400' },
   { id: 'linkedin', name: 'LinkedIn', description: 'Manage your professional network', provider: 'linkedin', Icon: Linkedin, iconBg: 'bg-sky-500/10', iconColor: 'text-sky-400' },
   { id: 'instagram', name: 'Instagram', description: 'Schedule and publish content', provider: 'instagram', Icon: Camera, iconBg: 'bg-pink-500/10', iconColor: 'text-pink-400' },
+  { id: 'tiktok', name: 'TikTok', description: 'Upload and publish short-form video', provider: 'tiktok', Icon: Music2, iconBg: 'bg-cyan-500/10', iconColor: 'text-cyan-400' },
+  { id: 'metaAds', name: 'Meta Ads', description: 'Facebook and Instagram campaigns, creatives, and insights', provider: 'metaAds', Icon: LineChart, iconBg: 'bg-blue-500/10', iconColor: 'text-blue-400' },
+  { id: 'searchApi', name: 'Search API', description: 'Competitive ad libraries (Meta, LinkedIn, TikTok, Google) via SerpApi', provider: 'searchApi', Icon: Radar, iconBg: 'bg-violet-500/10', iconColor: 'text-violet-400' },
   { id: 'notion', name: 'Notion', description: 'Read and write pages', provider: 'notion', Icon: FileText, iconBg: 'bg-gray-500/10', iconColor: 'text-gray-300' },
   { id: 'hubspot', name: 'HubSpot', description: 'Manage contacts and CRM data', provider: 'hubspot', Icon: BarChart2, iconBg: 'bg-orange-500/10', iconColor: 'text-orange-400' },
   { id: 'salesforce', name: 'Salesforce', description: 'CRM, opportunities, and accounts', provider: 'salesforce', Icon: Building2, iconBg: 'bg-cyan-500/10', iconColor: 'text-cyan-400' },

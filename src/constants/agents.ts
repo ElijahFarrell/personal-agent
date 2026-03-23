@@ -18,6 +18,10 @@ import {
   Home,
   CreditCard,
   Megaphone,
+  LineChart,
+  Radar,
+  Target,
+  Rocket,
 } from 'lucide-react'
 
 export const AGENT_IDS = {
@@ -35,6 +39,10 @@ export const AGENT_IDS = {
   REAL_ESTATE: 'realEstate',
   FINANCE: 'finance',
   MARKETING: 'marketing',
+  META_ADS: 'metaAds',
+  ADS_SCRAPER: 'adsScraper',
+  AD_ANALYZER: 'adAnalyzer',
+  CAMPAIGN_BUILDER: 'campaignBuilder',
 } as const
 
 export type AgentId = (typeof AGENT_IDS)[keyof typeof AGENT_IDS]
@@ -176,6 +184,42 @@ export const AGENT_REGISTRY: AgentMeta[] = [
     iconBg: 'bg-yellow-500/10',
     iconColor: 'text-yellow-400',
     toolId: 'marketing-agent',
+  },
+  {
+    id: AGENT_IDS.META_ADS,
+    displayName: 'Meta Ads',
+    description: 'Facebook and Instagram ads — campaigns, creatives, insights',
+    icon: LineChart,
+    iconBg: 'bg-blue-500/10',
+    iconColor: 'text-blue-400',
+    toolId: 'metaAdsAgent',
+  },
+  {
+    id: AGENT_IDS.ADS_SCRAPER,
+    displayName: 'Ads Scraper',
+    description: 'Search API — competitive ads across Meta, LinkedIn, TikTok, Google',
+    icon: Radar,
+    iconBg: 'bg-violet-500/10',
+    iconColor: 'text-violet-400',
+    toolId: 'ads-scraper-agent',
+  },
+  {
+    id: AGENT_IDS.AD_ANALYZER,
+    displayName: 'Ad Analyzer',
+    description: 'Synthesize competitive ad research into insights',
+    icon: Target,
+    iconBg: 'bg-rose-500/10',
+    iconColor: 'text-rose-400',
+    toolId: 'ad-analyzer-agent',
+  },
+  {
+    id: AGENT_IDS.CAMPAIGN_BUILDER,
+    displayName: 'Campaign Builder',
+    description: 'Turn analysis into a campaign brief and channel plan',
+    icon: Rocket,
+    iconBg: 'bg-emerald-500/10',
+    iconColor: 'text-emerald-400',
+    toolId: 'campaign-builder-agent',
   },
 ]
 

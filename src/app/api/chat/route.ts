@@ -119,6 +119,16 @@ export async function POST(req: NextRequest) {
         return null
       })
 
+    let effectiveAgentInstructions = agentInstructions
+    if (dbUser) {
+      const stored = await convex
+        .query(api.userAgentSettings.getByUserId, { userId: dbUser._id })
+        .catch(() => null)
+      if (stored?.instructionsByAgentId && Object.keys(stored.instructionsByAgentId).length > 0) {
+        effectiveAgentInstructions = stored.instructionsByAgentId
+      }
+    }
+
     if (dbUser) {
       const hasCredits = await convex
         .query(api.credits.hasEnoughCredits, {
@@ -140,7 +150,7 @@ export async function POST(req: NextRequest) {
       threadId,
       userId,
       tenantId,
-      agentInstructions,
+      agentInstructions: effectiveAgentInstructions,
       targetAgent,
       deepResearch,
       model,

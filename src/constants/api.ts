@@ -17,5 +17,7 @@ export const API_ROUTES = {
   skillsBrowse: '/api/skills/browse',
   composioAuthorize: '/api/composio/authorize',
   composioStatus: '/api/composio/status',
+  metaAdsInsights: '/api/metaAdsInsights',
+  adsIntelligenceRun: '/api/ads-intelligence/run',
   telegramLink: '/api/telegram/link',
 } as const

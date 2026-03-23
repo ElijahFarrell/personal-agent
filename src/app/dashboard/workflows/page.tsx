@@ -37,6 +37,9 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { WorkflowRunResumeDialog } from '@/components/workflows/WorkflowRunResumeDialog'
 import { WORKFLOW_RUN_STATUS } from '@convex/constants'
+import { useOrgConfig } from '@/hooks/useOrgConfig'
+import { isFeatureEnabled } from '@/constants/featureGating'
+import { Textarea } from '@/components/ui/textarea'
 
 function WorkflowCard({
   wf,
@@ -194,6 +197,13 @@ function WorkflowCard({
 
 export default function WorkflowsPage() {
   const { user } = useUser()
+  const { config } = useOrgConfig()
+  const nlEnabled = isFeatureEnabled(config, 'workflowBuilder')
+  const [nlPrompt, setNlPrompt] = useState('')
+  const [nlPreview, setNlPreview] = useState<{
+    plan: { name: string; description: string; steps: Array<{ label: string; agentId: string }> }
+  } | null>(null)
+  const [nlLoading, setNlLoading] = useState(false)
   const [deletingId, setDeletingId] = useState<Id<'workflowDefinitions'> | null>(null)
   const [runLoadingId, setRunLoadingId] = useState<Id<'workflowDefinitions'> | null>(null)
   const [resumeDialog, setResumeDialog] = useState<{
@@ -239,6 +249,47 @@ export default function WorkflowsPage() {
     setResumeDialog({ runId, stepId })
   }
 
+  const handleNlPreview = async () => {
+    if (!nlPrompt.trim()) return
+    setNlLoading(true)
+    setNlPreview(null)
+    try {
+      const res = await fetch('/api/workflows/nl', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: nlPrompt, save: false }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? 'Failed')
+      setNlPreview({ plan: data.plan })
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : 'Failed')
+    } finally {
+      setNlLoading(false)
+    }
+  }
+
+  const handleNlSave = async () => {
+    if (!nlPrompt.trim()) return
+    setNlLoading(true)
+    try {
+      const res = await fetch('/api/workflows/nl', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: nlPrompt, save: true }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? 'Failed')
+      setNlPrompt('')
+      setNlPreview(null)
+      window.alert(`Saved workflow ${data.plan?.name ?? ''}`)
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : 'Failed')
+    } finally {
+      setNlLoading(false)
+    }
+  }
+
   const handleDelete = async (workflowId: Id<'workflowDefinitions'>) => {
     setDeletingId(workflowId)
     try {
@@ -263,13 +314,67 @@ export default function WorkflowsPage() {
             Build and run automated workflows with agents, tools, and human approval steps.
           </p>
         </div>
-        <Button asChild>
-          <Link href="/dashboard/workflows/builder">
-            <Plus className="mr-2 h-4 w-4" />
-            New Workflow
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button asChild variant="secondary">
+            <Link href="/dashboard/workflows/builder">
+              <Plus className="mr-2 h-4 w-4" />
+              Graph builder
+            </Link>
+          </Button>
+        </div>
       </div>
+
+      {nlEnabled && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Describe an automation</CardTitle>
+            <CardDescription>
+              Natural language: what should happen, which agents, and optionally when (e.g. every Monday).
+              Preview first, then save. Advanced editing uses the graph builder.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <Textarea
+              value={nlPrompt}
+              onChange={(e) => setNlPrompt(e.target.value)}
+              placeholder='Example: Every Monday at 9am, research my industry news with the Research agent, then draft a LinkedIn post with the Content agent.'
+              rows={4}
+              className="resize-y min-h-[100px]"
+            />
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={nlLoading || !nlPrompt.trim()}
+                onClick={() => void handleNlPreview()}
+              >
+                {nlLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                Preview
+              </Button>
+              <Button
+                type="button"
+                disabled={nlLoading || !nlPrompt.trim()}
+                onClick={() => void handleNlSave()}
+              >
+                Save workflow
+              </Button>
+            </div>
+            {nlPreview && (
+              <div className="rounded-md border border-border bg-muted/40 p-3 text-sm">
+                <p className="font-medium">{nlPreview.plan.name}</p>
+                <p className="text-muted-foreground">{nlPreview.plan.description}</p>
+                <ol className="mt-2 list-decimal pl-5 space-y-1">
+                  {nlPreview.plan.steps.map((s, i) => (
+                    <li key={i}>
+                      <span className="font-mono text-xs text-primary">{s.agentId}</span> — {s.label}
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {!workflows && (
         <div className="flex items-center justify-center py-12">

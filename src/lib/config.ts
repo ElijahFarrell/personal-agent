@@ -66,6 +66,9 @@ export const config = {
   composio: {
     apiKey: optionalEnv('COMPOSIO_API_KEY'),
   },
+  replicate: {
+    apiToken: optionalEnv('REPLICATE_API_TOKEN'),
+  },
   admin: {
     /** Clerk userId of the super admin (server). Only this user can access /api/admin/* */
     superAdminUserId: optionalEnv('SUPER_ADMIN_USER_ID'),

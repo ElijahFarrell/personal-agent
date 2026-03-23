@@ -19,6 +19,10 @@ const AGENT_DESCRIPTIONS: Record<
   'real-estate-agent': { providers: ['calendly'], desc: 'Calendly — event types, scheduled events, scheduling.' },
   'finance-agent': { providers: ['stripe', 'quickbooks'], desc: 'Stripe, QuickBooks — customers, charges, invoices, payments.' },
   'marketing-agent': { provider: 'mailchimp', desc: 'Mailchimp — audiences, campaigns.' },
+  'metaAdsAgent': { provider: 'metaAds', desc: 'Meta Ads — Facebook/Instagram campaigns, creatives, insights, audiences.' },
+  'ads-scraper-agent': { provider: 'searchApi', desc: 'Search API ad libraries — scrape Meta, LinkedIn, TikTok, Google competitive ads (parallel per engine).' },
+  'ad-analyzer-agent': { provider: 'searchApi', desc: 'Analyze competitive ad scrapes — themes, messaging, creative patterns (uses cached Search API results).' },
+  'campaign-builder-agent': { provider: 'searchApi', desc: 'Turn competitive analysis into a campaign brief and channel plan.' },
   'sdr-agent': {
     provider: null,
     desc: 'Lead gen: Exa company search, Apollo (search/enrich/sequences), Outlook (send). Use for "find 50 CEOs", "research leads", "personalize outreach", "add to sequence".',

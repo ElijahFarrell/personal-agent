@@ -27,6 +27,13 @@ export const TABLES = {
   CONTENT_DRAFTS: 'contentDrafts',
   WORKFLOW_SNAPSHOTS: 'workflowSnapshots',
   CHAT_GENERATION_JOBS: 'chatGenerationJobs',
+  USER_AGENT_SETTINGS: 'userAgentSettings',
+  AUTOMATION_TRIGGERS: 'automationTriggers',
+  INBOX_THREADS: 'inboxThreads',
+  INBOX_MESSAGES: 'inboxMessages',
+  VIDEO_GENERATION_JOBS: 'videoGenerationJobs',
+  MEDIA_ASSETS: 'mediaAssets',
+  ADS_PIPELINE_RUNS: 'adsPipelineRuns',
 } as const
 
 // ─── Index Names ─────────────────────────────────────────────────────────────
@@ -58,6 +65,15 @@ export const INDEXES = {
   BY_TENANT_PLATFORM: 'by_tenantId_platform',
   BY_WORKFLOW_RUN: 'by_workflowName_runId',
   BY_SNAPSHOT_RUN_ID: 'by_snapshot_runId',
+  BY_USER_PROVIDER_EXTERNAL_THREAD: 'by_userId_provider_externalThreadId',
+  BY_INBOX_THREAD_SENT_AT: 'by_threadId_sentAt',
+  BY_INBOX_THREAD_MESSAGE: 'by_threadId_externalMessageId',
+  BY_COMPOSIO_TRIGGER_ID: 'by_composioTriggerId',
+  BY_VIDEO_JOB_USER_CREATED: 'by_userId_createdAt',
+  BY_MEDIA_TENANT_CREATED: 'by_tenantId_createdAt',
+  BY_ADS_PIPELINE_TENANT_CREATED: 'by_tenantId_createdAt',
+  BY_ADS_PIPELINE_USER_CREATED: 'by_userId_createdAt',
+  BY_ADS_PIPELINE_TENANT_STATUS: 'by_tenantId_status',
 } as const
 
 // ─── Enum Values ─────────────────────────────────────────────────────────────
@@ -78,6 +94,8 @@ export const CREDIT_TX_TYPE = {
 export const CREDIT_ACTION = {
   CHAT_MESSAGE: 'chat_message',
   TOOL_EXECUTION: 'tool_execution',
+  VIDEO_GENERATION: 'video_generation',
+  AUTOMATION_RUN: 'automation_run',
   TRIAL_GRANT: 'trial_grant',
   PURCHASE: 'purchase',
   ADMIN_GRANT: 'admin_grant',
@@ -87,6 +105,8 @@ export const CREDIT_ACTION = {
 export const CREDIT_COSTS = {
   [CREDIT_ACTION.CHAT_MESSAGE]: 1,
   [CREDIT_ACTION.TOOL_EXECUTION]: 2,
+  [CREDIT_ACTION.VIDEO_GENERATION]: 10,
+  [CREDIT_ACTION.AUTOMATION_RUN]: 2,
 } as const
 
 // ─── Trial Configuration ─────────────────────────────────────────────────────
@@ -281,4 +301,36 @@ export const FEATURE_FLAGS = {
   VOICE_MODE: 'voiceMode',
   WORKFLOW_BUILDER: 'workflowBuilder',
   SCHEDULED_TASKS: 'scheduledTasks',
+  VIDEO_STUDIO: 'videoStudio',
+  UNIFIED_INBOX: 'unifiedInbox',
+  EVENT_TRIGGERS: 'eventTriggers',
+} as const
+
+export const INBOX_PROVIDER = {
+  GMAIL: 'gmail',
+  OUTLOOK: 'outlook',
+} as const
+
+export const ADS_PIPELINE_RUN_STATUS = {
+  PENDING: 'pending',
+  SCRAPING: 'scraping',
+  ANALYZING: 'analyzing',
+  BUILDING: 'building',
+  COMPLETED: 'completed',
+  FAILED: 'failed',
+} as const
+
+export const VIDEO_JOB_STATUS = {
+  QUEUED: 'queued',
+  RUNNING: 'running',
+  COMPLETED: 'completed',
+  FAILED: 'failed',
+} as const
+
+export const MEDIA_ASSET_STATUS = {
+  DRAFT: 'draft',
+  READY: 'ready',
+  POSTING: 'posting',
+  POSTED: 'posted',
+  FAILED: 'failed',
 } as const

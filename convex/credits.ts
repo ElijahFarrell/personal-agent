@@ -21,7 +21,9 @@ export const hasEnoughCredits = query({
     tenantId: v.id(TABLES.TENANTS),
     action: v.union(
       v.literal(CREDIT_ACTION.CHAT_MESSAGE),
-      v.literal(CREDIT_ACTION.TOOL_EXECUTION)
+      v.literal(CREDIT_ACTION.TOOL_EXECUTION),
+      v.literal(CREDIT_ACTION.VIDEO_GENERATION),
+      v.literal(CREDIT_ACTION.AUTOMATION_RUN)
     ),
   },
   handler: async (ctx, { tenantId, action }) => {
@@ -64,7 +66,9 @@ export const deductCredits = mutation({
     userId: v.optional(v.id(TABLES.USERS)),
     action: v.union(
       v.literal(CREDIT_ACTION.CHAT_MESSAGE),
-      v.literal(CREDIT_ACTION.TOOL_EXECUTION)
+      v.literal(CREDIT_ACTION.TOOL_EXECUTION),
+      v.literal(CREDIT_ACTION.VIDEO_GENERATION),
+      v.literal(CREDIT_ACTION.AUTOMATION_RUN)
     ),
   },
   handler: async (ctx, { tenantId, userId, action }) => {

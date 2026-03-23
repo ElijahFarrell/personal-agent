@@ -8,6 +8,8 @@
  * @module
  */
 
+import type * as adsPipelineRuns from "../adsPipelineRuns.js";
+import type * as automationTriggers from "../automationTriggers.js";
 import type * as billing from "../billing.js";
 import type * as chatJobs from "../chatJobs.js";
 import type * as constants from "../constants.js";
@@ -15,6 +17,7 @@ import type * as contentDrafts from "../contentDrafts.js";
 import type * as contextDocs from "../contextDocs.js";
 import type * as credits from "../credits.js";
 import type * as dailyTodos from "../dailyTodos.js";
+import type * as inbox from "../inbox.js";
 import type * as integrations from "../integrations.js";
 import type * as messages from "../messages.js";
 import type * as migrations from "../migrations.js";
@@ -26,8 +29,10 @@ import type * as telegram from "../telegram.js";
 import type * as tenantConfigs from "../tenantConfigs.js";
 import type * as tenants from "../tenants.js";
 import type * as threads from "../threads.js";
+import type * as userAgentSettings from "../userAgentSettings.js";
 import type * as userDashboardPreferences from "../userDashboardPreferences.js";
 import type * as users from "../users.js";
+import type * as videoGeneration from "../videoGeneration.js";
 import type * as workflowDefinitions from "../workflowDefinitions.js";
 import type * as workflowRuns from "../workflowRuns.js";
 import type * as workflowSnapshots from "../workflowSnapshots.js";
@@ -39,6 +44,8 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  adsPipelineRuns: typeof adsPipelineRuns;
+  automationTriggers: typeof automationTriggers;
   billing: typeof billing;
   chatJobs: typeof chatJobs;
   constants: typeof constants;
@@ -46,6 +53,7 @@ declare const fullApi: ApiFromModules<{
   contextDocs: typeof contextDocs;
   credits: typeof credits;
   dailyTodos: typeof dailyTodos;
+  inbox: typeof inbox;
   integrations: typeof integrations;
   messages: typeof messages;
   migrations: typeof migrations;
@@ -57,8 +65,10 @@ declare const fullApi: ApiFromModules<{
   tenantConfigs: typeof tenantConfigs;
   tenants: typeof tenants;
   threads: typeof threads;
+  userAgentSettings: typeof userAgentSettings;
   userDashboardPreferences: typeof userDashboardPreferences;
   users: typeof users;
+  videoGeneration: typeof videoGeneration;
   workflowDefinitions: typeof workflowDefinitions;
   workflowRuns: typeof workflowRuns;
   workflowSnapshots: typeof workflowSnapshots;

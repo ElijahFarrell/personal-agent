@@ -85,6 +85,9 @@ export async function PUT(
         voiceMode: !!features.voiceMode,
         workflowBuilder: !!features.workflowBuilder,
         scheduledTasks: !!features.scheduledTasks,
+        videoStudio: !!features.videoStudio,
+        unifiedInbox: !!features.unifiedInbox,
+        eventTriggers: !!features.eventTriggers,
       },
       limits: {
         maxMembers: Number(limits.maxMembers) ?? 1,
@@ -93,6 +96,8 @@ export async function PUT(
         maxSchedules: Number(limits.maxSchedules) ?? 1,
         maxSkills: Number(limits.maxSkills) ?? 5,
         monthlyCredits: Number(limits.monthlyCredits) ?? 10,
+        maxVideoGenerationsPerMonth: Number(limits.maxVideoGenerationsPerMonth) ?? 20,
+        maxInboxSyncPerDay: Number(limits.maxInboxSyncPerDay) ?? 50,
       },
       billingModel: billingModel as
         | 'unlimited'

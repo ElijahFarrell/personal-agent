@@ -81,6 +81,10 @@ export {
   createRealEstateAgent,
   createFinanceAgent,
   createMarketingAgent,
+  createMetaAdsAgent,
+  createAdsScraperAgent,
+  createAdAnalyzerAgent,
+  createCampaignBuilderAgent,
   createAllAgents,
 } from './agents'
 export { createVoice } from './voice'
@@ -97,3 +101,9 @@ export {
   type EnrichmentInput,
   type EnrichmentOutput,
 } from './workflows/prospectEnrichment'
+export {
+  adsIntelligenceWorkflow,
+  executeAdsIntelligencePipeline,
+  type AdsIntelligenceWorkflowInput,
+  type AdsIntelligenceWorkflowOutput,
+} from './workflows/adsIntelligencePipeline'
