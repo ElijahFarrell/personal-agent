@@ -1,6 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { useUser } from '@clerk/nextjs'
+import { useMutation, useQuery } from 'convex/react'
+import { api } from '@convex/_generated/api'
 import {
   BrainCircuit,
   Mail,
@@ -21,6 +24,7 @@ import {
   Home,
   CreditCard,
   Megaphone,
+  LineChart,
   Lock,
 } from 'lucide-react'
 import { useOrgConfig } from '@/hooks/useOrgConfig'
@@ -69,6 +73,7 @@ const AGENTS: AgentDef[] = [
       { id: 'real-estate-agent', description: 'Delegate to the Real Estate Agent (Follow Up Boss, Calendly)' },
       { id: 'finance-agent', description: 'Delegate to the Finance Agent (Stripe, QuickBooks)' },
       { id: 'marketing-agent', description: 'Delegate to the Marketing Agent (Mailchimp)' },
+      { id: 'metaAdsAgent', description: 'Delegate to the Meta Ads Agent (Facebook/Instagram ads)' },
       { id: 'mem0-recall', description: 'Search long-term memory' },
       { id: 'mem0-memorize', description: 'Save to long-term memory' },
     ],
@@ -307,11 +312,27 @@ const AGENTS: AgentDef[] = [
       { id: 'mem0-memorize', description: 'Save marketing preferences' },
     ],
   },
+  {
+    id: 'metaAds',
+    name: 'Meta Ads Agent',
+    role: 'Meta Ads',
+    description:
+      'Manages Facebook and Instagram advertising: campaigns, ad sets, creatives, audiences, and performance insights via the Meta Marketing API.',
+    model: 'Claude Haiku',
+    icon: LineChart,
+    iconBg: 'bg-blue-500/10',
+    iconColor: 'text-blue-400',
+    tools: [
+      { id: 'MCP tools', description: 'Meta Ads — campaigns, insights, creatives, audiences' },
+      { id: 'mem0-recall', description: 'Retrieve ad preferences and benchmarks' },
+      { id: 'mem0-memorize', description: 'Save performance notes' },
+    ],
+  },
 ]
 
 const STORAGE_KEY = 'agent-custom-instructions'
 
-function loadInstructions(): Record<string, string> {
+function loadLegacyInstructions(): Record<string, string> {
   if (typeof window === 'undefined') return {}
   try {
     return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}')
@@ -320,22 +341,60 @@ function loadInstructions(): Record<string, string> {
   }
 }
 
-function saveInstructions(instructions: Record<string, string>) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(instructions))
-}
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function AgentsPage() {
+  const { user } = useUser()
   const { config } = useOrgConfig()
+  const dbUser = useQuery(
+    api.users.getUserByClerkUserId,
+    user ? { clerkUserId: user.id } : 'skip'
+  )
+  const serverSettings = useQuery(
+    api.userAgentSettings.getByUserId,
+    dbUser ? { userId: dbUser._id } : 'skip'
+  )
+  const upsertSettings = useMutation(api.userAgentSettings.upsert)
+  const clearAgentMut = useMutation(api.userAgentSettings.clearAgent)
+
   const [customInstructions, setCustomInstructions] = useState<Record<string, string>>({})
   const [selectedAgent, setSelectedAgent] = useState<AgentDef | null>(null)
   const [draftInstructions, setDraftInstructions] = useState('')
   const [saved, setSaved] = useState(false)
+  const [migratedLegacy, setMigratedLegacy] = useState(false)
 
   useEffect(() => {
-    setCustomInstructions(loadInstructions())
-  }, [])
+    if (!serverSettings || !dbUser) return
+    const fromServer = serverSettings.instructionsByAgentId ?? {}
+    if (Object.keys(fromServer).length > 0) {
+      setCustomInstructions(fromServer)
+      return
+    }
+    if (migratedLegacy) return
+    const legacy = loadLegacyInstructions()
+    if (Object.keys(legacy).length === 0) {
+      setMigratedLegacy(true)
+      return
+    }
+    void upsertSettings({
+      userId: dbUser._id,
+      tenantId: dbUser.tenantId,
+      instructionsByAgentId: legacy,
+    }).then(() => {
+      try {
+        localStorage.removeItem(STORAGE_KEY)
+      } catch {
+        /* ignore */
+      }
+      setMigratedLegacy(true)
+    })
+  }, [serverSettings, dbUser, upsertSettings, migratedLegacy])
+
+  useEffect(() => {
+    if (serverSettings?.instructionsByAgentId) {
+      setCustomInstructions(serverSettings.instructionsByAgentId)
+    }
+  }, [serverSettings])
 
   function openAgent(agent: AgentDef, locked?: boolean) {
     if (locked) return
@@ -350,23 +409,37 @@ export default function AgentsPage() {
     setSaved(false)
   }
 
-  function handleSave() {
-    if (!selectedAgent) return
+  const handleSave = useCallback(async () => {
+    if (!selectedAgent || !dbUser) return
     const updated = { ...customInstructions, [selectedAgent.id]: draftInstructions }
     setCustomInstructions(updated)
-    saveInstructions(updated)
+    await upsertSettings({
+      userId: dbUser._id,
+      tenantId: dbUser.tenantId,
+      instructionsByAgentId: updated,
+    })
     setSaved(true)
-  }
+  }, [
+    selectedAgent,
+    dbUser,
+    customInstructions,
+    draftInstructions,
+    upsertSettings,
+  ])
 
-  function handleClear() {
-    if (!selectedAgent) return
+  const handleClear = useCallback(async () => {
+    if (!selectedAgent || !dbUser) return
     const updated = { ...customInstructions }
     delete updated[selectedAgent.id]
     setCustomInstructions(updated)
-    saveInstructions(updated)
+    await clearAgentMut({
+      userId: dbUser._id,
+      tenantId: dbUser.tenantId,
+      agentId: selectedAgent.id,
+    })
     setDraftInstructions('')
     setSaved(false)
-  }
+  }, [selectedAgent, dbUser, customInstructions, clearAgentMut])
 
   const configuredCount = Object.values(customInstructions).filter(Boolean).length
 

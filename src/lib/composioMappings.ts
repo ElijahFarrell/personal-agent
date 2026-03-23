@@ -27,6 +27,9 @@ export const PROVIDER_TO_TOOLKIT: Record<ComposioProvider, string> = {
   mailchimp: 'MAILCHIMP',
   apollo: 'APOLLO',
   outlook: 'OUTLOOK',
+  tiktok: 'TIKTOK',
+  metaAds: 'METAADS',
+  searchApi: 'SEARCH_API',
 } as const
 
 export const TOOLKIT_TO_PROVIDER: Record<string, ComposioProvider> = Object.fromEntries(
@@ -42,6 +45,8 @@ export const COMPOSIO_PROVIDERS = Object.keys(
 
 export function getToolkitForProvider(provider: string): string | null {
   const p = provider.toLowerCase()
+  if (p === 'metaads') return 'METAADS'
+  if (p === 'searchapi') return 'SEARCH_API'
   return PROVIDER_TO_TOOLKIT[p as ComposioProvider] ?? null
 }
 

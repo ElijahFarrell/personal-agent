@@ -1,6 +1,38 @@
 import { defineSchema, defineTable } from 'convex/server'
 import { v } from 'convex/values'
-import { BILLING_MODEL, CHAT_JOB_STATUS, CONTEXT_DOC_CATEGORY, CONTENT_DRAFT_STATUS, CONTENT_PLATFORM, CREDIT_ACTION, CREDIT_TX_TYPE, CUSTOM_FIELD_TYPE, DRAFT_STATUS, INDEXES, INTEGRATION_STATUS, MESSAGE_ROLE, MESSAGE_SOURCE, OUTREACH_CHANNEL, PROSPECT_SOURCE, PROSPECT_STAGE, PROSPECT_STATUS, ROLE, SCHEDULE_ACTION_TYPE, SCHEDULE_LOG_STATUS, SCOPE, SKILL_SOURCE, SUBSCRIPTION_STATUS, TABLES, TIER, WORKFLOW_RUN_STATUS, WORKFLOW_STEP_STATUS } from './constants'
+import {
+  ADS_PIPELINE_RUN_STATUS,
+  BILLING_MODEL,
+  CHAT_JOB_STATUS,
+  CONTEXT_DOC_CATEGORY,
+  CONTENT_DRAFT_STATUS,
+  CONTENT_PLATFORM,
+  CREDIT_ACTION,
+  CREDIT_TX_TYPE,
+  CUSTOM_FIELD_TYPE,
+  DRAFT_STATUS,
+  INDEXES,
+  INBOX_PROVIDER,
+  INTEGRATION_STATUS,
+  MEDIA_ASSET_STATUS,
+  MESSAGE_ROLE,
+  MESSAGE_SOURCE,
+  OUTREACH_CHANNEL,
+  PROSPECT_SOURCE,
+  PROSPECT_STAGE,
+  PROSPECT_STATUS,
+  ROLE,
+  SCHEDULE_ACTION_TYPE,
+  SCHEDULE_LOG_STATUS,
+  SCOPE,
+  SKILL_SOURCE,
+  SUBSCRIPTION_STATUS,
+  TABLES,
+  TIER,
+  VIDEO_JOB_STATUS,
+  WORKFLOW_RUN_STATUS,
+  WORKFLOW_STEP_STATUS,
+} from './constants'
 
 export default defineSchema({
   [TABLES.TENANTS]: defineTable({
@@ -29,6 +61,10 @@ export default defineSchema({
       voiceMode: v.boolean(),
       workflowBuilder: v.boolean(),
       scheduledTasks: v.boolean(),
+      /** Added 2026 — optional so legacy tenantConfigs rows validate until backfill. */
+      videoStudio: v.optional(v.boolean()),
+      unifiedInbox: v.optional(v.boolean()),
+      eventTriggers: v.optional(v.boolean()),
     }),
     limits: v.object({
       maxMembers: v.number(),
@@ -37,6 +73,9 @@ export default defineSchema({
       maxSchedules: v.number(),
       maxSkills: v.number(),
       monthlyCredits: v.number(),
+      /** Added 2026 — optional so legacy tenantConfigs rows validate until backfill. */
+      maxVideoGenerationsPerMonth: v.optional(v.number()),
+      maxInboxSyncPerDay: v.optional(v.number()),
     }),
     billingModel: v.union(
       v.literal(BILLING_MODEL.UNLIMITED),
@@ -227,6 +266,8 @@ export default defineSchema({
     action: v.union(
       v.literal(CREDIT_ACTION.CHAT_MESSAGE),
       v.literal(CREDIT_ACTION.TOOL_EXECUTION),
+      v.literal(CREDIT_ACTION.VIDEO_GENERATION),
+      v.literal(CREDIT_ACTION.AUTOMATION_RUN),
       v.literal(CREDIT_ACTION.TRIAL_GRANT),
       v.literal(CREDIT_ACTION.PURCHASE),
       v.literal(CREDIT_ACTION.ADMIN_GRANT),
@@ -545,4 +586,147 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index(INDEXES.BY_THREAD_CREATED, ['threadId', 'createdAt']),
+
+  [TABLES.USER_AGENT_SETTINGS]: defineTable({
+    userId: v.id(TABLES.USERS),
+    tenantId: v.id(TABLES.TENANTS),
+    instructionsByAgentId: v.record(v.string(), v.string()),
+    updatedAt: v.number(),
+  }).index(INDEXES.BY_USER_ID, ['userId']),
+
+  [TABLES.AUTOMATION_TRIGGERS]: defineTable({
+    tenantId: v.id(TABLES.TENANTS),
+    userId: v.id(TABLES.USERS),
+    composioTriggerId: v.string(),
+    toolkit: v.string(),
+    triggerSlug: v.string(),
+    config: v.optional(v.any()),
+    isEnabled: v.boolean(),
+    action: v.object({
+      type: v.union(
+        v.literal(SCHEDULE_ACTION_TYPE.WORKFLOW),
+        v.literal(SCHEDULE_ACTION_TYPE.AGENT_PROMPT)
+      ),
+      workflowId: v.optional(v.id(TABLES.WORKFLOW_DEFINITIONS)),
+      agentPrompt: v.optional(v.string()),
+    }),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index(INDEXES.BY_TENANT_ID, ['tenantId'])
+    .index(INDEXES.BY_USER_ID, ['userId'])
+    .index(INDEXES.BY_COMPOSIO_TRIGGER_ID, ['composioTriggerId']),
+
+  [TABLES.INBOX_THREADS]: defineTable({
+    tenantId: v.id(TABLES.TENANTS),
+    userId: v.id(TABLES.USERS),
+    provider: v.union(
+      v.literal(INBOX_PROVIDER.GMAIL),
+      v.literal(INBOX_PROVIDER.OUTLOOK)
+    ),
+    externalThreadId: v.string(),
+    subject: v.optional(v.string()),
+    snippet: v.optional(v.string()),
+    lastMessageAt: v.number(),
+    participantEmails: v.array(v.string()),
+    prospectId: v.optional(v.id(TABLES.PROSPECTS)),
+    needsReply: v.boolean(),
+    updatedAt: v.number(),
+  })
+    .index(INDEXES.BY_TENANT_ID, ['tenantId'])
+    .index(INDEXES.BY_USER_ID, ['userId'])
+    .index(INDEXES.BY_USER_PROVIDER_EXTERNAL_THREAD, [
+      'userId',
+      'provider',
+      'externalThreadId',
+    ]),
+
+  [TABLES.INBOX_MESSAGES]: defineTable({
+    threadId: v.id(TABLES.INBOX_THREADS),
+    externalMessageId: v.string(),
+    sentAt: v.number(),
+    fromEmail: v.string(),
+    bodyPreview: v.string(),
+    isOutbound: v.boolean(),
+    createdAt: v.number(),
+  })
+    .index(INDEXES.BY_INBOX_THREAD_SENT_AT, ['threadId', 'sentAt'])
+    .index(INDEXES.BY_INBOX_THREAD_MESSAGE, ['threadId', 'externalMessageId']),
+
+  [TABLES.VIDEO_GENERATION_JOBS]: defineTable({
+    tenantId: v.id(TABLES.TENANTS),
+    userId: v.id(TABLES.USERS),
+    status: v.union(
+      v.literal(VIDEO_JOB_STATUS.QUEUED),
+      v.literal(VIDEO_JOB_STATUS.RUNNING),
+      v.literal(VIDEO_JOB_STATUS.COMPLETED),
+      v.literal(VIDEO_JOB_STATUS.FAILED)
+    ),
+    provider: v.string(),
+    prompt: v.string(),
+    error: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index(INDEXES.BY_TENANT_ID, ['tenantId'])
+    .index(INDEXES.BY_VIDEO_JOB_USER_CREATED, ['userId', 'createdAt']),
+
+  [TABLES.MEDIA_ASSETS]: defineTable({
+    tenantId: v.id(TABLES.TENANTS),
+    userId: v.id(TABLES.USERS),
+    status: v.union(
+      v.literal(MEDIA_ASSET_STATUS.DRAFT),
+      v.literal(MEDIA_ASSET_STATUS.READY),
+      v.literal(MEDIA_ASSET_STATUS.POSTING),
+      v.literal(MEDIA_ASSET_STATUS.POSTED),
+      v.literal(MEDIA_ASSET_STATUS.FAILED)
+    ),
+    videoUrl: v.optional(v.string()),
+    thumbnailUrl: v.optional(v.string()),
+    durationSec: v.optional(v.number()),
+    platformIntent: v.string(),
+    publishId: v.optional(v.string()),
+    jobId: v.optional(v.id(TABLES.VIDEO_GENERATION_JOBS)),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index(INDEXES.BY_TENANT_ID, ['tenantId'])
+    .index(INDEXES.BY_MEDIA_TENANT_CREATED, ['tenantId', 'createdAt']),
+
+  [TABLES.ADS_PIPELINE_RUNS]: defineTable({
+    tenantId: v.id(TABLES.TENANTS),
+    userId: v.id(TABLES.USERS),
+    status: v.union(
+      v.literal(ADS_PIPELINE_RUN_STATUS.PENDING),
+      v.literal(ADS_PIPELINE_RUN_STATUS.SCRAPING),
+      v.literal(ADS_PIPELINE_RUN_STATUS.ANALYZING),
+      v.literal(ADS_PIPELINE_RUN_STATUS.BUILDING),
+      v.literal(ADS_PIPELINE_RUN_STATUS.COMPLETED),
+      v.literal(ADS_PIPELINE_RUN_STATUS.FAILED)
+    ),
+    currentStage: v.optional(v.string()),
+    query: v.string(),
+    platforms: v.array(v.string()),
+    focusArea: v.optional(v.string()),
+    requestedEngines: v.array(v.string()),
+    completedEngines: v.array(v.string()),
+    cachedSearchRefs: v.array(
+      v.object({
+        engine: v.string(),
+        searchId: v.string(),
+        ok: v.boolean(),
+        error: v.optional(v.string()),
+      })
+    ),
+    analysisMarkdown: v.optional(v.string()),
+    campaignBriefMarkdown: v.optional(v.string()),
+    error: v.optional(v.string()),
+    startedAt: v.number(),
+    completedAt: v.optional(v.number()),
+    updatedAt: v.number(),
+    createdAt: v.number(),
+  })
+    .index(INDEXES.BY_ADS_PIPELINE_TENANT_CREATED, ['tenantId', 'createdAt'])
+    .index(INDEXES.BY_ADS_PIPELINE_USER_CREATED, ['userId', 'createdAt'])
+    .index(INDEXES.BY_ADS_PIPELINE_TENANT_STATUS, ['tenantId', 'status']),
 })

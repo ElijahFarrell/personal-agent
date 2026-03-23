@@ -19,6 +19,10 @@ export { createProjectAgent } from './projectAgent'
 export { createRealEstateAgent } from './realEstateAgent'
 export { createFinanceAgent } from './financeAgent'
 export { createMarketingAgent } from './marketingAgent'
+export { createMetaAdsAgent } from './metaAdsAgent'
+export { createAdsScraperAgent } from './adsScraperAgent'
+export { createAdAnalyzerAgent } from './adAnalyzerAgent'
+export { createCampaignBuilderAgent } from './campaignBuilderAgent'
 export { createSDRAgent } from './sdrAgent'
 
 import { createOrchestratorAgent } from './orchestrator'
@@ -60,7 +64,7 @@ export async function createAllAgents(
     research: createResearchAgent(userId),
     calendar: createCalendarAgentSync(userId),
     linkedin: createLinkedInAgent(userId),
-    content: createContentAgent(userId),
+    content: await createContentAgent(userId),
     instagram: createInstagramAgent(userId),
     browser: createBrowserAgent(userId),
     slack: createSlackAgentSync(userId),

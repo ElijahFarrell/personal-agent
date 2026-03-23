@@ -19,7 +19,12 @@ import {
   createRealEstateAgent,
   createFinanceAgent,
   createMarketingAgent,
+  createMetaAdsAgent,
+  createAdsScraperAgent,
+  createAdAnalyzerAgent,
+  createCampaignBuilderAgent,
 } from '@/mastra'
+import { ADS_AGENT_GENERATE_OPTS } from '@/mastra/agents/adsAgentOptions'
 import { retrieveRelevantContext, buildContextBlock } from '@/services/contextService'
 import { createWorkspaceForTenant } from '@/mastra/createWorkspaceForTenant'
 import { buildProspectsContext } from '@/services/prospectsContextService'
@@ -151,7 +156,12 @@ export async function prepareChatAgentStream(
       'realEstate',
       'finance',
       'marketing',
+      'metaAds',
+      'adsScraper',
+      'adAnalyzer',
+      'campaignBuilder',
     ] as const
+    const adsIntelAgentIds = ['adsScraper', 'adAnalyzer', 'campaignBuilder'] as const
     const simpleAgentIds = ['research', 'linkedin', 'content', 'instagram', 'browser'] as const
 
     if (composioAgentIds.includes(agentId as (typeof composioAgentIds)[number])) {
@@ -165,6 +175,10 @@ export async function prepareChatAgentStream(
         realEstate: createRealEstateAgent,
         finance: createFinanceAgent,
         marketing: createMarketingAgent,
+        metaAds: createMetaAdsAgent,
+        adsScraper: createAdsScraperAgent,
+        adAnalyzer: createAdAnalyzerAgent,
+        campaignBuilder: createCampaignBuilderAgent,
       }
       const createFn = createFns[agentId as (typeof composioAgentIds)[number]]
       if (createFn) {
@@ -174,17 +188,23 @@ export async function prepareChatAgentStream(
         if (lastIdx >= 0 && agentMessagesWithTask[lastIdx]?.role === CHAT_ROLES.USER) {
           agentMessagesWithTask[lastIdx] = { role: CHAT_ROLES.USER, content: taskWithInstructions }
         }
+        const useAdsIntelOpts = adsIntelAgentIds.includes(
+          agentId as (typeof adsIntelAgentIds)[number]
+        )
         stream = await agent.stream(
           agentMessagesWithTask as Parameters<typeof agent.stream>[0],
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          { toolsets } as any
+          {
+            toolsets,
+            ...(useAdsIntelOpts ? ADS_AGENT_GENERATE_OPTS : {}),
+          } as any
         )
       }
     } else if (simpleAgentIds.includes(agentId as (typeof simpleAgentIds)[number])) {
       const draftScope = skillScope ? { tenantId: skillScope.tenantId, userId: skillScope.userId } : undefined
       let agent: Agent
       if (agentId === 'content') {
-        agent = createContentAgent(userId, draftScope, workspace)
+        agent = await createContentAgent(userId, draftScope, workspace)
       } else {
         const createFns = {
           research: createResearchAgent,

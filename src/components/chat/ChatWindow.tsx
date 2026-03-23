@@ -152,9 +152,18 @@ function VoiceInputButton() {
 interface ChatWindowProps {
   threadId: Id<'threads'> | null
   onThreadCreated?: (threadId: Id<'threads'>) => void
+  /** Pre-select @mention target (e.g. Meta Ads page). */
+  initialTargetAgent?: AgentId | null
+  /** Hide agent picker and lock badge when true. */
+  lockTargetAgent?: boolean
 }
 
-export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
+export function ChatWindow({
+  threadId,
+  onThreadCreated,
+  initialTargetAgent = null,
+  lockTargetAgent = false,
+}: ChatWindowProps) {
   const { user } = useUser()
 
   const dbUser = useQuery(
@@ -178,6 +187,10 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
     api.skills.getAllSkillsForChat,
     dbUser ? { tenantId: dbUser.tenantId, userId: dbUser._id } : 'skip'
   )
+  const userAgentSettings = useQuery(
+    api.userAgentSettings.getByUserId,
+    dbUser ? { userId: dbUser._id } : 'skip'
+  )
 
   const [pinnedSkillIds, setPinnedSkillIds] = useState<Set<string>>(new Set())
   const [cumulativeUsage, setCumulativeUsage] = useState({
@@ -189,7 +202,7 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
   >([])
   const [creditError, setCreditError] = useState(false)
   const [chatError, setChatError] = useState<string | null>(null)
-  const [targetAgent, setTargetAgent] = useState<AgentId | null>(null)
+  const [targetAgent, setTargetAgent] = useState<AgentId | null>(initialTargetAgent ?? null)
   const [deepResearch, setDeepResearch] = useState(false)
   const [selectedModel, setSelectedModel] = useState<string>('auto')
   const [runInBackground, setRunInBackground] = useState(false)
@@ -208,6 +221,11 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
 
   const agentInstructionsRef = useRef<Record<string, string> | undefined>(undefined)
   useEffect(() => {
+    const fromConvex = userAgentSettings?.instructionsByAgentId
+    if (fromConvex && Object.keys(fromConvex).length > 0) {
+      agentInstructionsRef.current = fromConvex
+      return
+    }
     try {
       const stored = localStorage.getItem('agent-custom-instructions')
       if (stored) {
@@ -220,7 +238,7 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
     } catch {
       // ignore
     }
-  }, [])
+  }, [userAgentSettings])
 
   const pinnedSkillIdsRef = useRef(pinnedSkillIds)
   pinnedSkillIdsRef.current = pinnedSkillIds
@@ -840,8 +858,9 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
             className="mx-auto max-w-4xl [&_[data-slot=input-group]]:!bg-transparent [&_[data-slot=input-group]]:border-white/10"
           >
             <PromptInputTextarea placeholder="Send a message…" />
-            <AgentMentionPopover anchorRef={inputAreaRef} onSelect={setTargetAgent} />
-           
+            {!lockTargetAgent && (
+              <AgentMentionPopover anchorRef={inputAreaRef} onSelect={setTargetAgent} />
+            )}
             <PromptInputFooter>
               <PromptInputTools className="flex-1 flex-wrap gap-1.5">
                 {targetAgent && (
@@ -850,14 +869,16 @@ export function ChatWindow({ threadId, onThreadCreated }: ChatWindowProps) {
                     className="gap-1 text-xs shrink-0"
                   >
                     @{AGENT_BY_ID.get(targetAgent)?.displayName ?? targetAgent}
-                    <button
-                      type="button"
-                      onClick={() => setTargetAgent(null)}
-                      className="rounded p-0.5 hover:bg-muted"
-                      aria-label="Clear agent"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
+                    {!lockTargetAgent && (
+                      <button
+                        type="button"
+                        onClick={() => setTargetAgent(null)}
+                        className="rounded p-0.5 hover:bg-muted"
+                        aria-label="Clear agent"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    )}
                   </Badge>
                 )}
                 <Tooltip>

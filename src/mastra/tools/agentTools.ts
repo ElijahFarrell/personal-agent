@@ -23,6 +23,11 @@ import { createProjectAgent } from '../agents/projectAgent'
 import { createRealEstateAgent } from '../agents/realEstateAgent'
 import { createFinanceAgent } from '../agents/financeAgent'
 import { createMarketingAgent } from '../agents/marketingAgent'
+import { createMetaAdsAgent } from '../agents/metaAdsAgent'
+import { createAdsScraperAgent } from '../agents/adsScraperAgent'
+import { createAdAnalyzerAgent } from '../agents/adAnalyzerAgent'
+import { createCampaignBuilderAgent } from '../agents/campaignBuilderAgent'
+import { ADS_AGENT_GENERATE_OPTS } from '../agents/adsAgentOptions'
 import { createSDRAgent } from '../agents/sdrAgent'
 import { createLeadAgent } from '../agents/leadAgent'
 
@@ -167,7 +172,7 @@ export function createAgentTools(
           const taskWithInstructions = withCustomInstructions(input.task, agentInstructions?.content)
           const inputForAgent = await getInputForAgent(input.task, taskWithInstructions)
           const draftScope = { tenantId, userId }
-          const agent = createContentAgent(userId, draftScope, workspace)
+          const agent = await createContentAgent(userId, draftScope, workspace)
           const result = await agent.generate(inputForAgent)
           return result.text
         } catch (error) {
@@ -382,6 +387,107 @@ export function createAgentTools(
         } catch (error) {
           const message = error instanceof Error ? error.message : 'Unknown error'
           return `Marketing agent error: ${message}`
+        }
+      },
+    }),
+
+    metaAdsAgent: createTool({
+      id: 'metaAdsAgent',
+      description:
+        'Delegate Meta (Facebook/Instagram) advertising tasks to the Meta Ads Agent. Use for: ' +
+        'campaigns, ad sets, ads, audiences, creatives, performance insights, and spend.',
+      inputSchema: taskSchema,
+      execute: async (input) => {
+        try {
+          const taskWithInstructions = withCustomInstructions(input.task, agentInstructions?.metaAds)
+          const inputForAgent = await getInputForAgent(input.task, taskWithInstructions)
+          const { agent, toolsets } = await createMetaAdsAgent(userId, connectedProviders, workspace)
+          const result = await agent.generate(
+            inputForAgent,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            { toolsets } as any
+          )
+          return result.text
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Unknown error'
+          return `Meta Ads agent error: ${message}`
+        }
+      },
+    }),
+
+    adsScraperAgent: createTool({
+      id: 'ads-scraper-agent',
+      description:
+        'Competitive ads scraping via Search API ad libraries (Meta, LinkedIn, TikTok, Google). ' +
+        'Use for multi-platform competitive research. Prefer parallel SEARCH_API_SEARCH calls per engine.',
+      inputSchema: taskSchema,
+      execute: async (input) => {
+        try {
+          const taskWithInstructions = withCustomInstructions(input.task, agentInstructions?.adsScraper)
+          const inputForAgent = await getInputForAgent(input.task, taskWithInstructions)
+          const { agent, toolsets } = await createAdsScraperAgent(userId, connectedProviders, workspace)
+          const result = await agent.generate(
+            inputForAgent,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            { toolsets, ...ADS_AGENT_GENERATE_OPTS } as any
+          )
+          return result.text
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Unknown error'
+          return `Ads Scraper agent error: ${message}`
+        }
+      },
+    }),
+
+    adAnalyzerAgent: createTool({
+      id: 'ad-analyzer-agent',
+      description:
+        'Analyze competitive ad research: themes, messaging, creative patterns. Uses Search API cached results when needed.',
+      inputSchema: taskSchema,
+      execute: async (input) => {
+        try {
+          const taskWithInstructions = withCustomInstructions(input.task, agentInstructions?.adAnalyzer)
+          const inputForAgent = await getInputForAgent(input.task, taskWithInstructions)
+          const { agent, toolsets } = await createAdAnalyzerAgent(userId, connectedProviders, workspace)
+          const result = await agent.generate(
+            inputForAgent,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            { toolsets, ...ADS_AGENT_GENERATE_OPTS } as any
+          )
+          return result.text
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Unknown error'
+          return `Ad Analyzer agent error: ${message}`
+        }
+      },
+    }),
+
+    campaignBuilderAgent: createTool({
+      id: 'campaign-builder-agent',
+      description:
+        'Build a campaign brief from competitive analysis — objectives, audiences, creative angles, channels, metrics.',
+      inputSchema: taskSchema,
+      execute: async (input) => {
+        try {
+          const taskWithInstructions = withCustomInstructions(
+            input.task,
+            agentInstructions?.campaignBuilder
+          )
+          const inputForAgent = await getInputForAgent(input.task, taskWithInstructions)
+          const { agent, toolsets } = await createCampaignBuilderAgent(
+            userId,
+            connectedProviders,
+            workspace
+          )
+          const result = await agent.generate(
+            inputForAgent,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            { toolsets, ...ADS_AGENT_GENERATE_OPTS } as any
+          )
+          return result.text
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Unknown error'
+          return `Campaign Builder agent error: ${message}`
         }
       },
     }),

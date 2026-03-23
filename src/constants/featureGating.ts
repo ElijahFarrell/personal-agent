@@ -14,6 +14,9 @@ export interface TenantConfigFeatures {
   voiceMode: boolean
   workflowBuilder: boolean
   scheduledTasks: boolean
+  videoStudio: boolean
+  unifiedInbox: boolean
+  eventTriggers: boolean
 }
 
 export interface TenantConfigLimits {
@@ -23,6 +26,8 @@ export interface TenantConfigLimits {
   maxSchedules: number
   maxSkills: number
   monthlyCredits: number
+  maxVideoGenerationsPerMonth: number
+  maxInboxSyncPerDay: number
 }
 
 export interface TenantConfig {
@@ -35,8 +40,17 @@ export interface TenantConfig {
 
 /** Fallback when no tenantConfigs row exists (free-tier equivalent). */
 export const DEFAULT_CONFIG: TenantConfig = {
-  allowedAgents: ['email', 'research', 'calendar', 'content'],
-  allowedIntegrations: ['gmail', 'google-calendar', 'apollo', 'outlook'],
+  allowedAgents: [
+    'email',
+    'research',
+    'calendar',
+    'content',
+    'metaAds',
+    'adsScraper',
+    'adAnalyzer',
+    'campaignBuilder',
+  ],
+  allowedIntegrations: ['gmail', 'google-calendar', 'apollo', 'outlook', 'metaAds', 'searchApi'],
   features: {
     customWorkflows: false,
     deepResearch: false,
@@ -48,6 +62,9 @@ export const DEFAULT_CONFIG: TenantConfig = {
     voiceMode: false,
     workflowBuilder: false,
     scheduledTasks: false,
+    videoStudio: false,
+    unifiedInbox: false,
+    eventTriggers: false,
   },
   limits: {
     maxMembers: 1,
@@ -56,6 +73,8 @@ export const DEFAULT_CONFIG: TenantConfig = {
     maxSchedules: 1,
     maxSkills: 5,
     monthlyCredits: 10,
+    maxVideoGenerationsPerMonth: 20,
+    maxInboxSyncPerDay: 50,
   },
   billingModel: 'friend',
 }

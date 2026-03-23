@@ -68,6 +68,10 @@ export type RouteTarget =
   | 'realEstate'
   | 'finance'
   | 'marketing'
+  | 'metaAds'
+  | 'adsScraper'
+  | 'adAnalyzer'
+  | 'campaignBuilder'
 
 export interface RouteDecision {
   target: RouteTarget
@@ -138,6 +142,9 @@ export type IntegrationProvider =
   | 'mailchimp'
   | 'apollo'
   | 'outlook'
+  | 'tiktok'
+  | 'metaAds'
+  | 'searchApi'
 
 /** Composio-backed providers (excludes pipedrive, jira, follow-up-boss). */
 export type ComposioProvider = IntegrationProvider

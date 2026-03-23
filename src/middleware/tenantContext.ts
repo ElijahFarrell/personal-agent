@@ -52,8 +52,8 @@ async function resolveConfig(tenantConvexId: Id<'tenants'>) {
     return {
       allowedAgents: config.allowedAgents,
       allowedIntegrations: config.allowedIntegrations,
-      features: config.features,
-      limits: config.limits,
+      features: { ...DEFAULT_CONFIG.features, ...config.features },
+      limits: { ...DEFAULT_CONFIG.limits, ...config.limits },
       billingModel: config.billingModel,
     }
   } catch {

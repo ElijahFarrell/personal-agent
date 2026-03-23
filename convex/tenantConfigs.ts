@@ -17,6 +17,9 @@ const DEFAULT_CONFIG_SHAPE = {
     voiceMode: false,
     workflowBuilder: false,
     scheduledTasks: false,
+    videoStudio: false,
+    unifiedInbox: false,
+    eventTriggers: false,
   },
   limits: {
     maxMembers: 1,
@@ -25,6 +28,8 @@ const DEFAULT_CONFIG_SHAPE = {
     maxSchedules: 1,
     maxSkills: 5,
     monthlyCredits: 10,
+    maxVideoGenerationsPerMonth: 20,
+    maxInboxSyncPerDay: 50,
   },
   billingModel: BILLING_MODEL.FRIEND,
 }
@@ -40,6 +45,9 @@ const featuresValidator = v.object({
   voiceMode: v.boolean(),
   workflowBuilder: v.boolean(),
   scheduledTasks: v.boolean(),
+  videoStudio: v.boolean(),
+  unifiedInbox: v.boolean(),
+  eventTriggers: v.boolean(),
 })
 
 const limitsValidator = v.object({
@@ -49,6 +57,8 @@ const limitsValidator = v.object({
   maxSchedules: v.number(),
   maxSkills: v.number(),
   monthlyCredits: v.number(),
+  maxVideoGenerationsPerMonth: v.number(),
+  maxInboxSyncPerDay: v.number(),
 })
 
 // ─── Queries ──────────────────────────────────────────────────────────────────

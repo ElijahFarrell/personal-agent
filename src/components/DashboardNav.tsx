@@ -15,6 +15,10 @@ import {
   Sparkles,
   FolderOpen,
   ChevronRight,
+  Inbox,
+  Film,
+  LineChart,
+  Radar,
 } from 'lucide-react'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { cn } from '@/lib/utils'
@@ -52,13 +56,23 @@ const NAV_CONFIG: (NavItem | NavGroup)[] = [
   { type: 'item', href: '/dashboard/prospects', label: 'Prospects', icon: Users },
   {
     type: 'group',
-    label: 'Workspace',
+    label: 'Content & Ads',
     icon: FolderOpen,
     storageKey: 'workspace',
     children: [
       { type: 'item', href: '/dashboard/context', label: 'Context', icon: FileText },
       { type: 'item', href: '/dashboard/skills', label: 'Skills', icon: Zap },
       { type: 'item', href: '/dashboard/integrations', label: 'Integrations', icon: Plug },
+      { type: 'item', href: '/dashboard/inbox', label: 'Inbox', icon: Inbox },
+      { type: 'item', href: '/dashboard/content/drafts', label: 'Drafts', icon: FileText },
+      { type: 'item', href: '/dashboard/content/video', label: 'Video', icon: Film },
+      { type: 'item', href: '/dashboard/content/metaAdsInsights', label: 'Meta Ads', icon: LineChart },
+      {
+        type: 'item',
+        href: '/dashboard/content/competitiveAds',
+        label: 'Competitive Ads',
+        icon: Radar,
+      },
     ],
   },
 ]
@@ -80,7 +94,9 @@ function getDefaultGroupState(pathname: string): Record<string, boolean> {
     workspace:
       pathname.startsWith('/dashboard/context') ||
       pathname.startsWith('/dashboard/skills') ||
-      pathname.startsWith('/dashboard/integrations'),
+      pathname.startsWith('/dashboard/integrations') ||
+      pathname.startsWith('/dashboard/inbox') ||
+      pathname.startsWith('/dashboard/content'),
   }
 }
 

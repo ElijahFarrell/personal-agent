@@ -62,6 +62,10 @@ export const AgentModels = {
   realEstate:   Models.CLAUDE_HAIKU,
   finance:      Models.CLAUDE_HAIKU,
   marketing:    Models.CLAUDE_HAIKU,
+  metaAds:      Models.CLAUDE_HAIKU,
+
+  /** Competitive ads intelligence — SEARCH_API tool use + analysis */
+  adsIntelligence: Models.CLAUDE_SONNET,
 } as const
 
 /** Context window sizes (tokens) per model for usage display */
