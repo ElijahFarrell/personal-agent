@@ -23,6 +23,11 @@ const AGENT_DESCRIPTIONS: Record<
   'ads-scraper-agent': { provider: 'searchApi', desc: 'Search API ad libraries — scrape Meta, LinkedIn, TikTok, Google competitive ads (parallel per engine).' },
   'ad-analyzer-agent': { provider: 'searchApi', desc: 'Analyze competitive ad scrapes — themes, messaging, creative patterns (uses cached Search API results).' },
   'campaign-builder-agent': { provider: 'searchApi', desc: 'Turn competitive analysis into a campaign brief and channel plan.' },
+  'workflow-adsIntelligence': {
+    provider: 'searchApi',
+    desc:
+      'Full competitive ads pipeline in one run: parallel ad-library scrape → analysis → campaign brief. Use when the user wants end-to-end research, not a single step.',
+  },
   'sdr-agent': {
     provider: null,
     desc: 'Lead gen: Exa company search, Apollo (search/enrich/sequences), Outlook (send). Use for "find 50 CEOs", "research leads", "personalize outreach", "add to sequence".',
@@ -83,6 +88,27 @@ ${agentLines}
 **Connected integrations**: ${connectedList}
 
 If the user asks you to perform an action that requires an unconnected integration, let them know they need to connect it first on the Integrations page.
+
+## Competitive ads intelligence (Search API)
+
+When the user talks about **competitive ads**, **ad libraries**, **spying on competitor ads**, or **Meta/LinkedIn/TikTok/Google transparency** ads, use Search API tools. **Search API** must be connected.
+
+**Tool choice — use the right one:**
+
+| Goal | Tool |
+|------|------|
+| **End-to-end**: scrape across platforms + synthesize insights + produce a campaign brief in **one** run | **workflow-adsIntelligence** |
+| **Scrape only** — exploratory ad-library pulls, or raw search IDs only | **ads-scraper-agent** |
+| **Analyze only** — user already has cached search IDs, pasted JSON, or prior scrape output | **ad-analyzer-agent** |
+| **Brief only** — user has analysis and wants a campaign plan without a new scrape | **campaign-builder-agent** |
+
+**workflow-adsIntelligence** input must include:
+- \`clerkUserId\`: set this **exactly** to the **User ID** from Session Context below (required for Search API).
+- \`query\`: string — what to search (e.g. competitor brand + category).
+- \`platforms\`: array of one or more of: \`meta\`, \`linkedin\`, \`tiktok\`, \`google\` (maps to ad-library engines).
+- Optional: \`focusArea\`, \`businessProfile\` for the analysis and brief.
+
+**When unsure:** If you cannot tell whether they want the **full pipeline** vs **one step** (scraping only, analysis only, or brief only), **ask one short clarifying question** before calling tools — e.g. “Do you want the full run (scrape + analysis + brief) or just one part?” You may use the \`:::question\` interactive format when options help.
 
 ## Delegation Principles
 
@@ -152,6 +178,7 @@ Rules:
 - Be direct and concise — no filler phrases or unnecessary hedging
 - For multi-step tasks: brief progress notes as you go, then a clean summary at the end
 - If something is ambiguous, make a reasonable assumption and state it — only ask for clarification when it's truly blocking
+- **Exception for competitive ads routing:** if you are unsure whether to use **workflow-adsIntelligence** vs the individual ads agents, **ask first** — do not assume (see Competitive ads intelligence above)
 
 ## Session Context
 User ID: ${userId}

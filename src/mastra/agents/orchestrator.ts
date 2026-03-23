@@ -8,6 +8,7 @@ import { createAgentTools } from '../tools/agentTools'
 import { buildOrchestratorPrompt } from '../prompts'
 import { createVoice } from '../voice'
 import { createWorkspaceForTenant } from '../createWorkspaceForTenant'
+import { adsIntelligenceWorkflow } from '../workflows/adsIntelligencePipeline'
 
 export interface OrchestratorSkillScope {
   tenantId: string
@@ -58,6 +59,9 @@ export async function createOrchestratorAgent(
       ...agentTools,
       mem0Recall: createMem0RecallTool(userId),
       mem0Memorize: createMem0MemorizeTool(userId),
+    },
+    workflows: {
+      adsIntelligence: adsIntelligenceWorkflow,
     },
   })
 }
