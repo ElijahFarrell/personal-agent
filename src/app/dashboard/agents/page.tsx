@@ -26,6 +26,9 @@ import {
   Megaphone,
   LineChart,
   Lock,
+  Radar,
+  Target,
+  Rocket,
 } from 'lucide-react'
 import { useOrgConfig } from '@/hooks/useOrgConfig'
 import { isAgentAllowed } from '@/constants/featureGating'
@@ -74,6 +77,9 @@ const AGENTS: AgentDef[] = [
       { id: 'finance-agent', description: 'Delegate to the Finance Agent (Stripe, QuickBooks)' },
       { id: 'marketing-agent', description: 'Delegate to the Marketing Agent (Mailchimp)' },
       { id: 'metaAdsAgent', description: 'Delegate to the Meta Ads Agent (Facebook/Instagram ads)' },
+      { id: 'ads-scraper-agent', description: 'Delegate to the Ads Scraper (Search API ad libraries)' },
+      { id: 'ad-analyzer-agent', description: 'Delegate to the Ad Analyzer (competitive insights)' },
+      { id: 'campaign-builder-agent', description: 'Delegate to the Campaign Builder (briefs)' },
       { id: 'mem0-recall', description: 'Search long-term memory' },
       { id: 'mem0-memorize', description: 'Save to long-term memory' },
     ],
@@ -326,6 +332,56 @@ const AGENTS: AgentDef[] = [
       { id: 'MCP tools', description: 'Meta Ads — campaigns, insights, creatives, audiences' },
       { id: 'mem0-recall', description: 'Retrieve ad preferences and benchmarks' },
       { id: 'mem0-memorize', description: 'Save performance notes' },
+    ],
+  },
+  {
+    id: 'adsScraper',
+    name: 'Ads Scraper',
+    role: 'Search API — ad libraries',
+    description:
+      'Runs competitive searches across Meta, LinkedIn, TikTok, and Google ad transparency surfaces via Composio SEARCH_API. Uses parallel SEARCH_API_SEARCH calls per engine when multiple platforms are selected.',
+    model: 'Claude Sonnet',
+    icon: Radar,
+    iconBg: 'bg-violet-500/10',
+    iconColor: 'text-violet-400',
+    tools: [
+      { id: 'SEARCH_API_SEARCH', description: 'Query ad-library engines (engine + q)' },
+      { id: 'SEARCH_API_GET_CACHED_SEARCH_BY_ID', description: 'Fetch cached JSON by search id' },
+      { id: 'mem0-recall', description: 'Retrieve scraping preferences' },
+      { id: 'mem0-memorize', description: 'Save successful query patterns' },
+    ],
+  },
+  {
+    id: 'adAnalyzer',
+    name: 'Ad Analyzer',
+    role: 'Competitive analysis',
+    description:
+      'Turns Search API results into structured competitive insights: themes, messaging, creative patterns, and gaps.',
+    model: 'Claude Sonnet',
+    icon: Target,
+    iconBg: 'bg-rose-500/10',
+    iconColor: 'text-rose-400',
+    tools: [
+      { id: 'SEARCH_API_GET_CACHED_SEARCH_BY_ID', description: 'Rehydrate cached ad search JSON' },
+      { id: 'SEARCH_API_SEARCH', description: 'Optional new query if context is missing' },
+      { id: 'mem0-recall', description: 'Retrieve analysis preferences' },
+      { id: 'mem0-memorize', description: 'Save analysis templates' },
+    ],
+  },
+  {
+    id: 'campaignBuilder',
+    name: 'Campaign Builder',
+    role: 'Campaign briefs',
+    description:
+      'Converts competitive analysis into an actionable campaign brief: objectives, audiences, angles, channels, and metrics.',
+    model: 'Claude Sonnet',
+    icon: Rocket,
+    iconBg: 'bg-emerald-500/10',
+    iconColor: 'text-emerald-400',
+    tools: [
+      { id: 'SEARCH_API_GET_CACHED_SEARCH_BY_ID', description: 'Optional data refresh from cache' },
+      { id: 'mem0-recall', description: 'Retrieve brand and ICP context' },
+      { id: 'mem0-memorize', description: 'Save brief preferences' },
     ],
   },
 ]
