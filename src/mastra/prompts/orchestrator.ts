@@ -37,7 +37,10 @@ const AGENT_DESCRIPTIONS: Record<
   'list-schedules': { provider: null, desc: 'List the user\'s schedules. Use when they ask to see their schedules, cron jobs, or automated tasks.' },
   'toggle-schedule': { provider: null, desc: 'Enable or disable a schedule. Use when the user wants to turn a schedule on or off.' },
   'delete-schedule': { provider: null, desc: 'Delete a schedule permanently.' },
-  'crm-agent': { providers: ['hubspot', 'salesforce', 'zoho-crm'], desc: 'HubSpot, Salesforce, Zoho CRM — contacts, deals, companies, tasks, notes.' },
+  'crm-agent': {
+    providers: ['hubspot', 'salesforce', 'zoho-crm', 'pipedrive'],
+    desc: 'HubSpot, Salesforce, Zoho CRM, Pipedrive — contacts, deals, companies, tasks, notes.',
+  },
   'project-agent': { providers: ['asana', 'monday'], desc: 'Asana, Monday.com — issues, tasks, projects, boards, sprints, updates.' },
 }
 

@@ -129,6 +129,7 @@ export type IntegrationProvider =
   | 'hubspot'
   | 'salesforce'
   | 'zoho-crm'
+  | 'pipedrive'
   | 'asana'
   | 'monday'
   | 'microsoft-teams'
@@ -146,7 +147,7 @@ export type IntegrationProvider =
   | 'metaAds'
   | 'searchApi'
 
-/** Composio-backed providers (excludes pipedrive, jira, follow-up-boss). */
+/** Composio-backed providers (excludes jira, follow-up-boss). Pipedrive may require BYO OAuth in Composio. */
 export type ComposioProvider = IntegrationProvider
 
 export interface UserIntegration {

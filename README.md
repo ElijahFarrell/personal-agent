@@ -124,6 +124,10 @@ Skills are loaded at runtime and injected into the orchestrator context when rel
 2. Set `COMPOSIO_API_KEY` in env
 3. Connect Gmail and Calendar via the Integrations page
 
+### Pipedrive (CRM)
+
+Pipedrive connects through Composio on the Integrations page. Composio often expects **Bring Your Own OAuth** for Pipedrive: create an app in the [Pipedrive Developer Hub](https://app.pipedrive.com/developer-hub), set the redirect callback Composio documents for your project, and add your client ID and secret in your Composio dashboard auth settings. See [Composio Pipedrive](https://docs.composio.dev/toolkits/pipedrive).
+
 ### LinkedIn
 
 1. Sign up at [linkedapi.io](https://app.linkedapi.io)

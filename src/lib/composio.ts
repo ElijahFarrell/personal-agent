@@ -57,6 +57,38 @@ export async function getAuthorizeUrl(
 }
 
 /**
+ * Removes all Composio connected accounts for this user and toolkit (provider).
+ * Use when the user wants to disconnect and reconnect from Integrations.
+ */
+export async function disconnectComposioProvider(
+  userId: string,
+  provider: ComposioProvider
+): Promise<{ disconnected: number }> {
+  if (!config.composio.apiKey) {
+    throw new Error('COMPOSIO_API_KEY is not configured')
+  }
+  const toolkit = getToolkitForProvider(provider)
+  if (!toolkit) {
+    throw new Error(`Unknown Composio provider: ${provider}`)
+  }
+
+  const composio = getComposio()
+  const { items } = await composio.connectedAccounts.list({
+    userIds: [userId],
+    toolkitSlugs: [toolkit],
+  })
+
+  let disconnected = 0
+  for (const account of items ?? []) {
+    if (!account.id) continue
+    await composio.connectedAccounts.delete(account.id)
+    disconnected += 1
+  }
+
+  return { disconnected }
+}
+
+/**
  * Returns connection status for all Composio-backed providers.
  */
 export async function getComposioConnectionStatus(
