@@ -7,7 +7,7 @@ import type { Id } from '@convex/_generated/dataModel'
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
 
-const CRM_PROVIDERS = ['hubspot', 'salesforce', 'zoho-crm'] as const
+const CRM_PROVIDERS = ['hubspot', 'salesforce', 'zoho-crm', 'pipedrive'] as const
 
 /**
  * POST /api/prospects/drafts/crm-sync — mark draft as CRM-synced when user has CRM connected.

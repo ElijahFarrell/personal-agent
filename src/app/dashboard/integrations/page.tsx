@@ -31,6 +31,7 @@ import {
   Music2,
   LineChart,
   Radar,
+  Briefcase,
 } from 'lucide-react'
 import { API_ROUTES } from '@/constants/api'
 import { useCallback, useEffect, useState } from 'react'
@@ -57,6 +58,7 @@ const INTEGRATIONS: Array<{
   { id: 'hubspot', name: 'HubSpot', description: 'Manage contacts and CRM data', provider: 'hubspot', Icon: BarChart2, iconBg: 'bg-orange-500/10', iconColor: 'text-orange-400' },
   { id: 'salesforce', name: 'Salesforce', description: 'CRM, opportunities, and accounts', provider: 'salesforce', Icon: Building2, iconBg: 'bg-cyan-500/10', iconColor: 'text-cyan-400' },
   { id: 'zoho-crm', name: 'Zoho CRM', description: 'Leads, contacts, and deals', provider: 'zoho-crm', Icon: Database, iconBg: 'bg-red-500/10', iconColor: 'text-red-400' },
+  { id: 'pipedrive', name: 'Pipedrive', description: 'Persons, deals, organizations, and activities', provider: 'pipedrive', Icon: Briefcase, iconBg: 'bg-emerald-500/10', iconColor: 'text-emerald-400' },
   { id: 'asana', name: 'Asana', description: 'Tasks, projects, and sections', provider: 'asana', Icon: CheckSquare, iconBg: 'bg-fuchsia-500/10', iconColor: 'text-fuchsia-400' },
   { id: 'monday', name: 'Monday.com', description: 'Boards, items, and updates', provider: 'monday', Icon: LayoutGrid, iconBg: 'bg-rose-500/10', iconColor: 'text-rose-400' },
   { id: 'microsoft-teams', name: 'Microsoft Teams', description: 'Messages, channels, and teams', provider: 'microsoft-teams', Icon: MessageCircle, iconBg: 'bg-indigo-500/10', iconColor: 'text-indigo-400' },

@@ -34,6 +34,7 @@ const INTEGRATION_PROVIDERS = [
   'hubspot',
   'salesforce',
   'zoho-crm',
+  'pipedrive',
   'asana',
   'monday',
   'microsoft-teams',

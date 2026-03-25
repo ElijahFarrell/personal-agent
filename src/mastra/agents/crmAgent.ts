@@ -7,7 +7,12 @@ import { getComposioToolsForProviders } from '@/lib/composio'
 import { CRM_PROMPT } from '../prompts/crm'
 import type { ComposioProvider } from '@/types'
 
-const CRM_PROVIDERS: ComposioProvider[] = ['hubspot', 'salesforce', 'zoho-crm']
+const CRM_PROVIDERS: ComposioProvider[] = [
+  'hubspot',
+  'salesforce',
+  'zoho-crm',
+  'pipedrive',
+]
 
 export interface CrmAgentResult {
   agent: Agent
@@ -15,7 +20,7 @@ export interface CrmAgentResult {
 }
 
 /**
- * Creates the CRM agent with Composio tools for HubSpot, Salesforce, Zoho CRM.
+ * Creates the CRM agent with Composio tools for HubSpot, Salesforce, Zoho CRM, Pipedrive.
  */
 export async function createCrmAgent(
   userId: string,

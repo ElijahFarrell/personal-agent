@@ -1,6 +1,7 @@
 /**
  * Maps our IntegrationProvider to Composio toolkit slugs.
- * Excludes providers that require custom auth (pipedrive, jira, follow-up-boss).
+ * Excludes providers not on Composio (jira, follow-up-boss).
+ * Pipedrive: Composio may require your own OAuth app credentials in the dashboard.
  */
 import type { ComposioProvider } from '@/types'
 
@@ -14,6 +15,7 @@ export const PROVIDER_TO_TOOLKIT: Record<ComposioProvider, string> = {
   hubspot: 'HUBSPOT',
   salesforce: 'SALESFORCE',
   'zoho-crm': 'ZOHO_BIGIN',
+  pipedrive: 'PIPEDRIVE',
   asana: 'ASANA',
   monday: 'MONDAY',
   'microsoft-teams': 'MICROSOFT_TEAMS',
