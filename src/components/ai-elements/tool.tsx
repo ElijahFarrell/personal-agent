@@ -27,11 +27,18 @@ import { Streamdown } from "streamdown";
 
 import { CodeBlock } from "./code-block";
 
-export type ToolProps = ComponentProps<typeof Collapsible>;
+export type ToolProps = ComponentProps<typeof Collapsible> & {
+  /** Pulse border while tool is executing (input-available / input-streaming). */
+  running?: boolean;
+};
 
-export const Tool = ({ className, ...props }: ToolProps) => (
+export const Tool = ({ className, running, ...props }: ToolProps) => (
   <Collapsible
-    className={cn("group not-prose mb-4 w-full rounded-md border", className)}
+    className={cn(
+      "group not-prose mb-4 w-full rounded-md border",
+      running && "tool-running-pulse border-primary/20",
+      className
+    )}
     {...props}
   />
 );

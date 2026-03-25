@@ -67,7 +67,7 @@ function WorkflowCard({
     <Card>
       <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
         <div>
-          <CardTitle className="text-base">{wf.name}</CardTitle>
+          <CardTitle className="text-sm">{wf.name}</CardTitle>
           <CardDescription className="line-clamp-2">
             {wf.description ?? 'No description'}
           </CardDescription>
@@ -309,7 +309,7 @@ export default function WorkflowsPage() {
     <div className="flex flex-col gap-6 p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Workflows</h1>
+          <h1 className="text-xl font-semibold tracking-tight">Workflows</h1>
           <p className="text-muted-foreground">
             Build and run automated workflows with agents, tools, and human approval steps.
           </p>
@@ -327,7 +327,7 @@ export default function WorkflowsPage() {
       {nlEnabled && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Describe an automation</CardTitle>
+            <CardTitle className="text-sm">Describe an automation</CardTitle>
             <CardDescription>
               Natural language: what should happen, which agents, and optionally when (e.g. every Monday).
               Preview first, then save. Advanced editing uses the graph builder.
@@ -386,7 +386,7 @@ export default function WorkflowsPage() {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16">
             <GitBranch className="mb-4 h-12 w-12 text-muted-foreground" />
-            <p className="mb-2 text-lg font-medium">No workflows yet</p>
+            <p className="mb-2 text-base font-medium">No workflows yet</p>
             <p className="mb-6 text-muted-foreground">
               Create your first workflow to automate tasks with agents and human-in-the-loop steps.
             </p>

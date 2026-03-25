@@ -317,7 +317,7 @@ export default function SkillsPage() {
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-white text-wrap-balance">
+            <h1 className="text-xl font-semibold tracking-tight text-white text-wrap-balance">
               Skills
             </h1>
             <p className="mt-1 text-[15px] text-gray-400">
@@ -410,25 +410,25 @@ export default function SkillsPage() {
             <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               <div className="rounded-lg border border-white/10 bg-card/60 backdrop-blur-sm p-3">
                 <p className="text-[11px] uppercase tracking-wide text-gray-500">Retrievable</p>
-                <p className="mt-1 text-2xl font-semibold text-white">
+                <p className="mt-1 text-xl font-semibold text-white">
                   {skillsHealth?.stats.availableCount ?? '—'}
                 </p>
               </div>
               <div className="rounded-lg border border-white/10 bg-card/60 backdrop-blur-sm p-3">
                 <p className="text-[11px] uppercase tracking-wide text-gray-500">Local Files</p>
-                <p className="mt-1 text-2xl font-semibold text-white">
+                <p className="mt-1 text-xl font-semibold text-white">
                   {skillsHealth?.stats.workspaceCount ?? '—'}
                 </p>
               </div>
               <div className="rounded-lg border border-white/10 bg-card/60 backdrop-blur-sm p-3">
                 <p className="text-[11px] uppercase tracking-wide text-gray-500">Tenant Content</p>
-                <p className="mt-1 text-2xl font-semibold text-white">
+                <p className="mt-1 text-xl font-semibold text-white">
                   {skillsHealth?.stats.tenantContentCount ?? '—'}
                 </p>
               </div>
               <div className="rounded-lg border border-white/10 bg-card/60 backdrop-blur-sm p-3">
                 <p className="text-[11px] uppercase tracking-wide text-gray-500">Missing Mappings</p>
-                <p className="mt-1 text-2xl font-semibold text-white">
+                <p className="mt-1 text-xl font-semibold text-white">
                   {skillsHealth?.stats.missingPreferenceCount ?? '—'}
                 </p>
               </div>
@@ -675,7 +675,7 @@ export default function SkillsPage() {
           <div className="mx-4 flex w-full max-w-2xl flex-col rounded-xl border border-white/10 bg-card/90 backdrop-blur-xl shadow-2xl">
             <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
               <div>
-                <h2 className="text-lg font-semibold text-white">
+                <h2 className="text-base font-semibold text-white">
                   {editingSkillId ? 'Edit Skill' : 'Create New Skill'}
                 </h2>
                 {!editingSkillId && (

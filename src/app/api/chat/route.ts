@@ -226,7 +226,7 @@ export async function POST(req: NextRequest) {
     let capturedUsage: { promptTokens?: number; completionTokens?: number } | null = null
     const aiStream = toAISdkStream(
       mastraStream as Parameters<typeof toAISdkStream>[0],
-      { from: 'agent' }
+      { from: 'agent', sendReasoning: true }
     )
 
     const uiStream = createUIMessageStream({

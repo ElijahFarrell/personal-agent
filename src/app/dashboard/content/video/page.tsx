@@ -68,7 +68,7 @@ export default function VideoStudioPage() {
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6 p-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
+        <h1 className="text-xl font-semibold tracking-tight flex items-center gap-2">
           <Film className="h-7 w-7 text-muted-foreground" />
           Video studio
         </h1>
@@ -79,7 +79,7 @@ export default function VideoStudioPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Create</CardTitle>
+          <CardTitle className="text-sm">Create</CardTitle>
           <CardDescription>
             Describe the clip (style, subject, CTA). Requires{' '}
             <code className="text-xs">REPLICATE_API_TOKEN</code> on the server for real renders.

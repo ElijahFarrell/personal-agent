@@ -61,7 +61,7 @@ export default function InboxPage() {
     <div className="flex flex-col gap-6 p-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
+          <h1 className="text-xl font-semibold tracking-tight flex items-center gap-2">
             <Inbox className="h-7 w-7 text-muted-foreground" />
             Inbox
           </h1>
@@ -104,7 +104,7 @@ export default function InboxPage() {
           {threads.map((t) => (
             <Card key={t._id}>
               <CardHeader className="py-3">
-                <CardTitle className="text-base">{t.subject ?? '(no subject)'}</CardTitle>
+                <CardTitle className="text-sm">{t.subject ?? '(no subject)'}</CardTitle>
                 <CardDescription className="line-clamp-2">
                   {t.snippet ?? ''}
                 </CardDescription>

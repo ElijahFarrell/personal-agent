@@ -103,7 +103,7 @@ export default function MetaAdsInsightsPage() {
       <div className="min-h-0 flex-1 overflow-y-auto border-b border-white/10 p-4 lg:border-b-0 lg:border-r">
         <div className="mx-auto flex max-w-4xl flex-col gap-4">
           <div>
-            <h1 className="flex items-center gap-2 text-xl font-semibold tracking-tight">
+            <h1 className="flex items-center gap-2 text-lg font-semibold tracking-tight">
               <LineChart className="h-6 w-6 text-muted-foreground" />
               Meta Ads
             </h1>
@@ -179,7 +179,7 @@ export default function MetaAdsInsightsPage() {
                   <Card key={k.label}>
                     <CardHeader className="pb-2">
                       <CardDescription>{k.label}</CardDescription>
-                      <CardTitle className="text-2xl tabular-nums">{k.value}</CardTitle>
+                      <CardTitle className="text-xl tabular-nums">{k.value}</CardTitle>
                     </CardHeader>
                   </Card>
                 ))}
@@ -187,7 +187,7 @@ export default function MetaAdsInsightsPage() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base">Spend by campaign</CardTitle>
+                  <CardTitle className="text-sm">Spend by campaign</CardTitle>
                   <CardDescription>Relative spend (last 7 days)</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-2">
@@ -218,7 +218,7 @@ export default function MetaAdsInsightsPage() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base">Campaigns</CardTitle>
+                  <CardTitle className="text-sm">Campaigns</CardTitle>
                 </CardHeader>
                 <CardContent className="overflow-x-auto">
                   <table className="w-full text-left text-sm">

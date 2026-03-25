@@ -51,7 +51,7 @@ export function QuestionCard({ question, onAnswer }: QuestionCardProps) {
   return (
     <Card className="my-4 border-border bg-card">
       <CardHeader className="pb-3">
-        <CardTitle className="text-base font-medium text-foreground">
+        <CardTitle className="text-sm font-medium text-foreground">
           {question.prompt}
         </CardTitle>
       </CardHeader>

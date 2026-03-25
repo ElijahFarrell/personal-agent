@@ -4,11 +4,15 @@ const isProtectedRoute = createRouteMatcher(['/dashboard(.*)'])
 
 // /sign-in and /sign-up are public by default (not in isProtectedRoute),
 // so Clerk won't redirect-loop when unauthenticated users land there.
-export default clerkMiddleware(async (auth, request) => {
+const handler = clerkMiddleware(async (auth, request) => {
   if (isProtectedRoute(request)) {
     await auth.protect()
   }
 })
+
+/** Next.js 16+ recognizes `src/proxy.ts`; named `proxy` matches the documented convention. */
+export const proxy = handler
+export default handler
 
 export const config = {
   matcher: [

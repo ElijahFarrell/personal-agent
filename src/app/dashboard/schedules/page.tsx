@@ -28,7 +28,7 @@ export default function SchedulesPage() {
     <div className="flex flex-col gap-6 p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Schedules</h1>
+          <h1 className="text-xl font-semibold tracking-tight">Schedules</h1>
           <p className="text-muted-foreground">
             Create recurring tasks that run on a cron schedule. Use agent prompts
             or saved workflows.
@@ -50,7 +50,7 @@ export default function SchedulesPage() {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16">
             <Clock className="mb-4 h-12 w-12 text-muted-foreground" />
-            <p className="mb-2 text-lg font-medium">No schedules yet</p>
+            <p className="mb-2 text-base font-medium">No schedules yet</p>
             <p className="mb-6 text-center text-muted-foreground max-w-sm">
               Create a schedule to run agent prompts or workflows automatically on
               a cron schedule (e.g. every morning at 9am).

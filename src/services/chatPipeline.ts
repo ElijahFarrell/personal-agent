@@ -260,7 +260,7 @@ export async function consumeMastraStreamToResult(mastraStream: unknown): Promis
 }> {
   const aiStream = toAISdkStream(
     mastraStream as Parameters<typeof toAISdkStream>[0],
-    { from: 'agent' }
+    { from: 'agent', sendReasoning: true }
   )
   let last: UIMessage | undefined
   for await (const msg of readUIMessageStream({ stream: aiStream })) {

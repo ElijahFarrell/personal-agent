@@ -176,7 +176,7 @@ export default function ContentDraftsPage() {
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-white">Drafts</h1>
+            <h1 className="text-xl font-semibold tracking-tight text-white">Drafts</h1>
             <p className="mt-1 text-[15px] text-gray-400">
               Draft and manage posts for LinkedIn, X, and more. Copy to clipboard to post manually.
               {drafts && drafts.length > 0 && (
@@ -372,7 +372,7 @@ export default function ContentDraftsPage() {
           <div className="mx-4 flex w-full max-w-2xl flex-col rounded-xl border border-white/10 bg-card/90 backdrop-blur-xl shadow-2xl">
             <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
               <div>
-                <h2 className="text-lg font-semibold text-white">
+                <h2 className="text-base font-semibold text-white">
                   {editingDraftId ? 'Edit Draft' : 'Add Draft'}
                 </h2>
                 {!editingDraftId && (
