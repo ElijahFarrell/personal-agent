@@ -183,7 +183,7 @@ export function ChartRenderer({ spec }: ChartRendererProps) {
   return (
     <Card className="w-full">
       <CardHeader className="pb-2">
-        <CardTitle className="text-base">{spec.title}</CardTitle>
+        <CardTitle className="text-sm">{spec.title}</CardTitle>
         {spec.description && (
           <CardDescription>{spec.description}</CardDescription>
         )}

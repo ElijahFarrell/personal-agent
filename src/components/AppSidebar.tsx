@@ -224,7 +224,7 @@ export function AppSidebar() {
           <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary shadow-md shadow-primary/30">
             <Zap className="h-4 w-4 text-primary-foreground" aria-hidden="true" />
           </div>
-          <span className="text-[15px] font-semibold tracking-tight text-sidebar-foreground truncate">
+          <span className="text-sm font-semibold tracking-tight text-sidebar-foreground truncate">
             AI OS
           </span>
         </Link>
@@ -353,7 +353,7 @@ export function AppSidebar() {
         {showAdmin && (
           <Link
             href="/dashboard/admin"
-            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
+            className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
           >
             <Shield className="h-4 w-4" aria-hidden="true" />
             Admin

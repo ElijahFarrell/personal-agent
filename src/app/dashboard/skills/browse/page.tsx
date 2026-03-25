@@ -154,7 +154,7 @@ export default function SkillBrowsePage() {
               >
                 <ArrowLeft className="h-4 w-4" />
               </Link>
-              <h1 className="text-2xl font-semibold tracking-tight text-white">
+              <h1 className="text-xl font-semibold tracking-tight text-white">
                 Skill Store
               </h1>
             </div>

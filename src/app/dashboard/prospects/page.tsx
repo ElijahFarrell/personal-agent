@@ -475,7 +475,7 @@ export default function ProspectsPage() {
           {/* Header */}
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-semibold tracking-tight text-white">Prospects</h1>
+              <h1 className="text-xl font-semibold tracking-tight text-white">Prospects</h1>
               <p className="mt-1 text-[15px] text-gray-400">
                 Research, personalize, and track outreach.
                 {prospects && prospects.length > 0 && (
@@ -799,18 +799,18 @@ export default function ProspectsPage() {
                       value={editData.firstName}
                       onChange={(e) => setEditData((p) => ({ ...p, firstName: e.target.value }))}
                       placeholder="First name"
-                      className="flex-1 rounded-md border border-gray-700 bg-gray-800/60 px-2 py-1 text-lg font-semibold text-white outline-none focus:border-brand-500"
+                      className="flex-1 rounded-md border border-gray-700 bg-gray-800/60 px-2 py-1 text-base font-semibold text-white outline-none focus:border-brand-500"
                     />
                     <input
                       type="text"
                       value={editData.lastName}
                       onChange={(e) => setEditData((p) => ({ ...p, lastName: e.target.value }))}
                       placeholder="Last name"
-                      className="flex-1 rounded-md border border-gray-700 bg-gray-800/60 px-2 py-1 text-lg font-semibold text-white outline-none focus:border-brand-500"
+                      className="flex-1 rounded-md border border-gray-700 bg-gray-800/60 px-2 py-1 text-base font-semibold text-white outline-none focus:border-brand-500"
                     />
                   </div>
                 ) : (
-                  <h2 className="text-xl font-semibold text-white">
+                  <h2 className="text-lg font-semibold text-white">
                     {(selectedProspect as typeof selectedProspect & { firstName?: string; lastName?: string }).firstName ||
                     (selectedProspect as typeof selectedProspect & { firstName?: string; lastName?: string }).lastName
                       ? [(selectedProspect as typeof selectedProspect & { firstName?: string; lastName?: string }).firstName, (selectedProspect as typeof selectedProspect & { firstName?: string; lastName?: string }).lastName].filter(Boolean).join(' ')
@@ -1196,7 +1196,7 @@ export default function ProspectsPage() {
         >
           <div className="mx-4 flex w-full max-w-lg flex-col rounded-xl border border-gray-800 bg-gray-900 shadow-2xl">
             <div className="flex items-center justify-between border-b border-gray-800/60 px-6 py-4">
-              <h2 className="text-lg font-semibold text-white">Add Prospect</h2>
+              <h2 className="text-base font-semibold text-white">Add Prospect</h2>
               <button type="button" onClick={closeForm} aria-label="Close" className="rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-800 hover:text-white">
                 <X className="h-5 w-5" />
               </button>

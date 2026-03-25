@@ -311,7 +311,7 @@ export default function DashboardPage() {
       <div className="mx-auto max-w-4xl space-y-8">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground text-wrap-balance">
+            <h1 className="text-xl font-semibold tracking-tight text-foreground text-wrap-balance">
               Good morning, {firstName}
             </h1>
             <p className="mt-1 text-[15px] text-muted-foreground">

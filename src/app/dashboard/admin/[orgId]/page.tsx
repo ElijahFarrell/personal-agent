@@ -336,7 +336,7 @@ export default function AdminOrgConfigPage() {
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+            <h1 className="text-xl font-semibold tracking-tight text-foreground">
               {tenant?.name ?? 'Configure org'}
             </h1>
             <p className="text-sm text-muted-foreground">{orgId}</p>

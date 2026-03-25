@@ -151,7 +151,7 @@ export function DashboardNav() {
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-600 shadow-md shadow-brand-600/30">
             <Zap className="h-4 w-4 text-white" aria-hidden="true" />
           </div>
-          <span className="text-[15px] font-semibold tracking-tight text-white">AI OS</span>
+          <span className="text-sm font-semibold tracking-tight text-white">AI OS</span>
         </Link>
       </div>
 
@@ -169,7 +169,7 @@ export function DashboardNav() {
                     href={entry.href}
                     aria-current={isActive ? 'page' : undefined}
                     className={cn(
-                      'group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                      'group flex items-center gap-3 rounded-lg px-3 py-2 text-xs font-medium transition-colors',
                       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500',
                       'touch-action-manipulation',
                       isActive
@@ -203,7 +203,7 @@ export function DashboardNav() {
                 >
                   <CollapsibleTrigger
                     className={cn(
-                      'group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                      'group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-xs font-medium transition-colors',
                       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500',
                       'touch-action-manipulation',
                       hasActiveChild
@@ -240,7 +240,7 @@ export function DashboardNav() {
                               href={child.href}
                               aria-current={isActive ? 'page' : undefined}
                               className={cn(
-                                'group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                                'group flex items-center gap-3 rounded-lg px-3 py-2 text-xs font-medium transition-colors',
                                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500',
                                 'touch-action-manipulation',
                                 isActive

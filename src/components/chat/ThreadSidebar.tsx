@@ -127,7 +127,7 @@ export function ThreadSidebar({ activeThreadId, onSelectThread, onNewThread }: T
   return (
     <div className="flex h-full flex-col bg-sidebar border-l border-sidebar-border">
       <div className="flex items-center justify-between gap-2 px-3 py-2 border-b border-sidebar-border">
-        <span className="text-sm font-medium text-sidebar-foreground">Chats</span>
+        <span className="text-xs font-medium text-sidebar-foreground">Chats</span>
         <div className="flex items-center gap-0.5">
           <Button
             onClick={onNewThread}
@@ -173,7 +173,7 @@ export function ThreadSidebar({ activeThreadId, onSelectThread, onNewThread }: T
                         if (e.key === 'Enter') handleRename(thread._id)
                         if (e.key === 'Escape') setEditingId(null)
                       }}
-                      className="flex-1 rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground outline-none ring-1 ring-ring"
+                      className="flex-1 rounded-md border border-input bg-background px-2 py-1 text-xs text-foreground outline-none ring-1 ring-ring"
                     />
                     <button
                       onClick={() => handleRename(thread._id)}
@@ -194,7 +194,7 @@ export function ThreadSidebar({ activeThreadId, onSelectThread, onNewThread }: T
                       type="button"
                       onClick={() => onSelectThread(thread._id)}
                       className={cn(
-                        'flex min-w-0 flex-1 items-center gap-2 rounded-lg px-3 py-2 pr-20 text-left text-sm transition-colors',
+                        'flex min-w-0 flex-1 items-center gap-2 rounded-lg px-3 py-2 pr-20 text-left text-xs transition-colors',
                         isActive
                           ? 'bg-sidebar-accent text-sidebar-accent-foreground'
                           : 'text-muted-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
@@ -264,7 +264,7 @@ export function ThreadSidebar({ activeThreadId, onSelectThread, onNewThread }: T
           })}
 
           {threads && threads.length === 0 ? (
-            <p className="px-3 py-4 text-center text-sm text-muted-foreground">
+            <p className="px-3 py-4 text-center text-xs text-muted-foreground">
               No conversations yet
             </p>
           ) : null}

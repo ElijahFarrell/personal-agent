@@ -1,6 +1,13 @@
 'use client'
 
-import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
+import {
+  useState,
+  useCallback,
+  useRef,
+  useEffect,
+  useMemo,
+  Fragment,
+} from 'react'
 import { useUser } from '@clerk/nextjs'
 import { useQuery, useMutation } from 'convex/react'
 import { useChat } from '@ai-sdk/react'
@@ -16,13 +23,6 @@ import {
 } from '@/components/ai-elements/conversation'
 import { Message, MessageContent, MessageResponse } from '@/components/ai-elements/message'
 import { AssistantMessageContent } from './AssistantMessageContent'
-import {
-  Tool,
-  ToolHeader,
-  ToolContent,
-  ToolInput,
-  ToolOutput,
-} from '@/components/ai-elements/tool'
 import {
   PromptInput,
   PromptInputProvider,
@@ -51,7 +51,18 @@ import { API_ROUTES } from '@/constants/api'
 import { DEFAULT_CHAT_MODEL_ID, DEFAULT_CONTEXT_WINDOW } from '@/constants/models'
 import { CHAT_LIMITS, CHAT_ROLES, CHAT_SOURCES } from '@/constants/chat'
 import { AGENT_BY_ID, type AgentId } from '@/constants/agents'
-import { Sparkles, X, Telescope, CloudOff, Loader2 } from 'lucide-react'
+import {
+  Sparkles,
+  X,
+  Telescope,
+  Mail,
+  Calendar,
+  Sunrise,
+  Linkedin,
+  Inbox,
+  Users,
+  type LucideIcon,
+} from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -62,10 +73,15 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
-import { chatToolHint, chatToolTitle } from '@/constants/chatToolUi'
+import { chatToolTitle } from '@/constants/chatToolUi'
 import { CHAT_JOB_STATUS } from '@convex/constants'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
+import { AgentActivityStrip } from './AgentActivityStrip'
+import {
+  MessageActivityTrace,
+  extractChartSpecsFromParts,
+} from './MessageActivityTrace'
 
 function isDataChatUiPart(part: { type: string }): boolean {
   return part.type === 'data-chat-phase' || part.type === 'data-chat-milestone'
@@ -83,28 +99,6 @@ function extractStreamUiHints(messages: UIMessage[]) {
     if (p.type === 'data-chat-milestone' && p.data?.label) milestone = p.data.label
   }
   return { phase, milestone }
-}
-
-function RunningToolTimer({ active }: { active: boolean }) {
-  const [sec, setSec] = useState(0)
-  useEffect(() => {
-    if (!active) {
-      setSec(0)
-      return
-    }
-    setSec(0)
-    const t = setInterval(() => setSec((s) => s + 1), 1000)
-    return () => clearInterval(t)
-  }, [active])
-  if (!active) return null
-  const m = Math.floor(sec / 60)
-  const s = sec % 60
-  return (
-    <span className="tabular-nums text-muted-foreground">
-      {m > 0 ? `${m}m ` : ''}
-      {s}s
-    </span>
-  )
 }
 
 function isToolPart(part: { type: string }): boolean {
@@ -289,6 +283,26 @@ export function ChatWindow({
     () => extractStreamUiHints(chatMessages),
     [chatMessages]
   )
+
+  const activeToolLabels = useMemo(() => {
+    const last = chatMessages.findLast((m) => m.role === CHAT_ROLES.ASSISTANT)
+    if (!last?.parts) return [] as string[]
+    const labels: string[] = []
+    for (const part of last.parts) {
+      if (!isToolPart(part as { type: string })) continue
+      const p = part as { type: string; toolInvocation?: Record<string, unknown> }
+      const inv = p.toolInvocation ?? part
+      const toolName = p.type.startsWith('tool-')
+        ? p.type.slice(5)
+        : (inv as { toolName?: string }).toolName ?? 'unknown'
+      const state = (inv as { state?: string }).state ?? 'output-available'
+      const mapped = mapToolState(state)
+      if (mapped !== 'input-available' && mapped !== 'input-streaming') continue
+      const fullToolId = p.type.startsWith('tool-') ? p.type : `tool-${toolName}`
+      labels.push(chatToolTitle(fullToolId))
+    }
+    return [...new Set(labels)]
+  }, [chatMessages])
 
   useEffect(() => {
     if (!latestChatJob || !bgJobIdRef.current) return
@@ -643,11 +657,13 @@ export function ChatWindow({
     [handleSend]
   )
 
-  const SUGGESTED_PROMPTS = [
-    'Check my email',
-    "What's on my calendar today?",
-    'Brief me on my day',
-    'Draft a LinkedIn post',
+  const SUGGESTED_PROMPTS: Array<{ text: string; icon: LucideIcon }> = [
+    { text: 'Check my email', icon: Mail },
+    { text: "What's on my calendar today?", icon: Calendar },
+    { text: 'Brief me on my day', icon: Sunrise },
+    { text: 'Draft a LinkedIn post', icon: Linkedin },
+    { text: 'Summarize my inbox priorities', icon: Inbox },
+    { text: 'Surface leads ready for follow-up', icon: Users },
   ]
 
   if (!historyLoaded) {
@@ -694,16 +710,17 @@ export function ChatWindow({
               }
             >
               <div className="mt-4 flex w-full justify-center">
-                <div className="flex w-full max-w-lg flex-col gap-2">
-                  {SUGGESTED_PROMPTS.map((prompt) => (
+                <div className="grid w-full max-w-xl grid-cols-1 gap-2 sm:grid-cols-2">
+                  {SUGGESTED_PROMPTS.map(({ text, icon: Icon }) => (
                     <button
-                      key={prompt}
+                      key={text}
                       type="button"
-                      onClick={() => handleSend(prompt)}
+                      onClick={() => handleSend(text)}
                       disabled={!dbUser || creditError || streamBusy}
-                      className="rounded-lg border border-border bg-card px-4 py-3 text-left text-base text-muted-foreground transition-colors hover:border-primary/40 hover:bg-accent hover:text-foreground"
+                      className="flex items-start gap-3 rounded-lg border border-border bg-card px-3 py-2.5 text-left text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:bg-accent hover:text-foreground"
                     >
-                      &quot;{prompt}&quot;
+                      <Icon className="mt-0.5 h-4 w-4 shrink-0 text-primary/80" aria-hidden />
+                      <span>&quot;{text}&quot;</span>
                     </button>
                   ))}
                 </div>
@@ -711,106 +728,67 @@ export function ChatWindow({
             </ConversationEmptyState>
           ) : (
             <>
-              {isStreaming && milestoneHint && (
-                <div className="flex w-full items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-sm text-muted-foreground">
-                  <Loader2 className="h-4 w-4 shrink-0 animate-spin text-primary" />
-                  {milestoneHint}
-                </div>
-              )}
-              {bgJobRunning && (
-                <div className="flex w-full items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm text-muted-foreground">
-                  <CloudOff className="h-4 w-4 shrink-0" />
-                  Working in the background — you can leave this page. The reply will appear when it&apos;s
-                  ready.
-                </div>
-              )}
-              {displayMessages.map((msg) => (
-                <Message key={msg.id} from={msg.role}>
-                  <MessageContent className="text-base">
-                    {msg.role === 'user' ? (
-                      <MessageResponse>{msg.content}</MessageResponse>
-                    ) : (
-                      <>
-                        {msg.parts && msg.parts.filter(isToolPart).length > 0 && (
-                          <div className="mb-4 space-y-2">
-                            {msg.parts
-                              .filter(isToolPart)
-                              .map((part, i) => {
-                                const inv = (part as { toolInvocation?: Record<string, unknown> }).toolInvocation ?? part
-                                const toolName = part.type.startsWith('tool-')
-                                  ? part.type.slice(5)
-                                  : (inv as { toolName?: string }).toolName ?? 'unknown'
-                                const state = (inv as { state?: string }).state ?? 'output-available'
-                                const args = (inv as { args?: Record<string, unknown> }).args
-                                const result = (inv as { result?: unknown }).result
-                                const mappedState = mapToolState(state)
-                                const isChartTool = toolName === 'generate-chart' || toolName === 'generateChart'
-                                const chartSpec = isChartTool && mappedState === 'output-available'
-                                  ? (result as { chartSpec?: ChartSpec })?.chartSpec
-                                  : undefined
+              {displayMessages.map((msg, index) => {
+                const partsLoose = msg.parts as
+                  | Array<Record<string, unknown>>
+                  | undefined
+                const chartSpecs = extractChartSpecsFromParts(partsLoose)
+                const next = displayMessages[index + 1]
+                const isLastMsg = index === displayMessages.length - 1
+                const showBusyStripAfterUser =
+                  streamBusy &&
+                  msg.role === CHAT_ROLES.USER &&
+                  (next?.role === CHAT_ROLES.ASSISTANT || isLastMsg)
 
-                                if (chartSpec) {
-                                  return <ChartRenderer key={`${toolName}-${i}`} spec={chartSpec} />
-                                }
-
-                                const fullToolId = part.type.startsWith('tool-')
-                                  ? part.type
-                                  : `tool-${toolName}`
-                                const hint = chatToolHint(fullToolId)
-                                const toolRunning =
-                                  mappedState === 'input-available' ||
-                                  mappedState === 'input-streaming'
-
-                                return (
-                                  <Tool key={`${toolName}-${i}`}>
-                                    <ToolHeader
-                                      type="dynamic-tool"
-                                      state={mappedState}
-                                      toolName={toolName}
-                                      title={chatToolTitle(fullToolId)}
-                                    />
-                                    <ToolContent>
-                                      {(hint || toolRunning) && (
-                                        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/50 pb-2 text-xs text-muted-foreground">
-                                          <span>{hint ?? '\u00a0'}</span>
-                                          <RunningToolTimer active={toolRunning} />
-                                        </div>
-                                      )}
-                                      {args && Object.keys(args).length > 0 && (
-                                        <ToolInput input={args} />
-                                      )}
-                                      {(result !== undefined || state === 'output-error') && (
-                                        <ToolOutput
-                                          output={result}
-                                          errorText={state === 'output-error' ? String(result ?? 'Error') : undefined}
-                                        />
-                                      )}
-                                    </ToolContent>
-                                  </Tool>
-                                )
-                              })}
-                          </div>
+                return (
+                  <Fragment key={msg.id}>
+                    <Message from={msg.role}>
+                      <MessageContent className="text-sm">
+                        {msg.role === 'user' ? (
+                          <MessageResponse>{msg.content}</MessageResponse>
+                        ) : (
+                          <>
+                            <MessageActivityTrace
+                              parts={partsLoose}
+                              isStreaming={
+                                'isStreaming' in msg && Boolean(msg.isStreaming)
+                              }
+                            />
+                            <AssistantMessageContent
+                              content={msg.content}
+                              isStreaming={
+                                'isStreaming' in msg && msg.isStreaming
+                              }
+                              onQuestionAnswer={handleQuestionAnswer}
+                            />
+                            {chartSpecs.map((spec, i) => (
+                              <ChartRenderer
+                                key={`chart-${msg.id}-${i}`}
+                                spec={spec}
+                              />
+                            ))}
+                          </>
                         )}
-                        <AssistantMessageContent
-                          content={msg.content}
-                          isStreaming={'isStreaming' in msg && msg.isStreaming}
-                          onQuestionAnswer={handleQuestionAnswer}
+                      </MessageContent>
+                    </Message>
+                    {showBusyStripAfterUser && (
+                      <div className="w-full max-w-4xl self-stretch">
+                        <AgentActivityStrip
+                          visible
+                          variant="dock"
+                          showToolBadges={false}
+                          phase={phaseHint}
+                          milestone={milestoneHint}
+                          isStreaming={isStreaming}
+                          isSubmitted={status === 'submitted'}
+                          activeToolLabels={activeToolLabels}
+                          backgroundJob={bgJobRunning}
                         />
-                      </>
+                      </div>
                     )}
-                  </MessageContent>
-                </Message>
-              ))}
-              {isLoading && !isStreaming && (
-                <Message from="assistant">
-                  <MessageContent>
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-primary" />
-                      {phaseHint ?? 'Preparing context and connections…'}
-                    </div>
-                  </MessageContent>
-                </Message>
-              )}
+                  </Fragment>
+                )
+              })}
             </>
           )}
         </ConversationContent>
@@ -851,11 +829,17 @@ export function ChatWindow({
 
       <div ref={inputAreaRef} className="border-t border-white/5 px-4 py-3">
         <PromptInputProvider>
+          <div
+            className={cn(
+              'mx-auto max-w-4xl rounded-3xl border border-white/10 bg-card/30 p-1 shadow-md ring-1 ring-white/5',
+              'backdrop-blur-sm transition-shadow duration-200 hover:shadow-lg hover:ring-white/10'
+            )}
+          >
           <PromptInput
             onSubmit={async ({ text }) => {
               if (text.trim()) await handleSend(text.trim())
             }}
-            className="mx-auto max-w-4xl [&_[data-slot=input-group]]:!bg-transparent [&_[data-slot=input-group]]:border-white/10"
+            className="[&_[data-slot=input-group]]:!bg-transparent [&_[data-slot=input-group]]:rounded-2xl [&_[data-slot=input-group]]:border-white/10"
           >
             <PromptInputTextarea placeholder="Send a message…" />
             {!lockTargetAgent && (
@@ -967,6 +951,7 @@ export function ChatWindow({
               </div>
             </PromptInputFooter>
           </PromptInput>
+          </div>
         </PromptInputProvider>
       </div>
 

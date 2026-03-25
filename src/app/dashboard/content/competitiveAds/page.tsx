@@ -112,7 +112,7 @@ export default function CompetitiveAdsPage() {
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-6 p-6">
       <div>
-        <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
+        <h1 className="flex items-center gap-2 text-xl font-semibold tracking-tight">
           <Radar className="h-7 w-7 text-muted-foreground" />
           Competitive Ads
         </h1>
@@ -126,7 +126,7 @@ export default function CompetitiveAdsPage() {
 
       <Card className="border-amber-500/30 bg-amber-500/5">
         <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-base text-amber-200">
+          <CardTitle className="flex items-center gap-2 text-sm text-amber-200">
             <AlertTriangle className="h-4 w-4 shrink-0" />
             Long-running workflow
           </CardTitle>
@@ -139,7 +139,7 @@ export default function CompetitiveAdsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">New run</CardTitle>
+          <CardTitle className="text-sm">New run</CardTitle>
           <CardDescription>
             We run parallel searches per ad-library engine, then analyze cached results and draft a campaign
             brief.

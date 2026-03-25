@@ -102,7 +102,7 @@ export default function AdminPage() {
 
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+            <h1 className="text-xl font-semibold tracking-tight text-foreground">
               Organizations
             </h1>
             <p className="mt-1 text-[15px] text-muted-foreground">

@@ -149,3 +149,45 @@ h1, h2, h3, h4 {
   margin-left: 1px;
   color: hsl(var(--primary));
 }
+
+/* Agent activity strip — indeterminate progress (AgentActivityStrip) */
+@keyframes agent-progress-slide {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(350%);
+  }
+}
+
+.agent-progress-indeterminate {
+  animation: agent-progress-slide 1.15s ease-in-out infinite;
+}
+
+/* Running tool card — border emphasis (tool.tsx) */
+@keyframes tool-running-border {
+  0%,
+  100% {
+    border-color: hsl(var(--primary) / 0.12);
+    box-shadow: 0 0 0 1px hsl(var(--primary) / 0.08);
+  }
+  50% {
+    border-color: hsl(var(--primary) / 0.35);
+    box-shadow: 0 0 0 1px hsl(var(--primary) / 0.2);
+  }
+}
+
+.tool-running-pulse {
+  animation: tool-running-border 2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .agent-progress-indeterminate {
+    animation: none;
+  }
+  .tool-running-pulse {
+    animation: none;
+    border-color: hsl(var(--primary) / 0.22);
+    box-shadow: 0 0 0 1px hsl(var(--primary) / 0.12);
+  }
+}

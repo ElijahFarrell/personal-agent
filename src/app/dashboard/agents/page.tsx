@@ -505,7 +505,7 @@ export default function AgentsPage() {
 
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-white">Agents</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-white">Agents</h1>
           <p className="mt-1 text-[15px] text-gray-400">
             Your AI agent team. Each specialist handles a domain and can be called in parallel.
             {configuredCount > 0 && (
@@ -661,7 +661,7 @@ export default function AgentsPage() {
                   })()}
                 </span>
                 <div>
-                  <h2 className="text-base font-semibold text-white">{selectedAgent.name}</h2>
+                  <h2 className="text-sm font-semibold text-white">{selectedAgent.name}</h2>
                   <p className="text-xs text-gray-500">{selectedAgent.role} · {selectedAgent.model}</p>
                 </div>
               </div>
