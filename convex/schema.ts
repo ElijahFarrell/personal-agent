@@ -101,6 +101,16 @@ export default defineSchema({
     fullPlatformAccess: v.optional(v.boolean()),
     /** Short org voice: who you are, what you sell, tone — used for inbox reply personalization. */
     orgReplyVoice: v.optional(v.string()),
+    /** Minutes-per-action defaults for time-saved estimates; merged with niche defaults. */
+    metricAssumptions: v.optional(
+      v.object({
+        researchMinutesPerProspectSnapshot: v.optional(v.number()),
+        researchMinutesPerAdsRun: v.optional(v.number()),
+        minutesPerOutreachSend: v.optional(v.number()),
+        minutesPerInboxReply: v.optional(v.number()),
+        minutesPerPersonalizedOutreach: v.optional(v.number()),
+      })
+    ),
     updatedAt: v.number(),
     updatedBy: v.string(),
   }).index(INDEXES.BY_TENANT_ID, ['tenantId']),
@@ -388,7 +398,8 @@ export default defineSchema({
     researchedAt: v.number(),
   })
     .index(INDEXES.BY_PROSPECT_ID, ['prospectId'])
-    .index(INDEXES.BY_TENANT_ID, ['tenantId']),
+    .index(INDEXES.BY_TENANT_ID, ['tenantId'])
+    .index(INDEXES.BY_TENANT_RESEARCHED_AT, ['tenantId', 'researchedAt']),
 
   [TABLES.OUTREACH_DRAFTS]: defineTable({
     prospectId: v.id(TABLES.PROSPECTS),
@@ -415,7 +426,8 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index(INDEXES.BY_PROSPECT_ID, ['prospectId'])
-    .index(INDEXES.BY_TENANT_ID, ['tenantId']),
+    .index(INDEXES.BY_TENANT_ID, ['tenantId'])
+    .index(INDEXES.BY_TENANT_SENT_AT, ['tenantId', 'sentAt']),
 
   [TABLES.CONTENT_DRAFTS]: defineTable({
     tenantId: v.id(TABLES.TENANTS),
@@ -575,8 +587,24 @@ export default defineSchema({
     userId: v.id(TABLES.USERS),
     enabledWidgets: v.array(v.string()),
     widgetOrder: v.optional(v.array(v.number())),
+    /** Sub-metric toggles for the time-savings widget (e.g. research_hours, outreach). */
+    enabledMetricIds: v.optional(v.array(v.string())),
     updatedAt: v.number(),
   }).index(INDEXES.BY_USER_ID, ['userId']),
+
+  [TABLES.INBOX_OUTBOUND_EVENTS]: defineTable({
+    tenantId: v.id(TABLES.TENANTS),
+    userId: v.id(TABLES.USERS),
+    threadId: v.optional(v.id(TABLES.INBOX_THREADS)),
+    provider: v.union(
+      v.literal(INBOX_PROVIDER.GMAIL),
+      v.literal(INBOX_PROVIDER.OUTLOOK),
+      v.literal(INBOX_PROVIDER.WHATSAPP)
+    ),
+    sentAt: v.number(),
+  })
+    .index(INDEXES.BY_TENANT_ID, ['tenantId'])
+    .index(INDEXES.BY_TENANT_INBOX_OUTBOUND_SENT_AT, ['tenantId', 'sentAt']),
 
   // ─── Mastra Workflow Storage ───────────────────────────────────────────────
 
@@ -761,7 +789,8 @@ export default defineSchema({
   })
     .index(INDEXES.BY_ADS_PIPELINE_TENANT_CREATED, ['tenantId', 'createdAt'])
     .index(INDEXES.BY_ADS_PIPELINE_USER_CREATED, ['userId', 'createdAt'])
-    .index(INDEXES.BY_ADS_PIPELINE_TENANT_STATUS, ['tenantId', 'status']),
+    .index(INDEXES.BY_ADS_PIPELINE_TENANT_STATUS, ['tenantId', 'status'])
+    .index(INDEXES.BY_TENANT_COMPLETED_AT, ['tenantId', 'completedAt']),
 
   [TABLES.MARKETING_CAMPAIGN_METRICS]: defineTable({
     tenantId: v.id(TABLES.TENANTS),

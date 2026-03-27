@@ -19,27 +19,35 @@ export const updatePreferences = mutation({
     userId: v.id(TABLES.USERS),
     enabledWidgets: v.array(v.string()),
     widgetOrder: v.optional(v.array(v.number())),
+    enabledMetricIds: v.optional(v.array(v.string())),
   },
-  handler: async (ctx, { userId, enabledWidgets, widgetOrder }) => {
+  handler: async (ctx, { userId, enabledWidgets, widgetOrder, enabledMetricIds }) => {
     const now = Date.now()
     const existing = await ctx.db
       .query(TABLES.USER_DASHBOARD_PREFERENCES)
       .withIndex(INDEXES.BY_USER_ID, (q) => q.eq('userId', userId))
       .unique()
 
-    const doc = {
+    const base = {
       userId,
       enabledWidgets,
-      widgetOrder,
       updatedAt: now,
     }
 
     if (existing) {
-      await ctx.db.patch(existing._id, doc)
+      await ctx.db.patch(existing._id, {
+        ...base,
+        ...(widgetOrder !== undefined ? { widgetOrder } : {}),
+        ...(enabledMetricIds !== undefined ? { enabledMetricIds } : {}),
+      })
       return existing._id
     }
 
-    return await ctx.db.insert(TABLES.USER_DASHBOARD_PREFERENCES, doc)
+    return await ctx.db.insert(TABLES.USER_DASHBOARD_PREFERENCES, {
+      ...base,
+      widgetOrder,
+      enabledMetricIds,
+    })
   },
 })
 

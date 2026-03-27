@@ -57,6 +57,7 @@ export async function PUT(
       nicheOverrides,
       fullPlatformAccess,
       orgReplyVoice,
+      metricAssumptions,
     } = body
 
     if (
@@ -118,6 +119,15 @@ export async function PUT(
         | undefined,
       fullPlatformAccess: fullPlatformAccess as boolean | undefined,
       orgReplyVoice: orgReplyVoice as string | undefined,
+      metricAssumptions: metricAssumptions as
+        | {
+            researchMinutesPerProspectSnapshot?: number
+            researchMinutesPerAdsRun?: number
+            minutesPerOutreachSend?: number
+            minutesPerInboxReply?: number
+            minutesPerPersonalizedOutreach?: number
+          }
+        | undefined,
       updatedBy: userId!,
     })
 

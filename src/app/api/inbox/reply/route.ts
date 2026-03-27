@@ -52,6 +52,15 @@ export async function POST(req: NextRequest) {
       body: text,
     })
 
+    const sentAt = Date.now()
+    await convex.mutation(api.inboxOutboundEvents.recordOutbound, {
+      tenantId: dbUser.tenantId,
+      userId: dbUser._id,
+      threadId,
+      provider: thread.provider,
+      sentAt,
+    })
+
     return NextResponse.json({ ok: true })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to send reply'

@@ -69,6 +69,14 @@ const nicheOverridesValidator = v.object({
   orchestratorAddendum: v.optional(v.string()),
 })
 
+const metricAssumptionsValidator = v.object({
+  researchMinutesPerProspectSnapshot: v.optional(v.number()),
+  researchMinutesPerAdsRun: v.optional(v.number()),
+  minutesPerOutreachSend: v.optional(v.number()),
+  minutesPerInboxReply: v.optional(v.number()),
+  minutesPerPersonalizedOutreach: v.optional(v.number()),
+})
+
 // ─── Queries ──────────────────────────────────────────────────────────────────
 
 export const getByTenantId = query({
@@ -166,6 +174,7 @@ export const upsertConfig = mutation({
     nicheOverrides: v.optional(nicheOverridesValidator),
     fullPlatformAccess: v.optional(v.boolean()),
     orgReplyVoice: v.optional(v.string()),
+    metricAssumptions: v.optional(metricAssumptionsValidator),
     updatedBy: v.string(),
   },
   handler: async (ctx, args) => {
@@ -196,6 +205,11 @@ export const upsertConfig = mutation({
         ? args.orgReplyVoice
         : existing?.orgReplyVoice
 
+    const metricAssumptions =
+      args.metricAssumptions !== undefined
+        ? args.metricAssumptions
+        : existing?.metricAssumptions
+
     const doc = {
       tenantId: args.tenantId,
       allowedAgents: args.allowedAgents,
@@ -208,6 +222,7 @@ export const upsertConfig = mutation({
       nicheOverrides,
       fullPlatformAccess,
       orgReplyVoice,
+      metricAssumptions,
       updatedAt: now,
       updatedBy: args.updatedBy,
     }
