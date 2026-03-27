@@ -26,6 +26,7 @@ import {
   DEFAULT_ENABLED_WIDGETS,
   type DashboardWidgetId,
 } from '@/constants/dashboard'
+import { TimeSavingsWidget } from '@/components/dashboard/TimeSavingsWidget'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -212,10 +213,10 @@ export default function DashboardPage() {
 
   const availableWidgets = useMemo((): DashboardWidgetId[] => {
     const base = [...DEFAULT_ENABLED_WIDGETS]
-    if (!config.features.workflowBuilder) {
-      return base.filter((w) => w !== DASHBOARD_WIDGETS.WORKFLOW_RUNS)
-    }
-    return base
+    const withoutWorkflow = !config.features.workflowBuilder
+      ? base.filter((w) => w !== DASHBOARD_WIDGETS.WORKFLOW_RUNS)
+      : base
+    return withoutWorkflow
   }, [config.features.workflowBuilder])
 
   const enabledWidgets = useMemo((): DashboardWidgetId[] => {
@@ -231,6 +232,13 @@ export default function DashboardPage() {
     }
     return availableWidgets
   }, [widgetPrefs, config.features.workflowBuilder, availableWidgets])
+
+  /** Time savings first when enabled so the overview leads with estimated impact. */
+  const orderedWidgets = useMemo((): DashboardWidgetId[] => {
+    const ts = DASHBOARD_WIDGETS.TIME_SAVINGS
+    if (!enabledWidgets.includes(ts)) return enabledWidgets
+    return [ts, ...enabledWidgets.filter((w) => w !== ts)]
+  }, [enabledWidgets])
 
   const toggleWidget = (widgetId: DashboardWidgetId) => {
     if (!dbUser) return
@@ -307,8 +315,8 @@ export default function DashboardPage() {
   })
 
   return (
-    <div className="flex-1 overflow-y-auto p-8">
-      <div className="mx-auto max-w-4xl space-y-8">
+    <div className="flex-1 overflow-y-auto p-6 sm:p-8">
+      <div className="mx-auto max-w-7xl space-y-8">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-xl font-semibold tracking-tight text-foreground text-wrap-balance">
@@ -337,6 +345,7 @@ export default function DashboardPage() {
                 DASHBOARD_WIDGETS.TODO_CHECKLIST,
                 DASHBOARD_WIDGETS.STATS,
                 DASHBOARD_WIDGETS.FINANCIAL_SUMMARY,
+                DASHBOARD_WIDGETS.TIME_SAVINGS,
                 ...(config.features.workflowBuilder
                   ? [DASHBOARD_WIDGETS.WORKFLOW_RUNS]
                   : []),
@@ -358,6 +367,7 @@ export default function DashboardPage() {
                       'Financial summary'}
                     {id === DASHBOARD_WIDGETS.WORKFLOW_RUNS &&
                       'Recent workflow runs'}
+                    {id === DASHBOARD_WIDGETS.TIME_SAVINGS && 'Time savings'}
                   </span>
                 </label>
               ))}
@@ -369,7 +379,7 @@ export default function DashboardPage() {
           <TrialBanner daysRemaining={trialStatus.daysRemaining} />
         )}
 
-        {enabledWidgets.map((widgetId) => {
+        {orderedWidgets.map((widgetId) => {
           if (widgetId === DASHBOARD_WIDGETS.TODO_CHECKLIST) {
             return (
               <section
@@ -547,6 +557,18 @@ export default function DashboardPage() {
                   </div>
                 </div>
               </section>
+            )
+          }
+
+          if (widgetId === DASHBOARD_WIDGETS.TIME_SAVINGS && dbUser) {
+            return (
+              <TimeSavingsWidget
+                key={widgetId}
+                tenantId={dbUser.tenantId}
+                userId={dbUser._id}
+                enabledWidgets={enabledWidgets}
+                enabledMetricIds={widgetPrefs?.enabledMetricIds}
+              />
             )
           }
 

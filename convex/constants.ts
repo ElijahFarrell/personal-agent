@@ -36,6 +36,7 @@ export const TABLES = {
   MEDIA_ASSETS: 'mediaAssets',
   ADS_PIPELINE_RUNS: 'adsPipelineRuns',
   MARKETING_CAMPAIGN_METRICS: 'marketingCampaignMetrics',
+  INBOX_OUTBOUND_EVENTS: 'inboxOutboundEvents',
 } as const
 
 // ─── Index Names ─────────────────────────────────────────────────────────────
@@ -79,6 +80,12 @@ export const INDEXES = {
   BY_ADS_PIPELINE_TENANT_STATUS: 'by_tenantId_status',
   BY_MARKETING_USER_SOURCE: 'by_userId_source',
   BY_MARKETING_TENANT_USER_SYNCED: 'by_tenantId_userId_syncedAt',
+  BY_TENANT_RESEARCHED_AT: 'by_tenantId_researchedAt',
+  /** outreachDrafts.sentAt (optional until sent) */
+  BY_TENANT_SENT_AT: 'by_tenantId_sentAt',
+  /** inboxOutboundEvents.sentAt */
+  BY_TENANT_INBOX_OUTBOUND_SENT_AT: 'by_tenantId_inboxOutboundSentAt',
+  BY_TENANT_COMPLETED_AT: 'by_tenantId_completedAt',
 } as const
 
 // ─── Enum Values ─────────────────────────────────────────────────────────────
