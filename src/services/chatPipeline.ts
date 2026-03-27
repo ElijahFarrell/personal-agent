@@ -39,6 +39,10 @@ import { AGENT_BY_ID, type AgentId } from '@/constants/agents'
 import { CHAT_CREDIT_ACTION, CHAT_LIMITS, CHAT_ROLES, type AgentMessage } from '@/constants/chat'
 import { DEFAULT_CONFIG } from '@/constants/featureGating'
 import { getComposioConnectionStatus } from '@/lib/composio'
+import {
+  chatGatewayReportingContext,
+  mergeAgentStreamOptionsWithGatewayReporting,
+} from '@/lib/aiGatewayReporting'
 import type { Agent } from '@mastra/core/agent'
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
@@ -170,6 +174,14 @@ export async function prepareChatAgentStream(
   const instructions = agentInstructions ?? {}
   const meta = targetAgent ? AGENT_BY_ID.get(targetAgent as AgentId) : undefined
 
+  const reportingTenantId = String(convexTenantId ?? tenantId)
+  const baseGatewayCtx = (flowTag: string) =>
+    chatGatewayReportingContext({
+      clerkUserId: userId,
+      tenantId: reportingTenantId,
+      flowTag,
+    })
+
   if (meta) {
     const agentId = meta.id
     const agentInstructionsForTarget = instructions[agentId] ?? instructions[meta.toolId] ?? undefined
@@ -222,13 +234,17 @@ export async function prepareChatAgentStream(
         const useAdsIntelOpts = adsIntelAgentIds.includes(
           agentId as (typeof adsIntelAgentIds)[number]
         )
-        stream = await agent.stream(
-          agentMessagesWithTask as Parameters<typeof agent.stream>[0],
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const streamOpts = mergeAgentStreamOptionsWithGatewayReporting(
           {
             toolsets,
             ...(useAdsIntelOpts ? ADS_AGENT_GENERATE_OPTS : {}),
-          } as any
+          } as Record<string, unknown>,
+          baseGatewayCtx(`agent:${agentId}`)
+        )
+        stream = await agent.stream(
+          agentMessagesWithTask as Parameters<typeof agent.stream>[0],
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          streamOpts as any
         )
       }
     } else if (simpleAgentIds.includes(agentId as (typeof simpleAgentIds)[number])) {
@@ -251,13 +267,27 @@ export async function prepareChatAgentStream(
       if (lastIdx >= 0 && agentMessagesWithTask[lastIdx]?.role === CHAT_ROLES.USER) {
         agentMessagesWithTask[lastIdx] = { role: CHAT_ROLES.USER, content: taskWithInstructions }
       }
-      stream = await agent.stream(agentMessagesWithTask as Parameters<typeof agent.stream>[0])
+      stream = await agent.stream(
+        agentMessagesWithTask as Parameters<typeof agent.stream>[0],
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        mergeAgentStreamOptionsWithGatewayReporting(
+          {} as Record<string, unknown>,
+          baseGatewayCtx(`agent:${agentId}`)
+        ) as any
+      )
     }
   }
 
   if (stream === null && deepResearch) {
     const agent = createDeepResearchAgent(userId)
-    stream = await agent.stream(agentMessages as Parameters<typeof agent.stream>[0])
+    stream = await agent.stream(
+      agentMessages as Parameters<typeof agent.stream>[0],
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      mergeAgentStreamOptionsWithGatewayReporting(
+        {} as Record<string, unknown>,
+        baseGatewayCtx('flow:deep-research')
+      ) as any
+    )
   }
 
   if (stream === null) {
@@ -270,7 +300,14 @@ export async function prepareChatAgentStream(
       skillScope,
       platformResolved
     )
-    stream = await agent.stream(agentMessages as Parameters<typeof agent.stream>[0])
+    stream = await agent.stream(
+      agentMessages as Parameters<typeof agent.stream>[0],
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      mergeAgentStreamOptionsWithGatewayReporting(
+        {} as Record<string, unknown>,
+        baseGatewayCtx('agent:orchestrator')
+      ) as any
+    )
   }
 
   return { mastraStream: stream!, dbUser }

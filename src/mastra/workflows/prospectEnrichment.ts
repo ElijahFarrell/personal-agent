@@ -10,6 +10,7 @@ import { generateText } from 'ai'
 import { gateway } from 'ai'
 import MemoryClient from 'mem0ai'
 import { config } from '@/lib/config'
+import { gatewayReportingProviderOptions } from '@/lib/aiGatewayReporting'
 import * as apifyService from '@/services/apifyService'
 import { search } from '@/services/searchService'
 import { extractContent } from '@/services/browserService'
@@ -194,10 +195,15 @@ const synthesizeDossierStep = createStep({
     }
 
     try {
+      const uid = initData?.userId ?? 'system:prospect-enrichment'
       const { text } = await generateText({
         model: gateway('anthropic/claude-haiku-4-5'),
         system: `You identify personalization angles for outreach. Given research about a prospect, output a JSON array of 3-5 short angles (1 sentence each). Each should reference something specific that could be used to start a genuine conversation. Output ONLY the JSON array.`,
         prompt: `Prospect: ${initData?.prospectName ?? 'Unknown'}\nCompany: ${initData?.company ?? 'Unknown'}\n\n${contextParts.join('\n\n')}`,
+        ...gatewayReportingProviderOptions({
+          user: uid,
+          tags: ['surface:prospect-enrichment', 'workflow:prospect-enrichment', 'step:angles'],
+        }),
       })
 
       let angles: string[] = []
@@ -250,6 +256,7 @@ const draftMessageStep = createStep({
 
     const { linkedinProfile, personalizationAngles } = inputData
 
+    const draftUserId = userId ?? 'system:prospect-enrichment'
     const { text } = await generateText({
       model: gateway('anthropic/claude-sonnet-4-5'),
       system: `You draft personalized ${channel} outreach messages.
@@ -265,6 +272,10 @@ Connection: ${linkedinProfile?.connectionDegree ?? 'unknown'}
 Personalization angles:\n${personalizationAngles.map((a, i) => `${i + 1}. ${a}`).join('\n')}
 
 Draft a single personalized first message. ${channel === 'email' ? 'Also output a subject line on the first line prefixed with "Subject: ".' : 'Output ONLY the message text.'}`,
+      ...gatewayReportingProviderOptions({
+        user: draftUserId,
+        tags: ['surface:prospect-enrichment', 'workflow:prospect-enrichment', 'step:draft'],
+      }),
     })
 
     let draftBody = text.trim()
@@ -397,6 +408,10 @@ export async function executeProspectEnrichment(
         model: gateway('anthropic/claude-haiku-4-5'),
         system: `You identify personalization angles for outreach. Given research about a prospect, output a JSON array of 3-5 short angles (1 sentence each). Each should reference something specific that could be used to start a genuine conversation. Output ONLY the JSON array.`,
         prompt: `Prospect: ${prospectName}\nCompany: ${company ?? 'Unknown'}\n\n${contextParts.join('\n\n')}`,
+        ...gatewayReportingProviderOptions({
+          user: userId,
+          tags: ['surface:prospect-enrichment', 'runner:execute', 'step:angles'],
+        }),
       })
       try { personalizationAngles = JSON.parse(text) } catch { personalizationAngles = [text.trim()] }
     } catch {
@@ -424,6 +439,10 @@ export async function executeProspectEnrichment(
     model: gateway('anthropic/claude-sonnet-4-5'),
     system: `You draft personalized ${channel} outreach messages.\n\nRules:\n- ${channelRules[channel] ?? channelRules.linkedin}\n- Be specific — never generic\n- Use brand voice when available\n- Connection degree context: 1st = connected, 2nd/3rd = not connected, pending = request sent`,
     prompt: `${campaignContext ? `Campaign context: ${campaignContext}\n\n` : ''}Brand voice:\n${brandVoice || 'No brand voice stored — use a warm, professional tone.'}\n\nTarget: ${prospectName}\nHeadline: ${linkedinProfile?.headline ?? 'N/A'}\nConnection: ${linkedinProfile?.connectionDegree ?? 'unknown'}\nPersonalization angles:\n${personalizationAngles.map((a, i) => `${i + 1}. ${a}`).join('\n')}\n\nDraft a single personalized first message. ${channel === 'email' ? 'Also output a subject line on the first line prefixed with "Subject: ".' : 'Output ONLY the message text.'}`,
+    ...gatewayReportingProviderOptions({
+      user: userId,
+      tags: ['surface:prospect-enrichment', 'runner:execute', 'step:draft'],
+    }),
   })
 
   let draftBody = draftText.trim()

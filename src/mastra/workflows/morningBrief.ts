@@ -4,6 +4,7 @@ import { generateText } from 'ai'
 import { gateway } from 'ai'
 import MemoryClient from 'mem0ai'
 import { config } from '@/lib/config'
+import { gatewayReportingProviderOptions } from '@/lib/aiGatewayReporting'
 import {
   listTodayEvents,
   listUpcomingEvents,
@@ -118,6 +119,10 @@ Relevant memories:
 ${context.topMemories.join('\n')}
 
 ${context.previousBriefSummary ? `Previous brief context: ${context.previousBriefSummary}` : ''}`,
+    ...gatewayReportingProviderOptions({
+      user: userId,
+      tags: ['surface:morning-brief', 'workflow:morning-brief', `tenant:${tenantId}`],
+    }),
   })
 
   let brief: MorningBrief
@@ -197,12 +202,21 @@ const generateBriefStep = createStep({
   description: 'Generate structured morning brief from context',
   inputSchema: morningBriefContextSchema,
   outputSchema: morningBriefSchema,
-  execute: async ({ inputData }) => {
+  execute: async ({ inputData, getInitData }) => {
+    const init = getInitData<{ userId: string; tenantId: string }>()
     const { text } = await generateText({
       model: gateway('anthropic/claude-sonnet-4-5'),
       system: `You generate a personalized morning brief. Output valid JSON:
 { "greeting": string, "topPriority": string, "schedule": string, "actionItems": string[], "generatedAt": string }`,
       prompt: `Generate brief for ${inputData.date}. Calendar: ${JSON.stringify(inputData.calendarEvents)}. Emails: ${inputData.unreadEmails.map((e) => e.subject).join(', ')}. Memories: ${inputData.topMemories.join('; ')}`,
+      ...gatewayReportingProviderOptions({
+        user: init?.userId ?? 'system:morning-brief',
+        tags: [
+          'surface:morning-brief',
+          'workflow:morning-brief',
+          ...(init?.tenantId ? [`tenant:${init.tenantId}`] : []),
+        ],
+      }),
     })
 
     try {

@@ -1,6 +1,7 @@
 import { generateText } from 'ai'
 import { gateway } from 'ai'
 import { AgentModels } from '@/constants/models'
+import { gatewayReportingProviderOptions } from '@/lib/aiGatewayReporting'
 import { getCachedSearchJson } from './searchApiCacheService'
 import type { AdAnalysis, AdsScrapeResult } from './contracts'
 
@@ -42,6 +43,10 @@ export async function analyzeAdsFromScrape(
     model: AgentModels.content(),
     system: `You are a competitive advertising analyst. Synthesize ad-library search results into clear, actionable insights: themes, messaging patterns, creative formats, targeting signals (if visible), and gaps vs typical competitors. Use markdown with headings and bullet points. If data is sparse, say so and infer cautiously.${focus}`,
     prompt: `Analyze the following competitive ad research data:\n\n${context || 'No data retrieved.'}`,
+    ...gatewayReportingProviderOptions({
+      user: clerkUserId,
+      tags: ['surface:ads-intelligence', 'flow:analyze-ads'],
+    }),
   })
 
   return { markdown: text.trim() }
