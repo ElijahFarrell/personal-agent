@@ -7,7 +7,7 @@ import { getComposioToolsForProviders } from '@/lib/composio'
 import { MARKETING_PROMPT } from '../prompts/marketing'
 import type { ComposioProvider } from '@/types'
 
-const MARKETING_PROVIDERS: ComposioProvider[] = ['mailchimp']
+const MARKETING_PROVIDERS: ComposioProvider[] = ['mailchimp', 'lemlist']
 
 export interface MarketingAgentResult {
   agent: Agent
@@ -15,7 +15,7 @@ export interface MarketingAgentResult {
 }
 
 /**
- * Creates the Marketing agent with Composio tools for Mailchimp.
+ * Creates the Marketing agent with Composio tools for Mailchimp and Lemlist.
  */
 export async function createMarketingAgent(
   userId: string,

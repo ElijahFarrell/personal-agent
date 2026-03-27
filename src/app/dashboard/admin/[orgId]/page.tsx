@@ -51,6 +51,7 @@ const INTEGRATION_PROVIDERS = [
   'quickbooks',
   'mailchimp',
   'follow-up-boss',
+  'lemlist',
 ] as const
 
 const BILLING_MODELS = [

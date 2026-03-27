@@ -19,6 +19,7 @@ export const API_ROUTES = {
   composioDisconnect: '/api/composio/disconnect',
   composioStatus: '/api/composio/status',
   metaAdsInsights: '/api/metaAdsInsights',
+  marketingSyncMetrics: '/api/marketing/sync-metrics',
   adsIntelligenceRun: '/api/ads-intelligence/run',
   telegramLink: '/api/telegram/link',
 } as const

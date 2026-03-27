@@ -72,6 +72,8 @@ export const DEFAULT_CONFIG: TenantConfig = {
     'whatsapp',
     'metaAds',
     'searchApi',
+    'lemlist',
+    'mailchimp',
   ],
   features: {
     customWorkflows: false,

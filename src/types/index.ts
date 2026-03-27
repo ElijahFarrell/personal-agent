@@ -149,6 +149,7 @@ export type IntegrationProvider =
   | 'searchApi'
   | 'whatsapp'
   | 'follow-up-boss'
+  | 'lemlist'
 
 /** Composio-backed providers (excludes jira). Pipedrive may require BYO OAuth in Composio. */
 export type ComposioProvider = IntegrationProvider

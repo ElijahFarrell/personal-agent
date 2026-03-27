@@ -20,6 +20,7 @@ import type * as dailyTodos from "../dailyTodos.js";
 import type * as inbox from "../inbox.js";
 import type * as inboxSyncUsage from "../inboxSyncUsage.js";
 import type * as integrations from "../integrations.js";
+import type * as marketingMetrics from "../marketingMetrics.js";
 import type * as messages from "../messages.js";
 import type * as migrations from "../migrations.js";
 import type * as prospects from "../prospects.js";
@@ -57,6 +58,7 @@ declare const fullApi: ApiFromModules<{
   inbox: typeof inbox;
   inboxSyncUsage: typeof inboxSyncUsage;
   integrations: typeof integrations;
+  marketingMetrics: typeof marketingMetrics;
   messages: typeof messages;
   migrations: typeof migrations;
   prospects: typeof prospects;
