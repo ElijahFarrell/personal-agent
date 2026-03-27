@@ -50,6 +50,7 @@ const INTEGRATION_PROVIDERS = [
   'stripe',
   'quickbooks',
   'mailchimp',
+  'follow-up-boss',
 ] as const
 
 const BILLING_MODELS = [

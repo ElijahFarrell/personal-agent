@@ -148,8 +148,9 @@ export type IntegrationProvider =
   | 'metaAds'
   | 'searchApi'
   | 'whatsapp'
+  | 'follow-up-boss'
 
-/** Composio-backed providers (excludes jira, follow-up-boss). Pipedrive may require BYO OAuth in Composio. */
+/** Composio-backed providers (excludes jira). Pipedrive may require BYO OAuth in Composio. */
 export type ComposioProvider = IntegrationProvider
 
 export interface UserIntegration {

@@ -43,9 +43,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Thread not found' }, { status: 404 })
     }
 
+    const userEmailLower = dbUser.email.toLowerCase().trim()
+
     const contextBlock = await buildReplyContextPrompt({
       threadId,
       orgReplyVoice: config.orgReplyVoice,
+      clerkUserId: userId,
+      userEmailLower,
     })
 
     const status = await getComposioConnectionStatus(userId)

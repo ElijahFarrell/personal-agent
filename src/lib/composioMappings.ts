@@ -1,12 +1,13 @@
 /**
  * Maps our IntegrationProvider to Composio toolkit slugs.
- * Excludes providers not on Composio (jira, follow-up-boss).
+ * Excludes providers not on Composio (e.g. jira).
  * Pipedrive: Composio may require your own OAuth app credentials in the dashboard.
  */
 import type { ComposioProvider } from '@/types'
 
 export const PROVIDER_TO_TOOLKIT: Record<ComposioProvider, string> = {
   gmail: 'GMAIL',
+  'follow-up-boss': 'FOLLOW_UP_BOSS',
   'google-calendar': 'GOOGLECALENDAR',
   slack: 'SLACK',
   linkedin: 'LINKEDIN',
@@ -51,6 +52,7 @@ export function getToolkitForProvider(provider: string): string | null {
   if (p === 'metaads') return 'METAADS'
   if (p === 'searchapi') return 'SEARCH_API'
   if (p === 'whatsapp') return 'WHATSAPP'
+  if (p === 'follow-up-boss' || p === 'followupboss') return 'FOLLOW_UP_BOSS'
   return PROVIDER_TO_TOOLKIT[p as ComposioProvider] ?? null
 }
 

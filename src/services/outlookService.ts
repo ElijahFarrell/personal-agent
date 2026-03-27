@@ -33,3 +33,27 @@ export async function sendOutlookEmail(
     throw new Error(result.error)
   }
 }
+
+/**
+ * In-thread reply via Microsoft Graph (Composio). `message_id` is the Graph message id to reply to.
+ */
+export async function replyToOutlookMessage(
+  userId: string,
+  messageId: string,
+  comment: string
+): Promise<void> {
+  if (!config.composio.apiKey) {
+    throw new Error('COMPOSIO_API_KEY is not configured')
+  }
+
+  const result = await executeComposioTool(userId, 'OUTLOOK_REPLY_EMAIL', {
+    user_id: 'me',
+    message_id: messageId,
+    comment,
+  })
+
+  if (!result.successful && result.error) {
+    throw new Error(result.error)
+  }
+}
+
