@@ -35,6 +35,7 @@ export const TABLES = {
   VIDEO_GENERATION_JOBS: 'videoGenerationJobs',
   MEDIA_ASSETS: 'mediaAssets',
   ADS_PIPELINE_RUNS: 'adsPipelineRuns',
+  MARKETING_CAMPAIGN_METRICS: 'marketingCampaignMetrics',
 } as const
 
 // ─── Index Names ─────────────────────────────────────────────────────────────
@@ -76,6 +77,8 @@ export const INDEXES = {
   BY_ADS_PIPELINE_TENANT_CREATED: 'by_tenantId_createdAt',
   BY_ADS_PIPELINE_USER_CREATED: 'by_userId_createdAt',
   BY_ADS_PIPELINE_TENANT_STATUS: 'by_tenantId_status',
+  BY_MARKETING_USER_SOURCE: 'by_userId_source',
+  BY_MARKETING_TENANT_USER_SYNCED: 'by_tenantId_userId_syncedAt',
 } as const
 
 // ─── Enum Values ─────────────────────────────────────────────────────────────
@@ -134,6 +137,13 @@ export const ROLE = {
 export const INTEGRATION_STATUS = {
   ACTIVE: 'active',
   NEEDS_RECONNECT: 'needs_reconnect',
+} as const
+
+/** Source system for rows in marketingCampaignMetrics. */
+export const MARKETING_METRIC_SOURCE = {
+  LEMLIST: 'lemlist',
+  APOLLO: 'apollo',
+  MAILCHIMP: 'mailchimp',
 } as const
 
 export const MESSAGE_ROLE = {

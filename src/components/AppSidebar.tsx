@@ -25,6 +25,9 @@ import {
   LineChart,
   Radar,
   Inbox,
+  Megaphone,
+  BarChart3,
+  LayoutGrid,
 } from 'lucide-react'
 import { useOrgConfig } from '@/hooks/useOrgConfig'
 import { isSuperAdmin } from '@/middleware/adminGuard'
@@ -75,6 +78,16 @@ const NAV_CONFIG: (NavItem | NavGroup)[] = [
   { type: 'item', href: '/dashboard', label: 'Overview', icon: LayoutDashboard, exact: true },
   { type: 'item', href: '/dashboard/inbox', label: 'Inbox', icon: Inbox },
   { type: 'item', href: '/dashboard/prospects', label: 'Prospects', icon: Users },
+  {
+    type: 'group',
+    label: 'Marketing',
+    icon: Megaphone,
+    storageKey: 'marketing',
+    children: [
+      { type: 'item', href: '/dashboard/marketing', label: 'Overview', icon: LayoutGrid },
+      { type: 'item', href: '/dashboard/marketing/campaigns', label: 'Campaigns', icon: BarChart3 },
+    ],
+  },
   {
     type: 'group',
     label: 'AI',

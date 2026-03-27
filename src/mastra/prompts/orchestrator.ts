@@ -52,9 +52,15 @@ const AGENT_DESCRIPTIONS: Record<
   'browser-agent': { provider: null, desc: 'Navigate websites, extract page content, fill and submit forms. Confirms before submitting.' },
   'messaging-agent': { providers: ['slack', 'microsoft-teams', 'discord', 'whatsapp'], desc: 'Slack, Teams, Discord, WhatsApp Business — list channels, send messages. Always confirms before sending.' },
   'docs-agent': { providers: ['google-docs', 'google-sheet', 'airtable', 'notion'], desc: 'Google Docs, Sheets, Airtable, Notion — search, read, create documents and records.' },
-  'real-estate-agent': { providers: ['calendly'], desc: 'Calendly — event types, scheduled events, scheduling.' },
+  'real-estate-agent': {
+    providers: ['follow-up-boss', 'calendly'],
+    desc: 'Follow Up Boss — contacts, deals, tasks, notes. Calendly — event types, scheduled events, scheduling.',
+  },
   'finance-agent': { providers: ['stripe', 'quickbooks'], desc: 'Stripe, QuickBooks — customers, charges, invoices, payments.' },
-  'marketing-agent': { provider: 'mailchimp', desc: 'Mailchimp — audiences, campaigns.' },
+  'marketing-agent': {
+    providers: ['mailchimp', 'lemlist'],
+    desc: 'Mailchimp — audiences, campaigns. Lemlist — outreach campaigns, sequences, stats.',
+  },
   'metaAdsAgent': { provider: 'metaAds', desc: 'Meta Ads — Facebook/Instagram campaigns, creatives, insights, audiences.' },
   'ads-scraper-agent': { provider: 'searchApi', desc: 'Search API ad libraries — scrape Meta, LinkedIn, TikTok, Google competitive ads (parallel per engine).' },
   'ad-analyzer-agent': { provider: 'searchApi', desc: 'Analyze competitive ad scrapes — themes, messaging, creative patterns (uses cached Search API results).' },

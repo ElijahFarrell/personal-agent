@@ -27,6 +27,7 @@ import {
   SCOPE,
   SKILL_SOURCE,
   SUBSCRIPTION_STATUS,
+  MARKETING_METRIC_SOURCE,
   TABLES,
   TIER,
   VIDEO_JOB_STATUS,
@@ -761,4 +762,30 @@ export default defineSchema({
     .index(INDEXES.BY_ADS_PIPELINE_TENANT_CREATED, ['tenantId', 'createdAt'])
     .index(INDEXES.BY_ADS_PIPELINE_USER_CREATED, ['userId', 'createdAt'])
     .index(INDEXES.BY_ADS_PIPELINE_TENANT_STATUS, ['tenantId', 'status']),
+
+  [TABLES.MARKETING_CAMPAIGN_METRICS]: defineTable({
+    tenantId: v.id(TABLES.TENANTS),
+    userId: v.id(TABLES.USERS),
+    source: v.union(
+      v.literal(MARKETING_METRIC_SOURCE.LEMLIST),
+      v.literal(MARKETING_METRIC_SOURCE.APOLLO),
+      v.literal(MARKETING_METRIC_SOURCE.MAILCHIMP)
+    ),
+    externalId: v.string(),
+    label: v.string(),
+    periodStart: v.number(),
+    periodEnd: v.number(),
+    metrics: v.object({
+      sent: v.optional(v.number()),
+      replied: v.optional(v.number()),
+      opened: v.optional(v.number()),
+      bounced: v.optional(v.number()),
+      clicked: v.optional(v.number()),
+    }),
+    syncedAt: v.number(),
+    rawPayload: v.optional(v.any()),
+  })
+    .index(INDEXES.BY_USER_ID, ['userId'])
+    .index(INDEXES.BY_MARKETING_USER_SOURCE, ['userId', 'source'])
+    .index(INDEXES.BY_MARKETING_TENANT_USER_SYNCED, ['tenantId', 'userId', 'syncedAt']),
 })

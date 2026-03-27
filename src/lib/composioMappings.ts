@@ -34,6 +34,7 @@ export const PROVIDER_TO_TOOLKIT: Record<ComposioProvider, string> = {
   metaAds: 'METAADS',
   searchApi: 'SEARCH_API',
   whatsapp: 'WHATSAPP',
+  lemlist: 'LEMLIST',
 } as const
 
 export const TOOLKIT_TO_PROVIDER: Record<string, ComposioProvider> = Object.fromEntries(
