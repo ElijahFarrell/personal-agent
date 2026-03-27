@@ -34,19 +34,19 @@ function extractCampaignList(data: unknown): Array<Record<string, unknown>> {
 }
 
 function campaignIdFromRow(row: Record<string, unknown>): string | null {
-  const id =
-    (typeof row._id === 'string' && row._id) ||
-    (typeof row.id === 'string' && row.id) ||
-    (typeof row.campaignId === 'string' && row.campaignId)
-  return id ?? null
+  for (const key of ['_id', 'id', 'campaignId'] as const) {
+    const v = row[key]
+    if (typeof v === 'string' && v.length > 0) return v
+  }
+  return null
 }
 
 function campaignLabelFromRow(row: Record<string, unknown>): string {
-  const name =
-    (typeof row.name === 'string' && row.name) ||
-    (typeof row.label === 'string' && row.label) ||
-    (typeof row.title === 'string' && row.title)
-  return name?.trim() || 'Campaign'
+  for (const key of ['name', 'label', 'title'] as const) {
+    const v = row[key]
+    if (typeof v === 'string' && v.trim().length > 0) return v.trim()
+  }
+  return 'Campaign'
 }
 
 /** Best-effort extraction from Lemlist stats payload (shape varies by API version). */
