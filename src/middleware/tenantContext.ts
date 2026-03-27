@@ -4,6 +4,12 @@ import { api } from '@convex/_generated/api'
 import type { Id } from '@convex/_generated/dataModel'
 import type { TenantContext, PlanTier } from '@/types'
 import { DEFAULT_CONFIG } from '@/constants/featureGating'
+import { tenantConfigFromConvexRow } from '@/lib/convexTenantConfig'
+import {
+  accessContextFromTenantRow,
+  resolvePlatformConfig,
+  tenantConfigForResolvedGates,
+} from '@/platform/niche'
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
 
@@ -43,21 +49,27 @@ async function resolveTier(clerkOrgOrUserId: string): Promise<PlanTier> {
 /**
  * Resolve org config from Convex. Falls back to DEFAULT_CONFIG when none exists.
  */
-async function resolveConfig(tenantConvexId: Id<'tenants'>) {
+async function resolveConfig(
+  tenantConvexId: Id<'tenants'>,
+  clerkUserId: string,
+  clerkOrgId: string
+) {
   try {
-    const config = await convex.query(api.tenantConfigs.getByTenantId, {
+    const row = await convex.query(api.tenantConfigs.getByTenantId, {
       tenantId: tenantConvexId,
     })
-    if (!config) return DEFAULT_CONFIG
-    return {
-      allowedAgents: config.allowedAgents,
-      allowedIntegrations: config.allowedIntegrations,
-      features: { ...DEFAULT_CONFIG.features, ...config.features },
-      limits: { ...DEFAULT_CONFIG.limits, ...config.limits },
-      billingModel: config.billingModel,
-    }
+    const base = tenantConfigFromConvexRow(row)
+    const resolved = resolvePlatformConfig(
+      accessContextFromTenantRow(clerkUserId, clerkOrgId, base)
+    )
+    return tenantConfigForResolvedGates(base, resolved)
   } catch {
-    return DEFAULT_CONFIG
+    return tenantConfigForResolvedGates(
+      DEFAULT_CONFIG,
+      resolvePlatformConfig(
+        accessContextFromTenantRow(clerkUserId, clerkOrgId, DEFAULT_CONFIG)
+      )
+    )
   }
 }
 
@@ -76,16 +88,19 @@ export async function getTenantContext(): Promise<TenantContext> {
       clerkOrgId: tenantKey,
     })
     if (!tenant) {
+      const resolved = resolvePlatformConfig(
+        accessContextFromTenantRow(userId, tenantKey, DEFAULT_CONFIG)
+      )
       return {
         tenantId: tenantKey,
         userId,
         tier: 'free',
-        config: DEFAULT_CONFIG,
+        config: tenantConfigForResolvedGates(DEFAULT_CONFIG, resolved),
       }
     }
 
     const tier = await resolveTier(tenantKey)
-    const config = await resolveConfig(tenant._id)
+    const config = await resolveConfig(tenant._id, userId, tenantKey)
 
     return {
       tenantId: tenantKey,

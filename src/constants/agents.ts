@@ -22,6 +22,7 @@ import {
   Radar,
   Target,
   Rocket,
+  UserSearch,
 } from 'lucide-react'
 
 export const AGENT_IDS = {
@@ -43,6 +44,7 @@ export const AGENT_IDS = {
   ADS_SCRAPER: 'adsScraper',
   AD_ANALYZER: 'adAnalyzer',
   CAMPAIGN_BUILDER: 'campaignBuilder',
+  SDR: 'sdr',
 } as const
 
 export type AgentId = (typeof AGENT_IDS)[keyof typeof AGENT_IDS]
@@ -220,6 +222,15 @@ export const AGENT_REGISTRY: AgentMeta[] = [
     iconBg: 'bg-emerald-500/10',
     iconColor: 'text-emerald-400',
     toolId: 'campaign-builder-agent',
+  },
+  {
+    id: AGENT_IDS.SDR,
+    displayName: 'Lead / SDR',
+    description: 'Exa, Apollo, Outlook — find leads, enrich, sequences, send',
+    icon: UserSearch,
+    iconBg: 'bg-cyan-500/10',
+    iconColor: 'text-cyan-400',
+    toolId: 'sdr-agent',
   },
 ]
 

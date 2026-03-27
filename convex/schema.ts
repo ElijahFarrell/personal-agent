@@ -86,6 +86,17 @@ export default defineSchema({
       v.literal(BILLING_MODEL.FRIEND)
     ),
     adminNotes: v.optional(v.string()),
+    /** Primary vertical; drives niche packs on the server. */
+    nicheId: v.optional(
+      v.union(v.literal('generic'), v.literal('real_estate'))
+    ),
+    nicheOverrides: v.optional(
+      v.object({
+        orchestratorAddendum: v.optional(v.string()),
+      })
+    ),
+    /** When true, org bypasses niche/agent/feature gating (same as env allowlists). */
+    fullPlatformAccess: v.optional(v.boolean()),
     updatedAt: v.number(),
     updatedBy: v.string(),
   }).index(INDEXES.BY_TENANT_ID, ['tenantId']),

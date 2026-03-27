@@ -1,25 +1,9 @@
 import { createWorkflow, createStep } from '@mastra/core/workflows'
 import { z } from 'zod'
-import {
-  createEmailAgent,
-  createResearchAgent,
-  createCalendarAgent,
-  createLinkedInAgent,
-  createContentAgent,
-  createInstagramAgent,
-  createBrowserAgent,
-  createMessagingAgent,
-  createDocsAgent,
-  createCrmAgent,
-  createProjectAgent,
-  createRealEstateAgent,
-  createFinanceAgent,
-  createMarketingAgent,
-  createMetaAdsAgent,
-  createSDRAgent,
-} from '@/mastra/agents'
 import { AGENT_BY_TOOL_ID, type AgentId } from '@/constants/agents'
+import { WORKFLOW_AGENT_FACTORIES } from '@/platform/agent-catalog'
 import { createAgentTools } from '@/mastra/tools/agentTools'
+import type { ResolvedPlatformConfig } from '@/platform/niche/types'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -80,32 +64,14 @@ export interface CompileContext {
   workflowId: string
   /** Check if tenant has at least minRequired credits. Returns false if insufficient. */
   creditsCheck?: (tenantId: string, minRequired: number) => Promise<boolean>
+  /** When set, workflow tool steps use the same delegate tool allowlist as chat. */
+  platformResolved?: ResolvedPlatformConfig
 }
 
 // ─── Agent factory ────────────────────────────────────────────────────────────
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const AGENT_FACTORIES: Record<string, (userId: string, tenantId?: string) => Promise<any>> = {
-  email: async (userId) => (await createEmailAgent(userId, [])).agent,
-  research: async (userId) => createResearchAgent(userId),
-  calendar: async (userId) => (await createCalendarAgent(userId, [])).agent,
-  linkedin: async (userId) => createLinkedInAgent(userId),
-  content: async (userId) => await createContentAgent(userId),
-  instagram: async (userId) => createInstagramAgent(userId),
-  browser: async (userId) => createBrowserAgent(userId),
-  messaging: async (userId) => (await createMessagingAgent(userId, [])).agent,
-  docs: async (userId) => (await createDocsAgent(userId, [])).agent,
-  crm: async (userId) => (await createCrmAgent(userId, [])).agent,
-  project: async (userId) => (await createProjectAgent(userId, [])).agent,
-  realEstate: async (userId) => (await createRealEstateAgent(userId, [])).agent,
-  finance: async (userId) => (await createFinanceAgent(userId, [])).agent,
-  marketing: async (userId) => (await createMarketingAgent(userId, [])).agent,
-  metaAds: async (userId) => (await createMetaAdsAgent(userId, [])).agent,
-  sdr: async (userId, tenantId) => createSDRAgent(userId, tenantId ?? ''),
-}
-
 async function getAgentForNode(agentId: string, userId: string, tenantId: string) {
-  const factory = AGENT_FACTORIES[agentId]
+  const factory = WORKFLOW_AGENT_FACTORIES[agentId]
   if (!factory) {
     throw new Error(`Unknown agent: ${agentId}`)
   }
@@ -153,7 +119,7 @@ export async function compileWorkflow(
   definition: WorkflowDefinition,
   context: CompileContext
 ): Promise<unknown> {
-  const { userId, tenantId, workflowId } = context
+  const { userId, tenantId, workflowId, platformResolved } = context
   const { nodes, edges } = definition
 
   const order = getExecutionOrder(nodes, edges)
@@ -213,7 +179,14 @@ export async function compileWorkflow(
         inputSchema: passthroughSchema,
         outputSchema: passthroughSchemaOut,
         execute: async ({ inputData }) => {
-          const tools = createAgentTools(userId, tenantId) as unknown as Record<
+          const tools = createAgentTools(
+            userId,
+            tenantId,
+            undefined,
+            [],
+            undefined,
+            platformResolved
+          ) as unknown as Record<
             string,
             { execute: (input: { task: string }) => Promise<string> }
           >

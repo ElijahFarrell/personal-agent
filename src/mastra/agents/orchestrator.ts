@@ -9,6 +9,17 @@ import { buildOrchestratorPrompt } from '../prompts'
 import { createVoice } from '../voice'
 import { createWorkspaceForTenant } from '../createWorkspaceForTenant'
 import { adsIntelligenceWorkflow } from '../workflows/adsIntelligencePipeline'
+import type { ResolvedPlatformConfig } from '@/platform/niche/types'
+import type { AgentId } from '@/constants/agents'
+
+function shouldIncludeAdsWorkflow(
+  resolved: ResolvedPlatformConfig | undefined
+): boolean {
+  if (!resolved) return true
+  if (resolved.fullPlatformAccess) return true
+  const ads: AgentId[] = ['adsScraper', 'adAnalyzer', 'campaignBuilder']
+  return ads.some((id) => resolved.effectiveAllowedAgents.has(id))
+}
 
 export interface OrchestratorSkillScope {
   tenantId: string
@@ -26,10 +37,15 @@ export async function createOrchestratorAgent(
   agentInstructions?: Record<string, string>,
   connectedProviders: string[] = [],
   modelId?: string,
-  skillScope?: OrchestratorSkillScope
+  skillScope?: OrchestratorSkillScope,
+  platformResolved?: ResolvedPlatformConfig
 ) {
   const workspace = skillScope
-    ? await createWorkspaceForTenant(skillScope.tenantId, skillScope.userId)
+    ? await createWorkspaceForTenant(
+        skillScope.tenantId,
+        skillScope.userId,
+        platformResolved
+      )
     : undefined
 
   const agentTools = createAgentTools(
@@ -37,10 +53,16 @@ export async function createOrchestratorAgent(
     tenantId,
     agentInstructions,
     connectedProviders,
-    workspace
+    workspace,
+    platformResolved
   )
 
-  const baseInstructions = buildOrchestratorPrompt(userId, tenantId, connectedProviders)
+  const baseInstructions = buildOrchestratorPrompt(
+    userId,
+    tenantId,
+    connectedProviders,
+    platformResolved
+  )
   const orchestratorCustom = agentInstructions?.orchestrator?.trim()
   const instructions = orchestratorCustom
     ? `${baseInstructions}\n\n## Additional Instructions\n${orchestratorCustom}`
@@ -60,8 +82,8 @@ export async function createOrchestratorAgent(
       mem0Recall: createMem0RecallTool(userId),
       mem0Memorize: createMem0MemorizeTool(userId),
     },
-    workflows: {
-      adsIntelligence: adsIntelligenceWorkflow,
-    },
+    workflows: shouldIncludeAdsWorkflow(platformResolved)
+      ? { adsIntelligence: adsIntelligenceWorkflow }
+      : {},
   })
 }
