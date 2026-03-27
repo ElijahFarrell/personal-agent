@@ -53,6 +53,9 @@ export async function PUT(
       limits,
       billingModel,
       adminNotes,
+      nicheId,
+      nicheOverrides,
+      fullPlatformAccess,
     } = body
 
     if (
@@ -107,6 +110,11 @@ export async function PUT(
         | 'trial'
         | 'friend',
       adminNotes: adminNotes as string | undefined,
+      nicheId: nicheId as 'generic' | 'real_estate' | undefined,
+      nicheOverrides: nicheOverrides as
+        | { orchestratorAddendum?: string }
+        | undefined,
+      fullPlatformAccess: fullPlatformAccess as boolean | undefined,
       updatedBy: userId!,
     })
 

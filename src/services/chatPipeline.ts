@@ -27,11 +27,17 @@ import {
 import { ADS_AGENT_GENERATE_OPTS } from '@/mastra/agents/adsAgentOptions'
 import { retrieveRelevantContext, buildContextBlock } from '@/services/contextService'
 import { createWorkspaceForTenant } from '@/mastra/createWorkspaceForTenant'
+import { tenantConfigFromConvexRow } from '@/lib/convexTenantConfig'
+import {
+  accessContextFromTenantRow,
+  resolvePlatformConfig,
+} from '@/platform/niche'
 import { buildProspectsContext } from '@/services/prospectsContextService'
 import { api } from '@convex/_generated/api'
 import type { Id } from '@convex/_generated/dataModel'
 import { AGENT_BY_ID, type AgentId } from '@/constants/agents'
 import { CHAT_CREDIT_ACTION, CHAT_LIMITS, CHAT_ROLES, type AgentMessage } from '@/constants/chat'
+import { DEFAULT_CONFIG } from '@/constants/featureGating'
 import { getComposioConnectionStatus } from '@/lib/composio'
 import type { Agent } from '@mastra/core/agent'
 
@@ -81,8 +87,33 @@ export async function prepareChatAgentStream(
       }
     : undefined
 
+  let platformResolved
+  if (dbUser) {
+    const [row, tenantDoc] = await Promise.all([
+      convex
+        .query(api.tenantConfigs.getByTenantId, { tenantId: dbUser.tenantId })
+        .catch(() => null),
+      convex
+        .query(api.tenants.getTenantById, { tenantId: dbUser.tenantId })
+        .catch(() => null),
+    ])
+    const clerkOrgId = tenantDoc?.clerkOrgId ?? tenantId
+    const base = tenantConfigFromConvexRow(row)
+    platformResolved = resolvePlatformConfig(
+      accessContextFromTenantRow(userId, clerkOrgId, base)
+    )
+  } else {
+    platformResolved = resolvePlatformConfig(
+      accessContextFromTenantRow(userId, tenantId, DEFAULT_CONFIG)
+    )
+  }
+
   const workspace = skillScope
-    ? await createWorkspaceForTenant(skillScope.tenantId, skillScope.userId)
+    ? await createWorkspaceForTenant(
+        skillScope.tenantId,
+        skillScope.userId,
+        platformResolved
+      )
     : undefined
 
   const [relevantContext, historyDocs, prospectsContext] = await Promise.all([
@@ -236,7 +267,8 @@ export async function prepareChatAgentStream(
       agentInstructions,
       connectedProviders,
       model,
-      skillScope
+      skillScope,
+      platformResolved
     )
     stream = await agent.stream(agentMessages as Parameters<typeof agent.stream>[0])
   }

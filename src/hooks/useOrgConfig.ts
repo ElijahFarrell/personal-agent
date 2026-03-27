@@ -1,11 +1,13 @@
 'use client'
 
+import { useEffect, useMemo, useState } from 'react'
 import { useUser } from '@clerk/nextjs'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import type { Id } from '@convex/_generated/dataModel'
 import {
   DEFAULT_CONFIG,
+  type NicheId,
   type TenantConfig,
 } from '@/constants/featureGating'
 
@@ -37,16 +39,66 @@ export function useOrgConfig(): UseOrgConfigResult {
     dbUser ? { tenantId: dbUser.tenantId } : 'skip'
   )
 
+  const [effectiveGating, setEffectiveGating] = useState<{
+    allowedAgents: 'all' | string[]
+    features: TenantConfig['features']
+    fullPlatformAccess: boolean
+    nicheId: NicheId
+  } | null>(null)
+
+  useEffect(() => {
+    if (!user) {
+      setEffectiveGating(null)
+      return
+    }
+    let cancelled = false
+    fetch('/api/platform/effective-config', { credentials: 'same-origin' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then(
+        (data: {
+          allowedAgents?: 'all' | string[]
+          features?: TenantConfig['features']
+          fullPlatformAccess?: boolean
+          nicheId?: NicheId
+        } | null) => {
+          if (cancelled || !data?.features) return
+          setEffectiveGating({
+            allowedAgents: data.allowedAgents ?? DEFAULT_CONFIG.allowedAgents,
+            features: data.features,
+            fullPlatformAccess: data.fullPlatformAccess === true,
+            nicheId: data.nicheId ?? 'generic',
+          })
+        }
+      )
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [user?.id])
+
   const isLoading = user !== undefined && dbUser === undefined
-  const config: TenantConfig = tenantConfig
-    ? {
-        allowedAgents: tenantConfig.allowedAgents,
-        allowedIntegrations: tenantConfig.allowedIntegrations,
-        features: { ...DEFAULT_CONFIG.features, ...tenantConfig.features },
-        limits: { ...DEFAULT_CONFIG.limits, ...tenantConfig.limits },
-        billingModel: tenantConfig.billingModel,
-      }
-    : DEFAULT_CONFIG
+  const config: TenantConfig = useMemo(() => {
+    const base: TenantConfig = tenantConfig
+      ? {
+          allowedAgents: tenantConfig.allowedAgents,
+          allowedIntegrations: tenantConfig.allowedIntegrations,
+          features: { ...DEFAULT_CONFIG.features, ...tenantConfig.features },
+          limits: { ...DEFAULT_CONFIG.limits, ...tenantConfig.limits },
+          billingModel: tenantConfig.billingModel,
+          nicheId: tenantConfig.nicheId ?? 'generic',
+          nicheOverrides: tenantConfig.nicheOverrides,
+          fullPlatformAccess: tenantConfig.fullPlatformAccess,
+        }
+      : DEFAULT_CONFIG
+    if (!effectiveGating) return base
+    return {
+      ...base,
+      allowedAgents: effectiveGating.allowedAgents,
+      features: effectiveGating.features,
+      fullPlatformAccess: effectiveGating.fullPlatformAccess,
+      nicheId: effectiveGating.nicheId,
+    }
+  }, [tenantConfig, effectiveGating])
 
   const isOnTrial =
     !!billing?.trialEndsAt && billing.trialEndsAt > Date.now()

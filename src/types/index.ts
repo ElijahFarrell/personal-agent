@@ -72,6 +72,7 @@ export type RouteTarget =
   | 'adsScraper'
   | 'adAnalyzer'
   | 'campaignBuilder'
+  | 'sdr'
 
 export interface RouteDecision {
   target: RouteTarget

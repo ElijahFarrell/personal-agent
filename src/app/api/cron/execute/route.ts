@@ -105,12 +105,19 @@ export async function GET(req: NextRequest) {
                 autoApprove,
               })
               const { compileWorkflow } = await import('@/services/workflowCompilerService')
+              const { resolvePlatformForClerkUser } = await import('@/platform/niche')
+              const platformResolved = await resolvePlatformForClerkUser(
+                convex,
+                clerkUserId,
+                dbUser.tenantId
+              )
               const workflow = await compileWorkflow(
                 workflowDef.definition as WorkflowDefinition,
                 {
                   userId: clerkUserId,
                   tenantId: clerkTenantId,
                   workflowId: `schedule-${workflowId}`,
+                  platformResolved,
                   creditsCheck: async (tid, minRequired) => {
                     const balance = await convex.query(api.credits.getCreditBalance, {
                       tenantId: tid as typeof schedule.tenantId,

@@ -61,6 +61,12 @@ const limitsValidator = v.object({
   maxInboxSyncPerDay: v.number(),
 })
 
+const nicheIdValidator = v.union(v.literal('generic'), v.literal('real_estate'))
+
+const nicheOverridesValidator = v.object({
+  orchestratorAddendum: v.optional(v.string()),
+})
+
 // ─── Queries ──────────────────────────────────────────────────────────────────
 
 export const getByTenantId = query({
@@ -86,6 +92,9 @@ export const getDefaultConfig = query({
       features: { ...DEFAULT_CONFIG_SHAPE.features },
       limits: { ...DEFAULT_CONFIG_SHAPE.limits },
       billingModel: DEFAULT_CONFIG_SHAPE.billingModel,
+      nicheId: 'generic' as const,
+      nicheOverrides: undefined,
+      fullPlatformAccess: undefined,
     }
   },
 })
@@ -151,6 +160,9 @@ export const upsertConfig = mutation({
       v.literal(BILLING_MODEL.FRIEND)
     ),
     adminNotes: v.optional(v.string()),
+    nicheId: v.optional(nicheIdValidator),
+    nicheOverrides: v.optional(nicheOverridesValidator),
+    fullPlatformAccess: v.optional(v.boolean()),
     updatedBy: v.string(),
   },
   handler: async (ctx, args) => {
@@ -160,6 +172,22 @@ export const upsertConfig = mutation({
       .withIndex(INDEXES.BY_TENANT_ID, (q) => q.eq('tenantId', args.tenantId))
       .unique()
 
+    const nicheId = existing
+      ? args.nicheId !== undefined
+        ? args.nicheId
+        : (existing.nicheId ?? 'generic')
+      : (args.nicheId ?? 'generic')
+
+    const nicheOverrides =
+      args.nicheOverrides !== undefined
+        ? args.nicheOverrides
+        : existing?.nicheOverrides
+
+    const fullPlatformAccess =
+      args.fullPlatformAccess !== undefined
+        ? args.fullPlatformAccess
+        : existing?.fullPlatformAccess
+
     const doc = {
       tenantId: args.tenantId,
       allowedAgents: args.allowedAgents,
@@ -168,6 +196,9 @@ export const upsertConfig = mutation({
       limits: args.limits,
       billingModel: args.billingModel,
       adminNotes: args.adminNotes,
+      nicheId,
+      nicheOverrides,
+      fullPlatformAccess,
       updatedAt: now,
       updatedBy: args.updatedBy,
     }

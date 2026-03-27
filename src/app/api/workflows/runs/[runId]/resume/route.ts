@@ -7,6 +7,7 @@ import {
   compileWorkflow,
   type WorkflowDefinition,
 } from '@/services/workflowCompilerService'
+import { resolvePlatformForClerkUser } from '@/platform/niche'
 import { WORKFLOW_RUN_STATUS } from '@convex/constants'
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
@@ -65,12 +66,18 @@ export async function POST(
       return NextResponse.json({ error: 'Workflow definition not found' }, { status: 404 })
     }
 
+    const platformResolved = await resolvePlatformForClerkUser(
+      convex,
+      String(dbUser.clerkUserId),
+      dbUser.tenantId
+    )
     const workflow = await compileWorkflow(
       workflowDef.definition as WorkflowDefinition,
       {
         userId: String(dbUser.clerkUserId),
         tenantId: String(dbUser.tenantId),
         workflowId: `compiled-${run.workflowDefinitionId}`,
+        platformResolved,
         creditsCheck: async (tid, minRequired) => {
           const balance = await convex.query(api.credits.getCreditBalance, {
             tenantId: tid as typeof dbUser.tenantId,

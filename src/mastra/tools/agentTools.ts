@@ -28,8 +28,9 @@ import { createAdsScraperAgent } from '../agents/adsScraperAgent'
 import { createAdAnalyzerAgent } from '../agents/adAnalyzerAgent'
 import { createCampaignBuilderAgent } from '../agents/campaignBuilderAgent'
 import { ADS_AGENT_GENERATE_OPTS } from '../agents/adsAgentOptions'
-import { createSDRAgent } from '../agents/sdrAgent'
 import { createLeadAgent } from '../agents/leadAgent'
+import type { ResolvedPlatformConfig } from '@/platform/niche/types'
+import { AGENT_CATALOG } from '@/platform/agent-catalog'
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
 
@@ -41,6 +42,30 @@ const taskSchema = z.object({
 function withCustomInstructions(task: string, instructions: string | undefined): string {
   if (!instructions?.trim()) return task
   return `[Custom instructions for this agent: ${instructions.trim()}]\n\n${task}`
+}
+
+function filterToolsByPlatformConfig(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  built: Record<string, any>,
+  resolved: ResolvedPlatformConfig
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): Record<string, any> {
+  const out: Record<string, unknown> = {}
+  for (const { id, toolsObjectKey } of AGENT_CATALOG) {
+    if (resolved.fullPlatformAccess || resolved.effectiveAllowedAgents.has(id)) {
+      const t = built[toolsObjectKey]
+      if (t !== undefined) out[toolsObjectKey] = t
+    }
+  }
+  const allowSchedules =
+    resolved.fullPlatformAccess || resolved.effectiveFeatures.scheduledTasks
+  if (allowSchedules) {
+    if (built.createSchedule) out.createSchedule = built.createSchedule
+    if (built.listSchedules) out.listSchedules = built.listSchedules
+    if (built.toggleSchedule) out.toggleSchedule = built.toggleSchedule
+    if (built.deleteSchedule) out.deleteSchedule = built.deleteSchedule
+  }
+  return out
 }
 
 /**
@@ -56,7 +81,8 @@ export function createAgentTools(
   tenantId: string,
   agentInstructions?: Record<string, string>,
   connectedProviders: string[] = [],
-  workspace?: Workspace
+  workspace?: Workspace,
+  platformResolved?: ResolvedPlatformConfig
 ) {
   async function getInputForAgent(
     task: string,
@@ -72,7 +98,8 @@ export function createAgentTools(
     return `## Relevant Context\n\n${contextBlock}\n\n---\n\n## Your Task\n\n${taskWithInstructions}`
   }
 
-  return {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const built: Record<string, any> = {
     emailAgent: createTool({
       id: 'email-agent',
       description:
@@ -645,4 +672,6 @@ export function createAgentTools(
       },
     }),
   }
+
+  return platformResolved ? filterToolsByPlatformConfig(built, platformResolved) : built
 }

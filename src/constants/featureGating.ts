@@ -3,6 +3,13 @@
  * Used on both client and server.
  */
 
+/** Primary vertical for niche packs (Convex + resolver). */
+export type NicheId = 'generic' | 'real_estate'
+
+export interface NicheOverrides {
+  orchestratorAddendum?: string
+}
+
 export interface TenantConfigFeatures {
   customWorkflows: boolean
   deepResearch: boolean
@@ -36,6 +43,10 @@ export interface TenantConfig {
   features: TenantConfigFeatures
   limits: TenantConfigLimits
   billingModel?: string
+  nicheId?: NicheId
+  nicheOverrides?: NicheOverrides
+  /** Convex flag: org sees full agent/feature/workflow surface (like env allowlists). */
+  fullPlatformAccess?: boolean
 }
 
 /** Fallback when no tenantConfigs row exists (free-tier equivalent). */
@@ -77,16 +88,43 @@ export const DEFAULT_CONFIG: TenantConfig = {
     maxInboxSyncPerDay: 50,
   },
   billingModel: 'friend',
+  nicheId: 'generic',
+  nicheOverrides: undefined,
+  fullPlatformAccess: undefined,
 }
 
 export type FeatureKey = keyof TenantConfigFeatures
 
+/** For full-platform / builder sessions — every feature gate passes. */
+export function withAllFeaturesEnabled(
+  features: TenantConfigFeatures
+): TenantConfigFeatures {
+  const out = { ...features }
+  for (const k of Object.keys(out) as (keyof TenantConfigFeatures)[]) {
+    out[k] = true
+  }
+  return out
+}
+
 export function isAgentAllowed(config: TenantConfig, agentId: string): boolean {
+  if (config.fullPlatformAccess === true) return true
   if (config.allowedAgents === 'all') return true
   return config.allowedAgents.includes(agentId)
 }
 
+/**
+ * Agent allowlist after niche + tenant resolution (server-side).
+ */
+export function isAgentAllowedResolved(
+  resolved: { fullPlatformAccess: boolean; effectiveAllowedAgents: Set<string> },
+  agentId: string
+): boolean {
+  if (resolved.fullPlatformAccess) return true
+  return resolved.effectiveAllowedAgents.has(agentId)
+}
+
 export function isIntegrationAllowed(config: TenantConfig, provider: string): boolean {
+  if (config.fullPlatformAccess === true) return true
   if (config.allowedIntegrations === 'all') return true
   return config.allowedIntegrations.includes(provider)
 }
@@ -95,6 +133,7 @@ export function isFeatureEnabled(
   config: TenantConfig,
   feature: FeatureKey
 ): boolean {
+  if (config.fullPlatformAccess === true) return true
   return config.features[feature] === true
 }
 

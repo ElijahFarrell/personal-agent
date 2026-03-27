@@ -118,12 +118,19 @@ export async function POST(req: NextRequest) {
             autoApprove,
           })
           const { compileWorkflow } = await import('@/services/workflowCompilerService')
+          const { resolvePlatformForClerkUser } = await import('@/platform/niche')
+          const platformResolved = await resolvePlatformForClerkUser(
+            convex,
+            uid,
+            dbUser.tenantId
+          )
           const workflow = await compileWorkflow(
             workflowDef.definition as WorkflowDefinition,
             {
               userId: uid,
               tenantId: tid,
               workflowId: `composio-${workflowId}`,
+              platformResolved,
               creditsCheck: async (tenantId, minRequired) => {
                 const balance = await convex.query(api.credits.getCreditBalance, {
                   tenantId: tenantId as typeof binding.tenantId,

@@ -3,6 +3,42 @@
  * The orchestrator is the central intelligence — it delegates all specialized
  * work to sub-agent tools and synthesizes their results.
  */
+import type { ResolvedPlatformConfig } from '@/platform/niche/types'
+import { agentIdForOrchestratorToolId } from '@/platform/agent-catalog'
+import type { AgentId } from '@/constants/agents'
+
+const SCHEDULE_TOOL_KEYS = new Set([
+  'create-schedule',
+  'list-schedules',
+  'toggle-schedule',
+  'delete-schedule',
+])
+
+function shouldIncludeOrchestratorToolKey(
+  key: string,
+  resolved: ResolvedPlatformConfig | undefined
+): boolean {
+  if (!resolved) return true
+  const agentId = agentIdForOrchestratorToolId(key)
+  if (agentId) {
+    return (
+      resolved.fullPlatformAccess || resolved.effectiveAllowedAgents.has(agentId)
+    )
+  }
+  if (key === 'workflow-adsIntelligence') {
+    if (resolved.fullPlatformAccess) return true
+    const ads: AgentId[] = ['adsScraper', 'adAnalyzer', 'campaignBuilder']
+    return ads.some((id) => resolved.effectiveAllowedAgents.has(id))
+  }
+  if (SCHEDULE_TOOL_KEYS.has(key)) {
+    return (
+      resolved.fullPlatformAccess ||
+      resolved.effectiveFeatures.scheduledTasks === true
+    )
+  }
+  return true
+}
+
 const AGENT_DESCRIPTIONS: Record<
   string,
   { provider?: string | null; providers?: string[]; desc: string; sdrProviders?: string[] }
@@ -47,11 +83,13 @@ const AGENT_DESCRIPTIONS: Record<
 export function buildOrchestratorPrompt(
   userId: string,
   tenantId: string,
-  connectedProviders: string[] = []
+  connectedProviders: string[] = [],
+  resolved?: ResolvedPlatformConfig
 ): string {
   const providerSet = new Set(connectedProviders)
 
   const agentLines = Object.entries(AGENT_DESCRIPTIONS)
+    .filter(([name]) => shouldIncludeOrchestratorToolKey(name, resolved))
     .map(([name, { provider, providers, desc, sdrProviders }]) => {
       const isConnected = provider
         ? providerSet.has(provider)
@@ -78,7 +116,12 @@ export function buildOrchestratorPrompt(
     ? connectedProviders.join(', ')
     : 'none'
 
-  return `You are the Personal AI Operating System — the central intelligence for running a one-person business.
+  const verticalBlock =
+    resolved?.orchestratorContext?.trim() !== ''
+      ? `## Vertical focus\n\n${resolved!.orchestratorContext.trim()}\n\n---\n\n`
+      : ''
+
+  return `${verticalBlock}You are the Personal AI Operating System — the central intelligence for running a one-person business.
 
 Your role is to understand intent, decompose tasks, delegate to the right specialist agents, and deliver clear results. You have a team of specialized sub-agents available as tools — leverage them aggressively and in parallel.
 
