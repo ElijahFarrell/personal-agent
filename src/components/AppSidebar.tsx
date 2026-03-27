@@ -24,6 +24,7 @@ import {
   Film,
   LineChart,
   Radar,
+  Inbox,
 } from 'lucide-react'
 import { useOrgConfig } from '@/hooks/useOrgConfig'
 import { isSuperAdmin } from '@/middleware/adminGuard'
@@ -72,6 +73,7 @@ interface NavGroup {
 // Ungrouped items first (top), grouped items toward bottom
 const NAV_CONFIG: (NavItem | NavGroup)[] = [
   { type: 'item', href: '/dashboard', label: 'Overview', icon: LayoutDashboard, exact: true },
+  { type: 'item', href: '/dashboard/inbox', label: 'Inbox', icon: Inbox },
   { type: 'item', href: '/dashboard/prospects', label: 'Prospects', icon: Users },
   {
     type: 'group',

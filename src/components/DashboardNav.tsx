@@ -43,6 +43,7 @@ interface NavGroup {
 
 const NAV_CONFIG: (NavItem | NavGroup)[] = [
   { type: 'item', href: '/dashboard', label: 'Overview', icon: LayoutDashboard, exact: true },
+  { type: 'item', href: '/dashboard/inbox', label: 'Inbox', icon: Inbox },
   {
     type: 'group',
     label: 'AI',
@@ -63,7 +64,6 @@ const NAV_CONFIG: (NavItem | NavGroup)[] = [
       { type: 'item', href: '/dashboard/context', label: 'Context', icon: FileText },
       { type: 'item', href: '/dashboard/skills', label: 'Skills', icon: Zap },
       { type: 'item', href: '/dashboard/integrations', label: 'Integrations', icon: Plug },
-      { type: 'item', href: '/dashboard/inbox', label: 'Inbox', icon: Inbox },
       { type: 'item', href: '/dashboard/content/drafts', label: 'Drafts', icon: FileText },
       { type: 'item', href: '/dashboard/content/video', label: 'Video', icon: Film },
       { type: 'item', href: '/dashboard/content/metaAdsInsights', label: 'Meta Ads', icon: LineChart },
@@ -95,7 +95,6 @@ function getDefaultGroupState(pathname: string): Record<string, boolean> {
       pathname.startsWith('/dashboard/context') ||
       pathname.startsWith('/dashboard/skills') ||
       pathname.startsWith('/dashboard/integrations') ||
-      pathname.startsWith('/dashboard/inbox') ||
       pathname.startsWith('/dashboard/content'),
   }
 }

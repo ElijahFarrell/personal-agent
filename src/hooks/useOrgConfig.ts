@@ -88,6 +88,7 @@ export function useOrgConfig(): UseOrgConfigResult {
           nicheId: tenantConfig.nicheId ?? 'generic',
           nicheOverrides: tenantConfig.nicheOverrides,
           fullPlatformAccess: tenantConfig.fullPlatformAccess,
+          orgReplyVoice: tenantConfig.orgReplyVoice,
         }
       : DEFAULT_CONFIG
     if (!effectiveGating) return base

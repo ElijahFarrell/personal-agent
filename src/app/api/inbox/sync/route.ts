@@ -3,7 +3,8 @@ import { getTenantContext } from '@/middleware/tenantContext'
 import { isFeatureEnabled } from '@/constants/featureGating'
 import { ConvexHttpClient } from 'convex/browser'
 import { api } from '@convex/_generated/api'
-import { syncGmailInboxForUser } from '@/services/inboxSyncService'
+import { syncUnifiedInboxForUser } from '@/services/inboxSyncService'
+import { rescoreTenantProspectsFromInbox } from '@/services/leadScoringService'
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
 
@@ -27,11 +28,42 @@ export async function POST(_req: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 400 })
     }
 
-    const result = await syncGmailInboxForUser({
+    const usedToday = await convex.query(api.inboxSyncUsage.getCountForUserToday, {
+      userId: dbUser._id,
+    })
+
+    const maxSync = config.limits.maxInboxSyncPerDay
+    if (maxSync >= 0 && usedToday >= maxSync) {
+      return NextResponse.json(
+        {
+          error: `Daily inbox sync limit reached (${maxSync}). Try again tomorrow.`,
+        },
+        { status: 429 }
+      )
+    }
+
+    const userEmailLower = dbUser.email.toLowerCase().trim()
+    const result = await syncUnifiedInboxForUser({
       clerkUserId: userId,
       dbUserId: dbUser._id,
       tenantId: dbUser.tenantId,
+      userEmailLower,
     })
+
+    await convex.mutation(api.inboxSyncUsage.incrementSyncCount, {
+      userId: dbUser._id,
+    })
+
+    if (isFeatureEnabled(config, 'leadScoring')) {
+      try {
+        await rescoreTenantProspectsFromInbox({
+          tenantId: dbUser.tenantId,
+          inboxUserId: dbUser._id,
+        })
+      } catch (e) {
+        console.warn('[inbox/sync] lead scoring skipped:', e)
+      }
+    }
 
     return NextResponse.json(result)
   } catch (err) {

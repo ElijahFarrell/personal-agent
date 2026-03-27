@@ -65,6 +65,7 @@ export default defineSchema({
       videoStudio: v.optional(v.boolean()),
       unifiedInbox: v.optional(v.boolean()),
       eventTriggers: v.optional(v.boolean()),
+      leadScoring: v.optional(v.boolean()),
     }),
     limits: v.object({
       maxMembers: v.number(),
@@ -97,6 +98,8 @@ export default defineSchema({
     ),
     /** When true, org bypasses niche/agent/feature gating (same as env allowlists). */
     fullPlatformAccess: v.optional(v.boolean()),
+    /** Short org voice: who you are, what you sell, tone — used for inbox reply personalization. */
+    orgReplyVoice: v.optional(v.string()),
     updatedAt: v.number(),
     updatedBy: v.string(),
   }).index(INDEXES.BY_TENANT_ID, ['tenantId']),
@@ -331,6 +334,11 @@ export default defineSchema({
     ),
     notes: v.optional(v.string()),
     customFields: v.optional(v.any()),
+    /** Rule-based lead score 0–100; optional until scored */
+    leadScore: v.optional(v.number()),
+    scoreUpdatedAt: v.optional(v.number()),
+    scoreBreakdown: v.optional(v.any()),
+    scoreModelVersion: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -633,7 +641,8 @@ export default defineSchema({
     userId: v.id(TABLES.USERS),
     provider: v.union(
       v.literal(INBOX_PROVIDER.GMAIL),
-      v.literal(INBOX_PROVIDER.OUTLOOK)
+      v.literal(INBOX_PROVIDER.OUTLOOK),
+      v.literal(INBOX_PROVIDER.WHATSAPP)
     ),
     externalThreadId: v.string(),
     subject: v.optional(v.string()),
@@ -642,6 +651,7 @@ export default defineSchema({
     participantEmails: v.array(v.string()),
     prospectId: v.optional(v.id(TABLES.PROSPECTS)),
     needsReply: v.boolean(),
+    metadata: v.optional(v.any()),
     updatedAt: v.number(),
   })
     .index(INDEXES.BY_TENANT_ID, ['tenantId'])
@@ -656,13 +666,24 @@ export default defineSchema({
     threadId: v.id(TABLES.INBOX_THREADS),
     externalMessageId: v.string(),
     sentAt: v.number(),
+    /** Legacy display field; for email equals address; for WhatsApp often phone or wa id */
     fromEmail: v.string(),
+    senderId: v.optional(v.string()),
+    senderLabel: v.optional(v.string()),
     bodyPreview: v.string(),
     isOutbound: v.boolean(),
     createdAt: v.number(),
   })
     .index(INDEXES.BY_INBOX_THREAD_SENT_AT, ['threadId', 'sentAt'])
     .index(INDEXES.BY_INBOX_THREAD_MESSAGE, ['threadId', 'externalMessageId']),
+
+  [TABLES.INBOX_SYNC_USAGE]: defineTable({
+    userId: v.id(TABLES.USERS),
+    /** UTC calendar date YYYY-MM-DD */
+    dateKey: v.string(),
+    syncCount: v.number(),
+    updatedAt: v.number(),
+  }).index(INDEXES.BY_INBOX_SYNC_USER_DATE, ['userId', 'dateKey']),
 
   [TABLES.VIDEO_GENERATION_JOBS]: defineTable({
     tenantId: v.id(TABLES.TENANTS),

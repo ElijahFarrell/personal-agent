@@ -33,6 +33,7 @@ import {
   resolvePlatformConfig,
 } from '@/platform/niche'
 import { buildProspectsContext } from '@/services/prospectsContextService'
+import { buildInboxDigestForChat } from '@/services/inboxDigestService'
 import { api } from '@convex/_generated/api'
 import type { Id } from '@convex/_generated/dataModel'
 import { AGENT_BY_ID, type AgentId } from '@/constants/agents'
@@ -120,7 +121,7 @@ export async function prepareChatAgentStream(
       )
     : undefined
 
-  const [relevantContext, historyDocs, prospectsContext] = await Promise.all([
+  const [relevantContext, historyDocs, prospectsContext, inboxDigest] = await Promise.all([
     retrieveRelevantContext(message, tenantId, dbUserId).catch(() => []),
     threadId
       ? convex
@@ -129,6 +130,9 @@ export async function prepareChatAgentStream(
       : Promise.resolve([]),
     dbUser
       ? buildProspectsContext(dbUser.tenantId, dbUserId).catch(() => '')
+      : Promise.resolve(''),
+    dbUser && platformResolved.effectiveFeatures.unifiedInbox === true
+      ? buildInboxDigestForChat(dbUser._id).catch(() => '')
       : Promise.resolve(''),
   ])
 
@@ -148,7 +152,7 @@ export async function prepareChatAgentStream(
 
   const agentMessages: AgentMessage[] = []
 
-  const systemParts = [contextBlock, prospectsContext].filter(Boolean)
+  const systemParts = [contextBlock, prospectsContext, inboxDigest].filter(Boolean)
   if (systemParts.length > 0) {
     agentMessages.push({ role: CHAT_ROLES.SYSTEM, content: systemParts.join('\n\n---\n\n') })
   }

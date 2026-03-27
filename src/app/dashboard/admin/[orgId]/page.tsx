@@ -26,10 +26,14 @@ const INTEGRATION_PROVIDERS = [
   'apollo',
   'outlook',
   'gmail',
+  'whatsapp',
   'google-calendar',
   'slack',
   'linkedin',
   'instagram',
+  'tiktok',
+  'metaAds',
+  'searchApi',
   'notion',
   'hubspot',
   'salesforce',
@@ -68,6 +72,10 @@ const FEATURE_KEYS = [
   'voiceMode',
   'workflowBuilder',
   'scheduledTasks',
+  'videoStudio',
+  'unifiedInbox',
+  'eventTriggers',
+  'leadScoring',
 ] as const
 
 function featureLabel(key: string): string {
@@ -121,6 +129,7 @@ export default function AdminOrgConfigPage() {
             limits: { ...DEFAULT_CONFIG.limits, ...data.limits },
             billingModel: data.billingModel ?? DEFAULT_CONFIG.billingModel,
             adminNotes: data.adminNotes ?? '',
+            orgReplyVoice: data.orgReplyVoice ?? '',
           })
         } else {
           setConfig({ ...DEFAULT_CONFIG, adminNotes: '' })
@@ -549,6 +558,25 @@ export default function AdminOrgConfigPage() {
             </section>
 
             <section className={sectionClass}>
+              <h2 className="text-sm font-medium text-foreground">Org reply voice</h2>
+              <p className="mb-2 text-xs text-muted-foreground">
+                Short text the AI uses for inbox drafts: who you are, what you sell, tone, words to avoid.
+              </p>
+              <textarea
+                value={config.orgReplyVoice ?? ''}
+                onChange={(e) =>
+                  setConfig({
+                    ...config,
+                    orgReplyVoice: e.target.value,
+                  })
+                }
+                placeholder="e.g. We help SMBs automate sales follow-up. Friendly, direct, no jargon."
+                rows={4}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground"
+              />
+            </section>
+
+            <section className={sectionClass}>
               <h2 className="text-sm font-medium text-foreground">Limits</h2>
               <div className="grid gap-3 sm:grid-cols-2">
                 {(
@@ -559,6 +587,8 @@ export default function AdminOrgConfigPage() {
                     'maxSchedules',
                     'maxSkills',
                     'monthlyCredits',
+                    'maxVideoGenerationsPerMonth',
+                    'maxInboxSyncPerDay',
                   ] as const
                 ).map((key) => (
                   <div key={key}>
@@ -571,7 +601,7 @@ export default function AdminOrgConfigPage() {
                     <input
                       id={key}
                       type="number"
-                      value={config.limits[key]}
+                      value={config.limits[key] ?? DEFAULT_CONFIG.limits[key]}
                       onChange={(e) =>
                         setConfig({
                           ...config,

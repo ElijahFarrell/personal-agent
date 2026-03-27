@@ -208,6 +208,10 @@ export const updateProspect = mutation({
     stage: v.optional(stageValidator),
     notes: v.optional(v.string()),
     customFields: v.optional(v.any()),
+    leadScore: v.optional(v.number()),
+    scoreUpdatedAt: v.optional(v.number()),
+    scoreBreakdown: v.optional(v.any()),
+    scoreModelVersion: v.optional(v.string()),
   },
   handler: async (ctx, { prospectId, name, firstName, lastName, ...updates }) => {
     const filtered = Object.fromEntries(

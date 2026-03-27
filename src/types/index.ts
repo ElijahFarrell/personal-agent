@@ -147,6 +147,7 @@ export type IntegrationProvider =
   | 'tiktok'
   | 'metaAds'
   | 'searchApi'
+  | 'whatsapp'
 
 /** Composio-backed providers (excludes jira, follow-up-boss). Pipedrive may require BYO OAuth in Composio. */
 export type ComposioProvider = IntegrationProvider
@@ -386,6 +387,10 @@ export interface ProspectRecord {
   source: ProspectSource
   notes?: string
   customFields?: Record<string, unknown>
+  leadScore?: number
+  scoreUpdatedAt?: number
+  scoreBreakdown?: Record<string, unknown>
+  scoreModelVersion?: string
   createdAt: number
   updatedAt: number
 }

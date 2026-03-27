@@ -24,6 +24,7 @@ export interface TenantConfigFeatures {
   videoStudio: boolean
   unifiedInbox: boolean
   eventTriggers: boolean
+  leadScoring: boolean
 }
 
 export interface TenantConfigLimits {
@@ -47,6 +48,8 @@ export interface TenantConfig {
   nicheOverrides?: NicheOverrides
   /** Convex flag: org sees full agent/feature/workflow surface (like env allowlists). */
   fullPlatformAccess?: boolean
+  /** Org voice for AI replies (inbox, outreach). From Convex tenantConfigs. */
+  orgReplyVoice?: string
 }
 
 /** Fallback when no tenantConfigs row exists (free-tier equivalent). */
@@ -61,7 +64,15 @@ export const DEFAULT_CONFIG: TenantConfig = {
     'adAnalyzer',
     'campaignBuilder',
   ],
-  allowedIntegrations: ['gmail', 'google-calendar', 'apollo', 'outlook', 'metaAds', 'searchApi'],
+  allowedIntegrations: [
+    'gmail',
+    'google-calendar',
+    'apollo',
+    'outlook',
+    'whatsapp',
+    'metaAds',
+    'searchApi',
+  ],
   features: {
     customWorkflows: false,
     deepResearch: false,
@@ -76,6 +87,7 @@ export const DEFAULT_CONFIG: TenantConfig = {
     videoStudio: false,
     unifiedInbox: false,
     eventTriggers: false,
+    leadScoring: false,
   },
   limits: {
     maxMembers: 1,

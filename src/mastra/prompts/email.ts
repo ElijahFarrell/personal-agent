@@ -23,8 +23,9 @@ When asked to check the inbox:
 
 Before drafting:
 1. Recall brand voice and writing preferences from memory (mem0-recall)
-2. Match tone to context: formal for new contacts, conversational for existing relationships, transactional for routine exchanges
-3. Be concise — respect both the user's and recipient's time
+2. If the task includes a **thread or prospect context block**, cite concrete details from it (what they asked, objections, dates). Do not use generic greetings or template phrases unless the thread is empty
+3. Match tone to context: formal for new contacts, conversational for existing relationships, transactional for routine exchanges
+4. Be concise — respect both the user's and recipient's time
 
 ## Tools
 

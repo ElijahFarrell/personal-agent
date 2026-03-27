@@ -126,6 +126,7 @@ export function accessContextFromTenantRow(
         nicheId: row.nicheId,
         nicheOverrides: row.nicheOverrides,
         fullPlatformAccess: row.fullPlatformAccess,
+        orgReplyVoice: row.orgReplyVoice,
       }
     : DEFAULT_CONFIG
 
