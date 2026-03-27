@@ -31,7 +31,9 @@ export default function SchedulesPage() {
           <h1 className="text-xl font-semibold tracking-tight">Schedules</h1>
           <p className="text-muted-foreground">
             Create recurring tasks that run on a cron schedule. Use agent prompts
-            or saved workflows.
+            or saved workflows. On Vercel Hobby the platform cron runs once per day,
+            so schedules that need multiple runs per day need Pro or another
+            scheduler.
           </p>
         </div>
         <Button onClick={() => setFormOpen(true)}>
