@@ -158,7 +158,12 @@ export const insertMessage = mutation({
         q.eq('threadId', args.threadId).eq('externalMessageId', args.externalMessageId)
       )
       .first()
-    if (dup) return dup._id
+    if (dup) {
+      if (args.bodyPreview.length > (dup.bodyPreview?.length ?? 0)) {
+        await ctx.db.patch(dup._id, { bodyPreview: args.bodyPreview })
+      }
+      return dup._id
+    }
 
     return await ctx.db.insert(TABLES.INBOX_MESSAGES, {
       threadId: args.threadId,

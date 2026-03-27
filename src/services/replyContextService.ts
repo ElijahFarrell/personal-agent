@@ -4,12 +4,17 @@
 import { ConvexHttpClient } from 'convex/browser'
 import { api } from '@convex/_generated/api'
 import type { Id } from '@convex/_generated/dataModel'
+import { normalizeEmailPlainText } from '@/lib/inboxEmailText'
+import { INBOX_PROVIDER } from '@convex/constants'
+import { fetchLiveThreadMessages } from '@/services/inboxLiveMessagesService'
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
 
 export interface ReplyContextInput {
   threadId: Id<'inboxThreads'>
   orgReplyVoice?: string
+  clerkUserId: string
+  userEmailLower: string
 }
 
 export async function buildReplyContextPrompt(input: ReplyContextInput): Promise<string> {
@@ -18,25 +23,61 @@ export async function buildReplyContextPrompt(input: ReplyContextInput): Promise
     throw new Error('Thread not found')
   }
 
-  const messages = await convex.query(api.inbox.listMessagesForThread, {
-    threadId: input.threadId,
-    limit: 200,
-  })
+  type Row = {
+    who: string
+    dir: 'outbound' | 'inbound'
+    ts: string
+    body: string
+  }
+  const rows: Row[] = []
+
+  if (thread.provider === INBOX_PROVIDER.GMAIL || thread.provider === INBOX_PROVIDER.OUTLOOK) {
+    const live = await fetchLiveThreadMessages(
+      input.clerkUserId,
+      thread.provider,
+      thread.externalThreadId,
+      input.userEmailLower
+    )
+    for (const m of live) {
+      const who = m.fromEmail
+      const dir = m.isOutbound ? ('outbound' as const) : ('inbound' as const)
+      const ts = new Date(m.sentAt).toISOString()
+      const body = normalizeEmailPlainText(m.bodyPlain).trim() || m.bodyPlain.trim() || '(No content)'
+      rows.push({ who, dir, ts, body })
+    }
+  } else {
+    const messages = await convex.query(api.inbox.listMessagesForThread, {
+      threadId: input.threadId,
+      limit: 200,
+    })
+    for (const m of messages ?? []) {
+      const who = m.senderLabel || m.senderId || m.fromEmail
+      const dir = m.isOutbound ? ('outbound' as const) : ('inbound' as const)
+      const ts = new Date(m.sentAt).toISOString()
+      const body =
+        normalizeEmailPlainText(m.bodyPreview ?? '').trim() ||
+        '(no message body in storage for this channel)'
+      rows.push({ who, dir, ts, body })
+    }
+  }
 
   const lines: string[] = []
   lines.push('## Thread')
   lines.push(`Provider: ${thread.provider}`)
   lines.push(`Subject/title: ${thread.subject ?? '(none)'}`)
-  lines.push(`Snippet: ${thread.snippet ?? ''}`)
+  lines.push(`Snippet: ${normalizeEmailPlainText(thread.snippet ?? '')}`)
   lines.push(`Needs reply: ${thread.needsReply ? 'yes' : 'no'}`)
   lines.push('')
   lines.push('## Messages (oldest → newest)')
-  for (const m of messages ?? []) {
-    const who = m.senderLabel || m.senderId || m.fromEmail
-    const dir = m.isOutbound ? 'outbound' : 'inbound'
-    lines.push(
-      `- [${dir}] ${new Date(m.sentAt).toISOString()} from ${who}: ${m.bodyPreview}`
-    )
+  lines.push(
+    thread.provider === INBOX_PROVIDER.WHATSAPP
+      ? 'Each message includes text synced for this channel. Use quoted details when drafting.'
+      : 'Each message includes the full conversation text loaded on demand via Composio (not truncated). Use quoted details when drafting.'
+  )
+  for (const m of rows) {
+    lines.push('')
+    lines.push(`### ${m.dir} · ${m.who} · ${m.ts}`)
+    lines.push(m.body)
   }
 
   if (thread.prospectId) {

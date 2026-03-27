@@ -6,6 +6,8 @@ import { ConvexHttpClient } from 'convex/browser'
 import { api } from '@convex/_generated/api'
 import type { Id } from '@convex/_generated/dataModel'
 import { executeComposioTool, getComposioConnectionStatus } from '@/lib/composio'
+import { extractGmailMessagesFromToolData } from '@/lib/gmailPayloadPlain'
+import { normalizeEmailPlainText, threadListSnippet } from '@/lib/inboxEmailText'
 import { INBOX_PROVIDER } from '@convex/constants'
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
@@ -15,6 +17,7 @@ function parseFrom(fromHeader: string): string {
   return m ? m[1].trim() : fromHeader.trim()
 }
 
+/** Thread metadata only — full bodies load live from Composio when viewing a thread. */
 interface ParsedMsg {
   threadId: string
   messageId: string
@@ -27,17 +30,23 @@ interface ParsedMsg {
   labelIds: string[]
 }
 
+export interface InboxProviderSyncResult {
+  threadsSynced: number
+  /** Set when Composio returns failure or we cannot parse messages. */
+  error?: string
+}
+
 export async function syncGmailInboxForUser(params: {
   clerkUserId: string
   dbUserId: Id<'users'>
   tenantId: Id<'tenants'>
-}): Promise<{ threadsSynced: number }> {
+}): Promise<InboxProviderSyncResult> {
   const status = await getComposioConnectionStatus(params.clerkUserId)
   if (!status.gmail) {
     return { threadsSynced: 0 }
   }
 
-  const result = await executeComposioTool<{ messages?: Array<Record<string, unknown>> }>(
+  const result = await executeComposioTool<Record<string, unknown>>(
     params.clerkUserId,
     'GMAIL_FETCH_EMAILS',
     {
@@ -48,16 +57,31 @@ export async function syncGmailInboxForUser(params: {
   )
 
   if (!result.successful) {
-    if (result.error) throw new Error(result.error)
-    return { threadsSynced: 0 }
+    const msg =
+      result.error?.trim() ||
+      'Gmail fetch failed (Composio did not return details). Check the connection in Integrations.'
+    console.warn('[inbox] GMAIL_FETCH_EMAILS unsuccessful:', msg)
+    return { threadsSynced: 0, error: msg }
   }
 
-  const raw = result.data?.messages ?? []
+  const raw = extractGmailMessagesFromToolData(result.data)
+  if (
+    process.env.NODE_ENV === 'development' &&
+    raw.length === 0 &&
+    result.data &&
+    typeof result.data === 'object'
+  ) {
+    console.warn(
+      '[inbox] GMAIL_FETCH_EMAILS returned no messages array; top-level keys:',
+      Object.keys(result.data as object)
+    )
+  }
+
   const parsed: ParsedMsg[] = []
 
   for (const m of raw) {
     const threadId = String(m.threadId ?? m.thread_id ?? '')
-    const msgId = String(m.id ?? '')
+    const msgId = String(m.id ?? m.messageId ?? '')
     if (!threadId || !msgId) continue
 
     const headers = (m.payload as { headers?: Array<{ name?: string; value?: string }> })?.headers ?? []
@@ -80,17 +104,33 @@ export async function syncGmailInboxForUser(params: {
     const fromLower = from.toLowerCase()
     const isOutbound = labelIds.includes('SENT')
 
+    const snippetRaw = String(m.snippet ?? '').trim()
+    const snippetStr = normalizeEmailPlainText(snippetRaw)
+    const listSnippet = threadListSnippet(snippetRaw, snippetStr)
+
     parsed.push({
       threadId,
       messageId: msgId,
       subject: subject || '(no subject)',
-      snippet: String(m.snippet ?? ''),
+      snippet: listSnippet,
       from: fromLower,
       participants: [...participants],
       sentAt,
       isOutbound,
       labelIds,
     })
+  }
+
+  if (
+    process.env.NODE_ENV === 'development' &&
+    parsed.length === 0 &&
+    raw.length > 0
+  ) {
+    console.warn(
+      '[inbox] Gmail: 0 messages parsed from',
+      raw.length,
+      'raw rows (check id/messageId and threadId fields)'
+    )
   }
 
   return persistParsedThreads(
@@ -124,7 +164,7 @@ export async function syncOutlookInboxForUser(params: {
   dbUserId: Id<'users'>
   tenantId: Id<'tenants'>
   userEmailLower: string
-}): Promise<{ threadsSynced: number }> {
+}): Promise<InboxProviderSyncResult> {
   try {
   const status = await getComposioConnectionStatus(params.clerkUserId)
   if (!status.outlook) {
@@ -163,7 +203,12 @@ export async function syncOutlookInboxForUser(params: {
     if (!res.successful || !res.data) return
     const data = res.data as Record<string, unknown>
     const inner = (data.data as Record<string, unknown>)?.response_data as Record<string, unknown> | undefined
-    const value = (inner?.value as unknown[]) ?? (data.value as unknown[]) ?? []
+    const nestedData = data.data as Record<string, unknown> | undefined
+    const value =
+      (inner?.value as unknown[]) ??
+      (nestedData?.value as unknown[]) ??
+      (data.value as unknown[]) ??
+      []
     for (const item of value) {
       const m = item as Record<string, unknown>
       const messageId = String(m.id ?? '')
@@ -199,17 +244,31 @@ export async function syncOutlookInboxForUser(params: {
   collect(inboxRes, false)
   collect(sentRes, true)
 
-  const parsed: ParsedMsg[] = messages.map((m) => ({
-    threadId: m.threadId,
-    messageId: m.messageId,
-    subject: m.subject,
-    snippet: m.snippet,
-    from: m.from,
-    participants: m.participants,
-    sentAt: m.sentAt,
-    isOutbound: m.isOutbound,
-    labelIds: [],
-  }))
+  if (!inboxRes.successful && !sentRes.successful) {
+    const err =
+      inboxRes.error?.trim() ||
+      sentRes.error?.trim() ||
+      'Outlook fetch failed (Composio did not return details). Check the connection in Integrations.'
+    console.warn('[inbox] OUTLOOK_LIST_MESSAGES unsuccessful:', err)
+    return { threadsSynced: 0, error: err }
+  }
+
+  const parsed: ParsedMsg[] = messages.map((m) => {
+    const rawSn = String(m.snippet ?? '')
+    const normalized = normalizeEmailPlainText(rawSn).trim()
+    const listSnippet = threadListSnippet(rawSn, normalized)
+    return {
+      threadId: m.threadId,
+      messageId: m.messageId,
+      subject: m.subject,
+      snippet: listSnippet,
+      from: m.from,
+      participants: m.participants,
+      sentAt: m.sentAt,
+      isOutbound: m.isOutbound,
+      labelIds: [],
+    }
+  })
 
   return persistParsedThreads(
     { dbUserId: params.dbUserId, tenantId: params.tenantId },
@@ -217,8 +276,9 @@ export async function syncOutlookInboxForUser(params: {
     INBOX_PROVIDER.OUTLOOK
   )
   } catch (e) {
+    const msg = e instanceof Error ? e.message : 'Outlook sync failed'
     console.warn('[inbox] Outlook sync failed:', e)
-    return { threadsSynced: 0 }
+    return { threadsSynced: 0, error: msg }
   }
 }
 
@@ -264,7 +324,7 @@ async function persistParsedThreads(
     const needsReply =
       !latest.isOutbound && !latest.labelIds.includes('DRAFT')
 
-    const threadConvexId = await convex.mutation(api.inbox.upsertThread, {
+    await convex.mutation(api.inbox.upsertThread, {
       tenantId: params.tenantId,
       userId: params.dbUserId,
       provider,
@@ -277,17 +337,6 @@ async function persistParsedThreads(
       needsReply,
     })
 
-    for (const m of msgs) {
-      await convex.mutation(api.inbox.insertMessage, {
-        threadId: threadConvexId,
-        externalMessageId: m.messageId,
-        sentAt: m.sentAt,
-        fromEmail: m.from || 'unknown',
-        senderId: m.from || undefined,
-        bodyPreview: m.snippet.slice(0, 500),
-        isOutbound: m.isOutbound,
-      })
-    }
     threadsSynced++
   }
 
@@ -295,8 +344,8 @@ async function persistParsedThreads(
 }
 
 export interface UnifiedInboxSyncResult {
-  gmail: { threadsSynced: number }
-  outlook: { threadsSynced: number }
+  gmail: InboxProviderSyncResult
+  outlook: InboxProviderSyncResult
   whatsapp: { threadsSynced: number; note?: string }
 }
 
