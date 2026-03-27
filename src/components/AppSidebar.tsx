@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useUser, UserButton } from '@clerk/nextjs'
+import { useOrganization, useUser, UserButton } from '@clerk/nextjs'
 import {
   LayoutDashboard,
   Plug,
@@ -161,7 +161,10 @@ function isChildActive(pathname: string, items: NavItem[]): boolean {
 export function AppSidebar() {
   const pathname = usePathname()
   const { user } = useUser()
+  const { organization } = useOrganization()
   const { config } = useOrgConfig()
+
+  const brandLabel = organization?.name?.trim() || 'AI OS'
   const [mounted, setMounted] = useState(false)
   const [groupOpen, setGroupOpen] = useState<Record<string, boolean>>(() =>
     getDefaultGroupState(pathname)
@@ -221,13 +224,13 @@ export function AppSidebar() {
         <Link
           href="/dashboard"
           className="flex items-center gap-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring rounded-lg min-w-0 group-data-[collapsible=icon]:hidden"
-          aria-label="AI OS home"
+          aria-label={`${brandLabel} home`}
         >
           <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary shadow-md shadow-primary/30">
             <Zap className="h-4 w-4 text-primary-foreground" aria-hidden="true" />
           </div>
           <span className="text-sm font-semibold tracking-tight text-sidebar-foreground truncate">
-            AI OS
+            {brandLabel}
           </span>
         </Link>
         <SidebarTrigger />
