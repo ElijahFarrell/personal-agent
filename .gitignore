@@ -29,9 +29,9 @@ pnpm-debug.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# vercel
+# vercel (keep vercel.json in repo for crons / project config)
 .vercel
-vercel.json
+
 
 # mastra local sqlite
 mastra.db

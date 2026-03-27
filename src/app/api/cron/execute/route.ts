@@ -25,7 +25,9 @@ function isAuthorized(req: NextRequest): boolean {
 
 /**
  * GET handler for schedule cron execution.
- * Called every minute by Vercel Cron. Queries due schedules and runs them.
+ * Triggered by Vercel Cron (see vercel.json). On Hobby, crons run at most once per day;
+ * on Pro, you can use a per-minute schedule for tighter due-time accuracy.
+ * Queries due schedules and runs them.
  * Protected by Authorization: Bearer <INNGEST_SIGNING_KEY|CRON_SECRET>.
  */
 export async function GET(req: NextRequest) {
