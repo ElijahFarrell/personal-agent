@@ -85,7 +85,8 @@ const buildStep = createStep({
     const init = getInitData<z.infer<typeof workflowInputSchema>>()
     const campaign = await buildCampaignBrief(
       { markdown: inputData.markdown },
-      init.businessProfile
+      init.businessProfile,
+      init.clerkUserId
     )
     return {
       scrape: {
@@ -125,6 +126,10 @@ export async function executeAdsIntelligencePipeline(
   )
   const scrape = await scrapeEnginesParallel(input.clerkUserId, input.query, engines)
   const analysis = await analyzeAdsFromScrape(input.clerkUserId, scrape, input.focusArea)
-  const campaign = await buildCampaignBrief(analysis, input.businessProfile)
+  const campaign = await buildCampaignBrief(
+    analysis,
+    input.businessProfile,
+    input.clerkUserId
+  )
   return { scrape, analysis, campaign }
 }

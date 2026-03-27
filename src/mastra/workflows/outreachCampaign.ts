@@ -7,6 +7,7 @@ import { generateText } from 'ai'
 import { gateway } from 'ai'
 import MemoryClient from 'mem0ai'
 import { config } from '@/lib/config'
+import { gatewayReportingProviderOptions } from '@/lib/aiGatewayReporting'
 import * as linkedinService from '@/services/linkedinService'
 import { search } from '@/services/searchService'
 
@@ -98,6 +99,10 @@ ${target.context ? `Extra context: ${target.context}` : ''}
 ${webContext ? `Web context: ${webContext}` : ''}
 
 Draft a single personalized first message (max 300 chars). Output ONLY the message text, no JSON.`,
+        ...gatewayReportingProviderOptions({
+          user: userId,
+          tags: ['surface:outreach', 'workflow:outreach-campaign'],
+        }),
       })
 
       const message = text.trim().slice(0, 300)

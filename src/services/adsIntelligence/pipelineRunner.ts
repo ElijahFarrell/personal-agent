@@ -46,7 +46,7 @@ export async function runAdsIntelligenceWithProgress(
     analysisMarkdown: analysis.markdown,
   })
 
-  const campaign = await buildCampaignBrief(analysis, businessProfile)
+  const campaign = await buildCampaignBrief(analysis, businessProfile, clerkUserId)
 
   const now = Date.now()
   await patchAdsPipelineRun(runId, {
