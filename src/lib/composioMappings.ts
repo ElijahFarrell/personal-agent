@@ -32,6 +32,7 @@ export const PROVIDER_TO_TOOLKIT: Record<ComposioProvider, string> = {
   tiktok: 'TIKTOK',
   metaAds: 'METAADS',
   searchApi: 'SEARCH_API',
+  whatsapp: 'WHATSAPP',
 } as const
 
 export const TOOLKIT_TO_PROVIDER: Record<string, ComposioProvider> = Object.fromEntries(
@@ -49,6 +50,7 @@ export function getToolkitForProvider(provider: string): string | null {
   const p = provider.toLowerCase()
   if (p === 'metaads') return 'METAADS'
   if (p === 'searchapi') return 'SEARCH_API'
+  if (p === 'whatsapp') return 'WHATSAPP'
   return PROVIDER_TO_TOOLKIT[p as ComposioProvider] ?? null
 }
 

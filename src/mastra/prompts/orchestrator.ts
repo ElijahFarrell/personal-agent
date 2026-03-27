@@ -50,7 +50,7 @@ const AGENT_DESCRIPTIONS: Record<
   'content-agent': { provider: null, desc: 'Write LinkedIn posts, newsletters, tweets, marketing copy, and any professional content.' },
   'instagram-agent': { provider: 'instagram', desc: 'Send Instagram DMs and outreach messages. Always confirms before sending.' },
   'browser-agent': { provider: null, desc: 'Navigate websites, extract page content, fill and submit forms. Confirms before submitting.' },
-  'messaging-agent': { providers: ['slack', 'microsoft-teams', 'discord'], desc: 'Slack, Teams, Discord — list channels, send messages. Always confirms before sending.' },
+  'messaging-agent': { providers: ['slack', 'microsoft-teams', 'discord', 'whatsapp'], desc: 'Slack, Teams, Discord, WhatsApp Business — list channels, send messages. Always confirms before sending.' },
   'docs-agent': { providers: ['google-docs', 'google-sheet', 'airtable', 'notion'], desc: 'Google Docs, Sheets, Airtable, Notion — search, read, create documents and records.' },
   'real-estate-agent': { providers: ['calendly'], desc: 'Calendly — event types, scheduled events, scheduling.' },
   'finance-agent': { providers: ['stripe', 'quickbooks'], desc: 'Stripe, QuickBooks — customers, charges, invoices, payments.' },

@@ -124,18 +124,32 @@ export async function getComposioConnectionStatus(
   return status as Record<ComposioProvider, boolean>
 }
 
+export type ExecuteComposioToolOptions = {
+  /** Pin a Composio toolkit version (e.g. `20250909_00`). Prefer over skip in production. */
+  version?: string
+}
+
 /**
- * Executes a Composio tool directly. Use for service-layer calls (e.g. gmail send).
+ * Executes a Composio tool directly. Use for service-layer calls (e.g. inbox sync, Gmail send).
+ *
+ * Manual `tools.execute` requires a concrete toolkit version unless explicitly skipped.
+ * Agent/session code paths skip this; we use `dangerouslySkipVersionCheck` here so server
+ * calls work without env pins. For production stability, set `COMPOSIO_TOOLKIT_VERSION_<slug>`
+ * (lowercase slug, e.g. `GMAIL`) or pass `version` per call.
  */
 export async function executeComposioTool<T = unknown>(
   userId: string,
   toolName: string,
-  args: Record<string, unknown>
+  args: Record<string, unknown>,
+  options?: ExecuteComposioToolOptions
 ): Promise<{ successful: boolean; data?: T; error?: string }> {
   const composio = getComposio()
   const result = await composio.tools.execute(toolName, {
     userId,
     arguments: args,
+    ...(options?.version
+      ? { version: options.version }
+      : { dangerouslySkipVersionCheck: true }),
   })
   return {
     successful: !!result.successful,

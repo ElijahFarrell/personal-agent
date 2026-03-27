@@ -42,8 +42,18 @@ import {
 } from '@/components/ui/select'
 import { ChatPanel } from '@/components/chat/ChatPanel'
 import { ImportProspectsModal } from '@/components/prospects/ImportProspectsModal'
+import { useOrgConfig } from '@/hooks/useOrgConfig'
+import { isFeatureEnabled } from '@/constants/featureGating'
 
-type SortField = 'firstName' | 'lastName' | 'name' | 'company' | 'stage' | 'status' | 'updatedAt'
+type SortField =
+  | 'firstName'
+  | 'lastName'
+  | 'name'
+  | 'company'
+  | 'stage'
+  | 'status'
+  | 'updatedAt'
+  | 'leadScore'
 type SortDir = 'asc' | 'desc'
 type OwnerFilter = 'all' | 'mine' | 'unassigned'
 
@@ -73,6 +83,8 @@ const EMPTY_FORM: ProspectFormData = {
 
 export default function ProspectsPage() {
   const { user } = useUser()
+  const { config } = useOrgConfig()
+  const leadScoringEnabled = isFeatureEnabled(config, 'leadScoring')
 
   // Filters & sorting
   const [searchQuery, setSearchQuery] = useState('')
@@ -185,6 +197,10 @@ export default function ProspectsPage() {
         case 'stage': aVal = (a as { stage?: string }).stage ?? ''; bVal = (b as { stage?: string }).stage ?? ''; break
         case 'status': aVal = a.status; bVal = b.status; break
         case 'updatedAt': aVal = a.updatedAt; bVal = b.updatedAt; break
+        case 'leadScore':
+          aVal = (a as { leadScore?: number }).leadScore ?? -1
+          bVal = (b as { leadScore?: number }).leadScore ?? -1
+          break
       }
       if (aVal < bVal) return sortDir === 'asc' ? -1 : 1
       if (aVal > bVal) return sortDir === 'asc' ? 1 : -1
@@ -200,7 +216,7 @@ export default function ProspectsPage() {
       setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
     } else {
       setSortField(field)
-      setSortDir('asc')
+      setSortDir(field === 'leadScore' ? 'desc' : 'asc')
     }
   }
 
@@ -657,6 +673,11 @@ export default function ProspectsPage() {
                   <th className={thClass} onClick={() => toggleSort('lastName')}>Last Name <SortIcon field="lastName" /></th>
                   <th className={thClass} onClick={() => toggleSort('company')}>Company <SortIcon field="company" /></th>
                   <th className={thClass} onClick={() => toggleSort('stage')}>Stage <SortIcon field="stage" /></th>
+                  {leadScoringEnabled && (
+                    <th className={thClass} onClick={() => toggleSort('leadScore')}>
+                      Score <SortIcon field="leadScore" />
+                    </th>
+                  )}
                   <th className={thClass} onClick={() => toggleSort('status')}>Status <SortIcon field="status" /></th>
                   <th className={`${thClass} w-20`}>LinkedIn</th>
                   <th className={thClass}>Assigned To</th>
@@ -725,6 +746,11 @@ export default function ProspectsPage() {
                           </SelectContent>
                         </Select>
                       </td>
+                      {leadScoringEnabled && (
+                        <td className={`${tdClass} tabular-nums text-gray-400`}>
+                          {(prospect as { leadScore?: number }).leadScore ?? '—'}
+                        </td>
+                      )}
                       <td className={tdClass}>
                         <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium ${STATUS_META[prospect.status as ProspectStatus]?.color ?? ''}`}>
                           {STATUS_META[prospect.status as ProspectStatus]?.label ?? prospect.status}

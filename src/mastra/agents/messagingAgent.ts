@@ -7,7 +7,12 @@ import { getComposioToolsForProviders } from '@/lib/composio'
 import { MESSAGING_PROMPT } from '../prompts/messaging'
 import type { ComposioProvider } from '@/types'
 
-const MESSAGING_PROVIDERS: ComposioProvider[] = ['slack', 'microsoft-teams', 'discord']
+const MESSAGING_PROVIDERS: ComposioProvider[] = [
+  'slack',
+  'microsoft-teams',
+  'discord',
+  'whatsapp',
+]
 
 export interface MessagingAgentResult {
   agent: Agent

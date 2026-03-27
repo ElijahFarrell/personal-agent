@@ -18,5 +18,6 @@ export function tenantConfigFromConvexRow(
     nicheId: row.nicheId ?? 'generic',
     nicheOverrides: row.nicheOverrides,
     fullPlatformAccess: row.fullPlatformAccess,
+    orgReplyVoice: row.orgReplyVoice,
   }
 }

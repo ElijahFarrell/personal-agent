@@ -31,6 +31,7 @@ export const TABLES = {
   AUTOMATION_TRIGGERS: 'automationTriggers',
   INBOX_THREADS: 'inboxThreads',
   INBOX_MESSAGES: 'inboxMessages',
+  INBOX_SYNC_USAGE: 'inboxSyncUsage',
   VIDEO_GENERATION_JOBS: 'videoGenerationJobs',
   MEDIA_ASSETS: 'mediaAssets',
   ADS_PIPELINE_RUNS: 'adsPipelineRuns',
@@ -68,6 +69,7 @@ export const INDEXES = {
   BY_USER_PROVIDER_EXTERNAL_THREAD: 'by_userId_provider_externalThreadId',
   BY_INBOX_THREAD_SENT_AT: 'by_threadId_sentAt',
   BY_INBOX_THREAD_MESSAGE: 'by_threadId_externalMessageId',
+  BY_INBOX_SYNC_USER_DATE: 'by_userId_dateKey',
   BY_COMPOSIO_TRIGGER_ID: 'by_composioTriggerId',
   BY_VIDEO_JOB_USER_CREATED: 'by_userId_createdAt',
   BY_MEDIA_TENANT_CREATED: 'by_tenantId_createdAt',
@@ -309,6 +311,7 @@ export const FEATURE_FLAGS = {
 export const INBOX_PROVIDER = {
   GMAIL: 'gmail',
   OUTLOOK: 'outlook',
+  WHATSAPP: 'whatsapp',
 } as const
 
 export const ADS_PIPELINE_RUN_STATUS = {

@@ -2,8 +2,8 @@
  * Outlook email sending via Composio.
  * Uses Composio's OUTLOOK_SEND_EMAIL tool with the user's connected account.
  */
-import { Composio } from '@composio/core'
 import { config } from '@/lib/config'
+import { executeComposioTool } from '@/lib/composio'
 
 export interface SendOutlookEmailParams {
   to: string
@@ -23,15 +23,10 @@ export async function sendOutlookEmail(
     throw new Error('COMPOSIO_API_KEY is not configured')
   }
 
-  const composio = new Composio({ apiKey: config.composio.apiKey })
-
-  const result = await composio.tools.execute('OUTLOOK_SEND_EMAIL', {
-    userId,
-    arguments: {
-      to: params.to,
-      subject: params.subject,
-      body: params.body,
-    },
+  const result = await executeComposioTool(userId, 'OUTLOOK_SEND_EMAIL', {
+    to: params.to,
+    subject: params.subject,
+    body: params.body,
   })
 
   if (!result.successful && result.error) {

@@ -5,6 +5,7 @@ const DEFAULT_FEATURES = {
   videoStudio: false,
   unifiedInbox: false,
   eventTriggers: false,
+  leadScoring: false,
 } as const
 
 const DEFAULT_LIMITS = {
@@ -69,6 +70,7 @@ export const backfillTenantConfigFeatures2026 = mutation({
         f.videoStudio === undefined ||
         f.unifiedInbox === undefined ||
         f.eventTriggers === undefined ||
+        f.leadScoring === undefined ||
         l.maxVideoGenerationsPerMonth === undefined ||
         l.maxInboxSyncPerDay === undefined
       if (!needsPatch) continue
@@ -88,6 +90,7 @@ export const backfillTenantConfigFeatures2026 = mutation({
           videoStudio: f.videoStudio ?? DEFAULT_FEATURES.videoStudio,
           unifiedInbox: f.unifiedInbox ?? DEFAULT_FEATURES.unifiedInbox,
           eventTriggers: f.eventTriggers ?? DEFAULT_FEATURES.eventTriggers,
+          leadScoring: f.leadScoring ?? DEFAULT_FEATURES.leadScoring,
         },
         limits: {
           maxMembers: l.maxMembers,

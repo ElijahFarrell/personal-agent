@@ -56,6 +56,7 @@ export async function PUT(
       nicheId,
       nicheOverrides,
       fullPlatformAccess,
+      orgReplyVoice,
     } = body
 
     if (
@@ -91,6 +92,7 @@ export async function PUT(
         videoStudio: !!features.videoStudio,
         unifiedInbox: !!features.unifiedInbox,
         eventTriggers: !!features.eventTriggers,
+        leadScoring: !!features.leadScoring,
       },
       limits: {
         maxMembers: Number(limits.maxMembers) ?? 1,
@@ -115,6 +117,7 @@ export async function PUT(
         | { orchestratorAddendum?: string }
         | undefined,
       fullPlatformAccess: fullPlatformAccess as boolean | undefined,
+      orgReplyVoice: orgReplyVoice as string | undefined,
       updatedBy: userId!,
     })
 

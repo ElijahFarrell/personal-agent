@@ -20,6 +20,7 @@ const DEFAULT_CONFIG_SHAPE = {
     videoStudio: false,
     unifiedInbox: false,
     eventTriggers: false,
+    leadScoring: false,
   },
   limits: {
     maxMembers: 1,
@@ -48,6 +49,7 @@ const featuresValidator = v.object({
   videoStudio: v.boolean(),
   unifiedInbox: v.boolean(),
   eventTriggers: v.boolean(),
+  leadScoring: v.boolean(),
 })
 
 const limitsValidator = v.object({
@@ -163,6 +165,7 @@ export const upsertConfig = mutation({
     nicheId: v.optional(nicheIdValidator),
     nicheOverrides: v.optional(nicheOverridesValidator),
     fullPlatformAccess: v.optional(v.boolean()),
+    orgReplyVoice: v.optional(v.string()),
     updatedBy: v.string(),
   },
   handler: async (ctx, args) => {
@@ -188,6 +191,11 @@ export const upsertConfig = mutation({
         ? args.fullPlatformAccess
         : existing?.fullPlatformAccess
 
+    const orgReplyVoice =
+      args.orgReplyVoice !== undefined
+        ? args.orgReplyVoice
+        : existing?.orgReplyVoice
+
     const doc = {
       tenantId: args.tenantId,
       allowedAgents: args.allowedAgents,
@@ -199,6 +207,7 @@ export const upsertConfig = mutation({
       nicheId,
       nicheOverrides,
       fullPlatformAccess,
+      orgReplyVoice,
       updatedAt: now,
       updatedBy: args.updatedBy,
     }
