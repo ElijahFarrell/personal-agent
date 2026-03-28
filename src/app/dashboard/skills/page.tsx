@@ -1,6 +1,13 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type ComponentPropsWithoutRef,
+} from 'react'
 import { useUser } from '@clerk/nextjs'
 import { useMutation, useQuery } from 'convex/react'
 import {
@@ -15,11 +22,18 @@ import {
   Upload,
   Building2,
   User,
+  FolderUp,
 } from 'lucide-react'
 import { api } from '@convex/_generated/api'
 import type { Id } from '@convex/_generated/dataModel'
 import Link from 'next/link'
 import { API_ROUTES } from '@/constants/api'
+import {
+  parseSkillFrontmatter,
+  parseSkillFolderFromFileList,
+  parseSkillZipFromArrayBuffer,
+  validateSkillFrontmatter,
+} from '@/lib/skillMarkdown'
 
 type SeedStatus = 'idle' | 'seeding' | 'done' | 'error'
 type ScopeTab = 'org' | 'user'
@@ -81,6 +95,13 @@ export default function SkillsPage() {
   const [testResolved, setTestResolved] = useState<ResolvedSkillPreview[]>([])
   const [testError, setTestError] = useState('')
   const [testingSkills, setTestingSkills] = useState(false)
+  const [importedSkillLabel, setImportedSkillLabel] = useState<string | null>(null)
+  const [importWarnings, setImportWarnings] = useState<string[]>([])
+  const [importedReferences, setImportedReferences] = useState<Record<string, string> | null>(null)
+
+  const skillMdInputRef = useRef<HTMLInputElement>(null)
+  const folderInputRef = useRef<HTMLInputElement>(null)
+  const zipInputRef = useRef<HTMLInputElement>(null)
 
   const dbUser = useQuery(
     api.users.getUserByClerkUserId,
@@ -214,6 +235,9 @@ export default function SkillsPage() {
     setEditingSkillId(null)
     setFormData(EMPTY_FORM)
     setFormError('')
+    setImportedSkillLabel(null)
+    setImportWarnings([])
+    setImportedReferences(null)
     setShowForm(true)
   }
 
@@ -226,6 +250,9 @@ export default function SkillsPage() {
       isEnabled: skill.isEnabled,
     })
     setFormError('')
+    setImportedSkillLabel(null)
+    setImportWarnings([])
+    setImportedReferences(null)
     setShowForm(true)
   }
 
@@ -234,7 +261,84 @@ export default function SkillsPage() {
     setEditingSkillId(null)
     setFormData(EMPTY_FORM)
     setFormError('')
+    setImportedSkillLabel(null)
+    setImportWarnings([])
+    setImportedReferences(null)
   }
+
+  const handleImportSkillMd = useCallback(async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    setFormError('')
+    try {
+      const text = await file.text()
+      const parsed = parseSkillFrontmatter(text)
+      const err = validateSkillFrontmatter(parsed)
+      if (err) {
+        setFormError(err)
+        return
+      }
+      setFormData((prev) => ({
+        ...prev,
+        name: parsed.name.trim(),
+        description: parsed.description.trim(),
+        systemPrompt: parsed.content,
+      }))
+      setImportedReferences(null)
+      setImportWarnings([])
+      setImportedSkillLabel(file.name)
+    } catch {
+      setFormError('Could not read SKILL.md')
+    }
+  }, [])
+
+  const handleImportSkillFolder = useCallback(async (e: ChangeEvent<HTMLInputElement>) => {
+    const list = e.target.files
+    e.target.value = ''
+    if (!list?.length) return
+    setFormError('')
+    try {
+      const result = await parseSkillFolderFromFileList(list)
+      setFormData((prev) => ({
+        ...prev,
+        name: result.skillName,
+        description: result.description,
+        systemPrompt: result.content,
+      }))
+      setImportedReferences(
+        Object.keys(result.references).length > 0 ? result.references : null
+      )
+      setImportWarnings(result.warnings)
+      setImportedSkillLabel('Folder')
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : 'Could not read skill folder')
+    }
+  }, [])
+
+  const handleImportSkillZip = useCallback(async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    setFormError('')
+    try {
+      const buf = await file.arrayBuffer()
+      const result = await parseSkillZipFromArrayBuffer(buf)
+      setFormData((prev) => ({
+        ...prev,
+        name: result.skillName,
+        description: result.description,
+        systemPrompt: result.content,
+      }))
+      setImportedReferences(
+        Object.keys(result.references).length > 0 ? result.references : null
+      )
+      setImportWarnings(result.warnings)
+      setImportedSkillLabel(file.name)
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : 'Could not read skill ZIP')
+    }
+  }, [])
 
   async function handleSave() {
     if (!formData.name.trim()) {
@@ -251,6 +355,26 @@ export default function SkillsPage() {
     setFormError('')
 
     try {
+      const authorPayload: Record<string, unknown> = {
+        skillName: formData.name.trim(),
+        description: formData.description.trim(),
+        content: formData.systemPrompt,
+        scope: activeTab,
+      }
+      if (importedReferences && Object.keys(importedReferences).length > 0) {
+        authorPayload.references = importedReferences
+      }
+
+      const res = await fetch(API_ROUTES.skillsAuthor, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(authorPayload),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({ error: 'Save failed' }))
+        throw new Error(data.error)
+      }
+
       if (editingSkillId) {
         await updateSkill({
           skillId: editingSkillId,
@@ -259,22 +383,8 @@ export default function SkillsPage() {
           systemPrompt: formData.systemPrompt,
           isEnabled: formData.isEnabled,
         })
-      } else {
-        const res = await fetch(API_ROUTES.skillsAuthor, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            skillName: formData.name.trim(),
-            description: formData.description.trim(),
-            content: formData.systemPrompt,
-            scope: activeTab,
-          }),
-        })
-        if (!res.ok) {
-          const data = await res.json().catch(() => ({ error: 'Save failed' }))
-          throw new Error(data.error)
-        }
       }
+
       closeForm()
       await runReindex()
       await fetchSkillsHealth()
@@ -730,10 +840,77 @@ export default function SkillsPage() {
                 />
               </div>
 
+              {importWarnings.length > 0 ? (
+                <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-xs text-amber-200/90">
+                  <p className="font-medium text-amber-300">Import notes</p>
+                  <ul className="mt-1 list-inside list-disc space-y-0.5">
+                    {importWarnings.map((w) => (
+                      <li key={w}>{w}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+
               <div>
-                <label htmlFor="skill-content" className="mb-1.5 block text-sm font-medium text-gray-300">
-                  Content <span className="text-gray-500">(Markdown supported)</span>
-                </label>
+                <div className="mb-1.5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <label htmlFor="skill-content" className="block text-sm font-medium text-gray-300">
+                    Content <span className="text-gray-500">(Markdown supported)</span>
+                  </label>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <input
+                      ref={skillMdInputRef}
+                      type="file"
+                      accept=".md,.markdown,text/markdown"
+                      className="sr-only"
+                      aria-label="Import SKILL.md file"
+                      onChange={handleImportSkillMd}
+                    />
+                    <input
+                      ref={folderInputRef}
+                      type="file"
+                      multiple
+                      className="sr-only"
+                      aria-label="Import skill folder with references"
+                      onChange={handleImportSkillFolder}
+                      {...({ webkitdirectory: '' } as ComponentPropsWithoutRef<'input'>)}
+                    />
+                    <input
+                      ref={zipInputRef}
+                      type="file"
+                      accept=".zip,application/zip"
+                      className="sr-only"
+                      aria-label="Import skill ZIP"
+                      onChange={handleImportSkillZip}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => skillMdInputRef.current?.click()}
+                      className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background/80 px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                    >
+                      <Upload className="h-3.5 w-3.5" aria-hidden="true" />
+                      SKILL.md
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => folderInputRef.current?.click()}
+                      className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background/80 px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                    >
+                      <FolderUp className="h-3.5 w-3.5" aria-hidden="true" />
+                      Folder
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => zipInputRef.current?.click()}
+                      className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background/80 px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                    >
+                      <PackageOpen className="h-3.5 w-3.5" aria-hidden="true" />
+                      ZIP
+                    </button>
+                    {importedSkillLabel ? (
+                      <span className="text-xs text-gray-500">Loaded: {importedSkillLabel}</span>
+                    ) : null}
+                  </div>
+                </div>
                 <textarea
                   id="skill-content"
                   value={formData.systemPrompt}
@@ -743,7 +920,8 @@ export default function SkillsPage() {
                   className="w-full rounded-lg border border-input bg-background/80 px-3 py-2.5 font-mono text-sm leading-relaxed text-foreground placeholder-muted-foreground outline-none transition-colors focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50"
                 />
                 <p className="mt-1.5 text-xs text-gray-600">
-                  Write the full skill prompt in Markdown. This is the system context injected when this skill is retrieved.
+                  Import a Cursor-style SKILL.md (YAML frontmatter with name and description), or a folder/ZIP with{' '}
+                  <code className="rounded bg-muted/60 px-1">references/</code> for bundled files. You can still edit before saving.
                 </p>
               </div>
 

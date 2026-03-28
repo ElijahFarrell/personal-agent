@@ -3,6 +3,7 @@ import { join } from 'path'
 import { ConvexHttpClient } from 'convex/browser'
 import { api } from '@convex/_generated/api'
 import type { Id } from '@convex/_generated/dataModel'
+import { parseSkillFrontmatter } from '@/lib/skillMarkdown'
 import { workspace } from '@/mastra/workspace'
 import type { Skill, SkillMetadata, SkillSearchResult } from '@mastra/core/workspace'
 
@@ -58,29 +59,6 @@ const convex =
 
 function normalizeSkillName(name: string): string {
   return name.trim().toLowerCase()
-}
-
-/** Parse YAML frontmatter from SKILL.md. Returns { name, description } and raw content. */
-function parseSkillFrontmatter(raw: string): {
-  name: string
-  description: string
-  content: string
-} {
-  const match = raw.match(/^---\s*\n([\s\S]*?)\n---\s*\n([\s\S]*)$/)
-  const body = match ? match[2] : raw
-  const front = match ? match[1] : ''
-
-  let name = ''
-  let description = ''
-
-  for (const line of front.split('\n')) {
-    const nameMatch = line.match(/^name:\s*(.+)$/)
-    if (nameMatch) name = nameMatch[1].trim().replace(/^['"]|['"]$/g, '')
-    const descMatch = line.match(/^description:\s*(.+)$/)
-    if (descMatch) description = descMatch[1].trim().replace(/^['"]|['"]$/g, '')
-  }
-
-  return { name: name || 'unknown', description, content: body.trim() }
 }
 
 /** Fallback: list skills by reading skills/ directory from filesystem. */
