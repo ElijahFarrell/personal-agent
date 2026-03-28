@@ -500,7 +500,7 @@ export default function AgentsPage() {
   const configuredCount = Object.values(customInstructions).filter(Boolean).length
 
   return (
-    <div className="flex-1 overflow-y-auto p-8">
+    <div className="flex-1 overflow-y-auto p-6">
       <div className="mx-auto max-w-4xl space-y-6">
 
         {/* Header */}

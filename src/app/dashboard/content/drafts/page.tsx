@@ -171,7 +171,7 @@ export default function ContentDraftsPage() {
   const isPlatformAvailable = PLATFORM_META[activePlatform].available
 
   return (
-    <div className="flex-1 overflow-y-auto p-8">
+    <div className="flex-1 overflow-y-auto p-6">
       <div className="mx-auto max-w-4xl space-y-6">
         {/* Header */}
         <div className="flex items-start justify-between gap-4">

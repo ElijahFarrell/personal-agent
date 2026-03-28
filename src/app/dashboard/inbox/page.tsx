@@ -340,19 +340,27 @@ export default function InboxPage() {
   const selectedThread = threads?.find((t) => t._id === selectedId)
 
   return (
-    <div className="flex h-full min-h-0 flex-1 flex-col gap-4 p-4 md:p-6 lg:flex-row">
-      <div className="flex min-h-0 w-full min-w-0 flex-col gap-4 lg:max-w-md lg:shrink-0">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h1 className="flex items-center gap-2 text-xl font-semibold tracking-tight">
-              <Inbox className="h-7 w-7 text-muted-foreground" />
+    <div className="flex h-full min-h-0 flex-1 flex-col gap-3 p-3 md:p-4 lg:flex-row">
+      <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col gap-3 lg:max-w-md lg:shrink-0 lg:overflow-hidden">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="min-w-0">
+            <h1 className="flex items-center gap-1.5 text-lg font-semibold tracking-tight">
+              <Inbox className="h-5 w-5 shrink-0 text-muted-foreground" />
               Inbox
             </h1>
-            <p className="text-sm text-muted-foreground">
-              Gmail, Outlook, and WhatsApp (via webhook). Sync pulls the last ~30 days. Auto-sync
-              runs once when you open Inbox (per tab session) and every 5 minutes while you stay on
-              this page.
+            <p className="text-xs text-muted-foreground">
+              Gmail, Outlook, WhatsApp (webhook). ~30 days. Auto-sync when you open this page & every
+              5 min.
             </p>
+            <details className="mt-1 text-xs text-muted-foreground [&_summary]:cursor-pointer [&_summary]:text-muted-foreground">
+              <summary className="list-none [&::-webkit-details-marker]:hidden">
+                How sync works
+              </summary>
+              <p className="mt-1.5 pl-0 text-muted-foreground">
+                Sync pulls the last ~30 days. Auto-sync runs once when you open Inbox (per tab session)
+                and every 5 minutes while you stay on this page.
+              </p>
+            </details>
             {syncMeta && syncMeta.limit >= 0 && (
               <p className="mt-1 text-xs text-muted-foreground tabular-nums">
                 Syncs today: {syncMeta.usedToday} / {syncMeta.limit}
@@ -365,7 +373,7 @@ export default function InboxPage() {
               </p>
             )}
           </div>
-          <Button type="button" variant="secondary" onClick={() => void sync()} disabled={syncing}>
+          <Button type="button" variant="secondary" size="sm" onClick={() => void sync()} disabled={syncing}>
             {syncing ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
@@ -377,12 +385,12 @@ export default function InboxPage() {
 
         <div className="flex flex-wrap items-center gap-2">
           <ListOrdered className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm text-muted-foreground">Sort</span>
+          <span className="text-xs text-muted-foreground">Sort</span>
           <Select
             value={sortOrder}
             onValueChange={(v) => setSortOrder(v as SortOrder)}
           >
-            <SelectTrigger className="w-[200px]">
+            <SelectTrigger className="h-8 w-[180px] text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -399,99 +407,101 @@ export default function InboxPage() {
           </p>
         )}
 
-        {!threads && (
-          <div className="flex justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-        )}
+        <div className="flex min-h-0 flex-1 flex-col">
+          {!threads && (
+            <div className="flex flex-1 items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          )}
 
-        {threads && threads.length === 0 && (
-          <Card>
-            <CardContent className="py-12 text-center text-muted-foreground">
-              No threads yet. Connect Gmail or Outlook and sync.
-            </CardContent>
-          </Card>
-        )}
+          {threads && threads.length === 0 && (
+            <Card>
+              <CardContent className="py-8 text-center text-sm text-muted-foreground">
+                No threads yet. Connect Gmail or Outlook and sync.
+              </CardContent>
+            </Card>
+          )}
 
-        {threads && threads.length > 0 && (
-          <ul className="max-h-[calc(100vh-12rem)] space-y-2 overflow-y-auto pr-1">
-            {threads.map((t) => {
-              const score =
-                leadScoring && t.prospectId
-                  ? scoreByProspect.get(String(t.prospectId))
-                  : undefined
-              const active = selectedId === t._id
-              return (
-                <li key={t._id}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedId(t._id)
-                      setDraftText(null)
-                      setDraftMode(null)
-                      setReplyDraft('')
-                      setDraftError(null)
-                      setComposeReply('')
-                      setSendReplyError(null)
-                      setSendReplyOk(false)
-                    }}
-                    className={`flex w-full items-start gap-2 rounded-lg border p-3 text-left text-sm transition-colors ${
-                      active ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/50'
-                    }`}
-                  >
-                    <ChevronRight
-                      className={`mt-0.5 h-4 w-4 shrink-0 ${active ? 'text-primary' : 'text-muted-foreground'}`}
-                    />
-                    <span className="min-w-0 flex-1">
-                      <span className="line-clamp-1 font-medium">
-                        {t.subject ?? '(no subject)'}
-                      </span>
-                      <span className="mt-0.5 line-clamp-2 block text-xs text-muted-foreground break-words">
-                        {normalizeEmailPlainText(t.snippet ?? '')}
-                      </span>
-                      <span className="mt-2 flex flex-wrap gap-1.5">
-                        <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
-                          {t.provider}
+          {threads && threads.length > 0 && (
+            <ul className="min-h-0 flex-1 space-y-1.5 overflow-y-auto pr-1">
+              {threads.map((t) => {
+                const score =
+                  leadScoring && t.prospectId
+                    ? scoreByProspect.get(String(t.prospectId))
+                    : undefined
+                const active = selectedId === t._id
+                return (
+                  <li key={t._id}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedId(t._id)
+                        setDraftText(null)
+                        setDraftMode(null)
+                        setReplyDraft('')
+                        setDraftError(null)
+                        setComposeReply('')
+                        setSendReplyError(null)
+                        setSendReplyOk(false)
+                      }}
+                      className={`flex w-full items-start gap-2 rounded-lg border p-2 text-left text-sm transition-colors ${
+                        active ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/50'
+                      }`}
+                    >
+                      <ChevronRight
+                        className={`mt-0.5 h-4 w-4 shrink-0 ${active ? 'text-primary' : 'text-muted-foreground'}`}
+                      />
+                      <span className="min-w-0 flex-1">
+                        <span className="line-clamp-1 font-medium">
+                          {t.subject ?? '(no subject)'}
                         </span>
-                        {t.needsReply && (
-                          <span className="rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] text-amber-700 dark:text-amber-400">
-                            Needs reply
+                        <span className="mt-0.5 line-clamp-2 block text-xs text-muted-foreground break-words">
+                          {normalizeEmailPlainText(t.snippet ?? '')}
+                        </span>
+                        <span className="mt-1.5 flex flex-wrap gap-1.5">
+                          <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
+                            {t.provider}
                           </span>
-                        )}
-                        {score !== undefined && (
-                          <span className="rounded bg-violet-500/15 px-1.5 py-0.5 text-[10px] text-violet-700 dark:text-violet-300">
-                            Score {score}
-                          </span>
-                        )}
+                          {t.needsReply && (
+                            <span className="rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] text-amber-700 dark:text-amber-400">
+                              Needs reply
+                            </span>
+                          )}
+                          {score !== undefined && (
+                            <span className="rounded bg-violet-500/15 px-1.5 py-0.5 text-[10px] text-violet-700 dark:text-violet-300">
+                              Score {score}
+                            </span>
+                          )}
+                        </span>
                       </span>
-                    </span>
-                  </button>
-                </li>
-              )
-            })}
-          </ul>
-        )}
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </div>
       </div>
 
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-y-auto border-t border-border pt-4 lg:min-h-0 lg:flex-1 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3 overflow-y-auto border-t border-border pt-3 lg:min-h-0 lg:flex-1 lg:border-l lg:border-t-0 lg:pl-4 lg:pt-0">
         {!selectedThread && (
           <Card className="border-dashed">
-            <CardContent className="py-16 text-center text-muted-foreground">
+            <CardContent className="py-10 text-center text-sm text-muted-foreground">
               Select a thread to view messages and run AI draft or summary.
             </CardContent>
           </Card>
         )}
 
         {selectedThread && (
-          <div className="flex min-h-0 flex-1 flex-col gap-4">
+          <div className="flex min-h-0 flex-1 flex-col gap-3">
             <Card className="shrink-0">
-              <CardHeader className="pb-2">
+              <CardHeader className="space-y-1.5 p-4 pb-2">
                 <CardTitle className="text-base">{selectedThread.subject ?? '(no subject)'}</CardTitle>
                 <CardDescription className="line-clamp-3 break-words">
                   {normalizeEmailPlainText(selectedThread.snippet ?? '')}
                 </CardDescription>
               </CardHeader>
-              <CardContent className="flex flex-wrap gap-2 border-t border-border pt-4">
+              <CardContent className="flex flex-wrap gap-2 border-t border-border px-4 pb-4 pt-3">
                 <Button
                   type="button"
                   size="sm"
@@ -526,7 +536,7 @@ export default function InboxPage() {
             )}
             {draftText && draftMode && (
               <Card className="shrink-0">
-                <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 py-3">
+                <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 space-y-0 p-4 py-3">
                   <CardTitle className="text-sm">
                     {draftMode === 'reply' ? 'Reply draft' : 'Summary'}
                   </CardTitle>
@@ -550,7 +560,7 @@ export default function InboxPage() {
                     </div>
                   )}
                 </CardHeader>
-                <CardContent className="space-y-3">
+                <CardContent className="space-y-2 px-4 pb-4">
                   {draftMode === 'reply' ? (
                     <>
                       <p className="text-xs text-muted-foreground">
@@ -559,22 +569,22 @@ export default function InboxPage() {
                       <Textarea
                         value={replyDraft}
                         onChange={(e) => setReplyDraft(e.target.value)}
-                        className="min-h-[160px] font-sans text-sm"
+                        className="min-h-[140px] font-sans text-sm"
                         placeholder="Draft reply will appear here…"
                       />
                     </>
                   ) : (
-                    <InboxMessageMarkdown text={draftText} />
+                    <InboxMessageMarkdown text={draftText} density="compact" />
                   )}
                 </CardContent>
               </Card>
             )}
 
             <Card className="flex min-h-0 flex-1 flex-col overflow-hidden">
-              <CardHeader className="shrink-0 py-3">
+              <CardHeader className="shrink-0 space-y-0 p-4 py-3">
                 <CardTitle className="text-sm">Messages</CardTitle>
               </CardHeader>
-              <CardContent className="min-h-0 flex-1 overflow-y-auto pr-1">
+              <CardContent className="min-h-0 flex-1 overflow-y-auto px-4 pb-4 pr-3 pt-0">
                 {threadMessagesLoading && (
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 )}
@@ -587,15 +597,15 @@ export default function InboxPage() {
                   <p className="text-sm text-muted-foreground">No messages in this thread.</p>
                 )}
                 {!threadMessagesLoading && threadMessages && threadMessages.length > 0 && (
-                  <ul className="space-y-4">
+                  <ul className="space-y-3">
                     {threadMessages.map((m) => (
                       <li
                         key={m.externalMessageId}
-                        className={`rounded-md border p-4 ${
+                        className={`rounded-md border p-3 ${
                           m.isOutbound ? 'border-muted bg-muted/30' : 'border-border'
                         }`}
                       >
-                        <div className="mb-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
+                        <div className="mb-2 flex flex-wrap gap-2 text-xs text-muted-foreground">
                           <span className="font-medium text-foreground">
                             {m.isOutbound ? 'You' : m.senderLabel || m.fromEmail}
                           </span>
@@ -605,6 +615,7 @@ export default function InboxPage() {
                         </div>
                         <InboxMessageMarkdown
                           text={normalizeEmailPlainText(m.bodyPlain ?? '') || '—'}
+                          density="compact"
                         />
                       </li>
                     ))}
@@ -614,7 +625,7 @@ export default function InboxPage() {
             </Card>
 
             <Card className="shrink-0">
-              <CardHeader className="py-3">
+              <CardHeader className="space-y-1 p-4 py-3">
                 <CardTitle className="text-sm">Reply</CardTitle>
                 <CardDescription>
                   {selectedThread.provider === 'whatsapp'
@@ -622,7 +633,7 @@ export default function InboxPage() {
                     : 'Sends through your connected Gmail or Outlook account (Composio).'}
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-2 px-4 pb-4">
                 {sendReplyError && (
                   <p className="text-sm text-destructive" role="alert">
                     {sendReplyError}

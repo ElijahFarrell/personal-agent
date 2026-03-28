@@ -487,7 +487,7 @@ export default function ProspectsPage() {
     <div className="flex min-w-0 flex-1 overflow-hidden">
       {/* Left: Table */}
       <div className="flex flex-1 flex-col overflow-hidden border-r border-gray-800/60">
-        <div className="space-y-3 p-5">
+        <div className="space-y-3 p-4">
           {/* Header */}
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -814,7 +814,7 @@ export default function ProspectsPage() {
       {/* Right: Detail Panel */}
       <div className="hidden w-[440px] shrink-0 overflow-y-auto lg:block">
         {selectedProspect ? (
-          <div className="space-y-6 p-6">
+          <div className="space-y-4 p-4">
             {/* Detail Header */}
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">

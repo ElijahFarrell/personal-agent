@@ -130,7 +130,7 @@ export default function IntegrationsPage() {
   }
 
   return (
-    <div className="flex min-w-0 flex-1 flex-col overflow-y-auto p-8">
+    <div className="flex min-w-0 flex-1 flex-col overflow-y-auto p-6">
       <div className="mx-auto w-full max-w-5xl space-y-10">
         <div>
           <h1 className="text-xl font-semibold tracking-tight text-white text-wrap-balance">

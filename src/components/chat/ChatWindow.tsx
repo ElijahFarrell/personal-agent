@@ -670,7 +670,7 @@ export function ChatWindow({
     return (
       <div className="flex h-full flex-col">
         <div className="flex-1 overflow-hidden p-4">
-          <div className="mx-auto max-w-4xl space-y-4">
+          <div className="mx-auto max-w-4xl space-y-3">
             {[...Array(4)].map((_, i) => (
               <div
                 key={i}
@@ -697,7 +697,7 @@ export function ChatWindow({
   return (
     <div className="flex h-full flex-col">
       <Conversation className="flex-1">
-        <ConversationContent className="mx-auto flex min-h-full w-full max-w-4xl flex-col gap-6 px-4 py-6">
+        <ConversationContent className="mx-auto flex min-h-full w-full max-w-4xl flex-col gap-4 px-4 py-4">
           {displayMessages.length === 0 && !isStreaming && !isLoading ? (
             <ConversationEmptyState
               className="flex-1 py-12"
