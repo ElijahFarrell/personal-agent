@@ -16,6 +16,9 @@ import {
   INTEGRATION_CATALOG,
   INTEGRATION_CATEGORY_LABELS,
   INTEGRATION_CATEGORY_ORDER,
+  MARKETING_ADS_SUBGROUP_LABELS,
+  MARKETING_ADS_SUBGROUP_ORDER,
+  type MarketingAdsSubgroup,
 } from '@/constants/integrationsCatalog'
 
 const TELEGRAM_ENTRY = {
@@ -144,6 +147,56 @@ export default function IntegrationsPage() {
         {INTEGRATION_CATEGORY_ORDER.map((categoryId) => {
           const entries = byCategory.get(categoryId)
           if (!entries?.length) return null
+
+          if (categoryId === 'marketing_ads') {
+            return (
+              <section
+                key={categoryId}
+                aria-label={INTEGRATION_CATEGORY_LABELS[categoryId]}
+                className="space-y-6"
+              >
+                <h2 className="text-sm font-medium uppercase tracking-wide text-gray-500">
+                  {INTEGRATION_CATEGORY_LABELS[categoryId]}
+                </h2>
+                {MARKETING_ADS_SUBGROUP_ORDER.map((subId: MarketingAdsSubgroup) => {
+                  const subEntries = entries.filter(
+                    (e) => (e.marketingSubgroup ?? 'ads') === subId
+                  )
+                  if (!subEntries.length) return null
+                  return (
+                    <div key={subId} className="space-y-3">
+                      <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-600">
+                        {MARKETING_ADS_SUBGROUP_LABELS[subId]}
+                      </h3>
+                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        {subEntries.map(
+                          ({
+                            id,
+                            name,
+                            description,
+                            provider,
+                            Icon,
+                            iconBg,
+                            iconColor,
+                          }) =>
+                            renderIntegrationCard(
+                              id,
+                              name,
+                              description,
+                              provider,
+                              Icon,
+                              iconBg,
+                              iconColor
+                            )
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </section>
+            )
+          }
+
           return (
             <section
               key={categoryId}

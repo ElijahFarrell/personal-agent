@@ -56,6 +56,19 @@ export const INTEGRATION_CATEGORY_LABELS: Record<IntegrationCategoryId, string> 
   finance: 'Finance',
 }
 
+/** Splits the Marketing & ads section into two scannable groups on the integrations page. */
+export type MarketingAdsSubgroup = 'email_outreach' | 'ads'
+
+export const MARKETING_ADS_SUBGROUP_ORDER: MarketingAdsSubgroup[] = [
+  'email_outreach',
+  'ads',
+]
+
+export const MARKETING_ADS_SUBGROUP_LABELS: Record<MarketingAdsSubgroup, string> = {
+  email_outreach: 'Email & outreach',
+  ads: 'Ads & discovery',
+}
+
 export interface IntegrationCatalogEntry {
   id: string
   name: string
@@ -65,6 +78,8 @@ export interface IntegrationCatalogEntry {
   iconBg: string
   iconColor: string
   category: IntegrationCategoryId
+  /** Only for `marketing_ads` — used to group Mailchimp/Lemlist vs ad platforms. */
+  marketingSubgroup?: MarketingAdsSubgroup
 }
 
 export const INTEGRATION_CATALOG: IntegrationCatalogEntry[] = [
@@ -297,16 +312,19 @@ export const INTEGRATION_CATALOG: IntegrationCatalogEntry[] = [
     iconBg: 'bg-yellow-600/10',
     iconColor: 'text-yellow-500',
     category: 'marketing_ads',
+    marketingSubgroup: 'email_outreach',
   },
   {
     id: 'lemlist',
     name: 'Lemlist',
-    description: 'Multichannel outreach — campaigns, sequences, and lead engagement.',
+    description:
+      'Cold email & LinkedIn sequences, campaigns, and engagement stats (Marketing agent).',
     provider: 'lemlist',
     Icon: Megaphone,
     iconBg: 'bg-orange-500/10',
     iconColor: 'text-orange-400',
     category: 'marketing_ads',
+    marketingSubgroup: 'email_outreach',
   },
   {
     id: 'metaAds',
@@ -317,6 +335,7 @@ export const INTEGRATION_CATALOG: IntegrationCatalogEntry[] = [
     iconBg: 'bg-blue-500/10',
     iconColor: 'text-blue-400',
     category: 'marketing_ads',
+    marketingSubgroup: 'ads',
   },
   {
     id: 'tiktok',
@@ -327,6 +346,7 @@ export const INTEGRATION_CATALOG: IntegrationCatalogEntry[] = [
     iconBg: 'bg-fuchsia-500/10',
     iconColor: 'text-fuchsia-400',
     category: 'marketing_ads',
+    marketingSubgroup: 'ads',
   },
   {
     id: 'searchApi',
@@ -337,6 +357,7 @@ export const INTEGRATION_CATALOG: IntegrationCatalogEntry[] = [
     iconBg: 'bg-cyan-500/10',
     iconColor: 'text-cyan-400',
     category: 'marketing_ads',
+    marketingSubgroup: 'ads',
   },
   {
     id: 'stripe',
