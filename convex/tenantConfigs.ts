@@ -85,6 +85,10 @@ const metricAssumptionsValidator = v.object({
   minutesPerOutreachSend: v.optional(v.number()),
   minutesPerInboxReply: v.optional(v.number()),
   minutesPerPersonalizedOutreach: v.optional(v.number()),
+  minutesPerDeepResearchAssistantMessage: v.optional(v.number()),
+  minutesPerResearchAgentAssistantMessage: v.optional(v.number()),
+  minutesPerInboxDraftReply: v.optional(v.number()),
+  minutesPerInboxSummarize: v.optional(v.number()),
 })
 
 // ─── Queries ──────────────────────────────────────────────────────────────────

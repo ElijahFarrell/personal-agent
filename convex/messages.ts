@@ -15,6 +15,8 @@ export const saveMessage = mutation({
     metadata: v.optional(
       v.object({
         route: v.optional(v.string()),
+        deepResearch: v.optional(v.boolean()),
+        targetAgent: v.optional(v.string()),
         toolCalls: v.optional(
           v.array(
             v.object({

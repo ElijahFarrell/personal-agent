@@ -37,6 +37,8 @@ export const TABLES = {
   ADS_PIPELINE_RUNS: 'adsPipelineRuns',
   MARKETING_CAMPAIGN_METRICS: 'marketingCampaignMetrics',
   INBOX_OUTBOUND_EVENTS: 'inboxOutboundEvents',
+  /** AI draft reply vs thread summarize from unified inbox (time-savings). */
+  INBOX_AI_USAGE: 'inboxAiUsage',
 } as const
 
 // ─── Index Names ─────────────────────────────────────────────────────────────
@@ -86,6 +88,14 @@ export const INDEXES = {
   /** inboxOutboundEvents.sentAt */
   BY_TENANT_INBOX_OUTBOUND_SENT_AT: 'by_tenantId_inboxOutboundSentAt',
   BY_TENANT_COMPLETED_AT: 'by_tenantId_completedAt',
+  /** inboxAiUsage — range on tenant + time */
+  BY_TENANT_INBOX_AI_CREATED: 'by_tenantId_inboxAiCreatedAt',
+} as const
+
+/** inboxAiUsage.kind */
+export const INBOX_AI_USAGE_KIND = {
+  DRAFT_REPLY: 'draft_reply',
+  SUMMARIZE: 'summarize',
 } as const
 
 // ─── Enum Values ─────────────────────────────────────────────────────────────

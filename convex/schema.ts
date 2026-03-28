@@ -33,6 +33,7 @@ import {
   VIDEO_JOB_STATUS,
   WORKFLOW_RUN_STATUS,
   WORKFLOW_STEP_STATUS,
+  INBOX_AI_USAGE_KIND,
 } from './constants'
 
 export default defineSchema({
@@ -109,6 +110,10 @@ export default defineSchema({
         minutesPerOutreachSend: v.optional(v.number()),
         minutesPerInboxReply: v.optional(v.number()),
         minutesPerPersonalizedOutreach: v.optional(v.number()),
+        minutesPerDeepResearchAssistantMessage: v.optional(v.number()),
+        minutesPerResearchAgentAssistantMessage: v.optional(v.number()),
+        minutesPerInboxDraftReply: v.optional(v.number()),
+        minutesPerInboxSummarize: v.optional(v.number()),
       })
     ),
     updatedAt: v.number(),
@@ -200,6 +205,8 @@ export default defineSchema({
     metadata: v.optional(
       v.object({
         route: v.optional(v.string()),
+        deepResearch: v.optional(v.boolean()),
+        targetAgent: v.optional(v.string()),
         toolCalls: v.optional(
           v.array(
             v.object({
@@ -215,6 +222,7 @@ export default defineSchema({
   })
     .index(INDEXES.BY_USER_ID, ['userId'])
     .index(INDEXES.BY_TENANT_ID, ['tenantId'])
+    .index(INDEXES.BY_TENANT_CREATED, ['tenantId', 'createdAt'])
     .index(INDEXES.BY_USER_CREATED, ['userId', 'createdAt'])
     .index(INDEXES.BY_THREAD_CREATED, ['threadId', 'createdAt']),
 
@@ -605,6 +613,16 @@ export default defineSchema({
   })
     .index(INDEXES.BY_TENANT_ID, ['tenantId'])
     .index(INDEXES.BY_TENANT_INBOX_OUTBOUND_SENT_AT, ['tenantId', 'sentAt']),
+
+  [TABLES.INBOX_AI_USAGE]: defineTable({
+    tenantId: v.id(TABLES.TENANTS),
+    userId: v.id(TABLES.USERS),
+    kind: v.union(
+      v.literal(INBOX_AI_USAGE_KIND.DRAFT_REPLY),
+      v.literal(INBOX_AI_USAGE_KIND.SUMMARIZE)
+    ),
+    createdAt: v.number(),
+  }).index(INDEXES.BY_TENANT_INBOX_AI_CREATED, ['tenantId', 'createdAt']),
 
   // ─── Mastra Workflow Storage ───────────────────────────────────────────────
 
