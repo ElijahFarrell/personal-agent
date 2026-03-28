@@ -6,12 +6,18 @@ import { cn } from '@/lib/utils'
 type InboxMessageMarkdownProps = {
   text: string
   className?: string
+  /** Tighter line height for dense inbox layouts */
+  density?: 'default' | 'compact'
 }
 
 /**
  * Renders inbox body text as markdown (Streamdown) for lists, emphasis, code, links, etc.
  */
-export function InboxMessageMarkdown({ text, className }: InboxMessageMarkdownProps) {
+export function InboxMessageMarkdown({
+  text,
+  className,
+  density = 'default',
+}: InboxMessageMarkdownProps) {
   const safe = text.trim() || '—'
   return (
     <div
@@ -20,7 +26,12 @@ export function InboxMessageMarkdown({ text, className }: InboxMessageMarkdownPr
         className
       )}
     >
-      <MessageResponse className="text-sm leading-relaxed [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+      <MessageResponse
+        className={cn(
+          'text-sm [&>*:first-child]:mt-0 [&>*:last-child]:mb-0',
+          density === 'compact' ? 'leading-snug' : 'leading-relaxed'
+        )}
+      >
         {safe}
       </MessageResponse>
     </div>
