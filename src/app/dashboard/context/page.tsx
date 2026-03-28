@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { useUser } from '@clerk/nextjs'
 import { useMutation, useQuery } from 'convex/react'
 import {
@@ -17,10 +17,12 @@ import {
   Tag,
   Building2,
   User,
+  Upload,
 } from 'lucide-react'
 import { api } from '@convex/_generated/api'
 import type { Id } from '@convex/_generated/dataModel'
 import { API_ROUTES } from '@/constants/api'
+import { titleFromFilename } from '@/lib/skillMarkdown'
 
 type DocCategory = 'business-info' | 'preferences' | 'reference-docs' | 'custom'
 type ScopeTab = 'org' | 'user'
@@ -55,6 +57,8 @@ export default function ContextPage() {
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState<Id<'contextDocs'> | null>(null)
   const [indexing, setIndexing] = useState(false)
+  const [importedFileName, setImportedFileName] = useState<string | null>(null)
+  const contextFileInputRef = useRef<HTMLInputElement>(null)
 
   const dbUser = useQuery(
     api.users.getUserByClerkUserId,
@@ -98,6 +102,7 @@ export default function ContextPage() {
     setEditingDocId(null)
     setFormData(EMPTY_FORM)
     setFormError('')
+    setImportedFileName(null)
     setShowForm(true)
   }
 
@@ -109,6 +114,7 @@ export default function ContextPage() {
       category: doc.category as DocCategory,
     })
     setFormError('')
+    setImportedFileName(null)
     setShowForm(true)
   }
 
@@ -117,7 +123,28 @@ export default function ContextPage() {
     setEditingDocId(null)
     setFormData(EMPTY_FORM)
     setFormError('')
+    setImportedFileName(null)
   }
+
+  const handleImportContextFile = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0]
+      e.target.value = ''
+      if (!file) return
+      const reader = new FileReader()
+      reader.onload = () => {
+        const text = String(reader.result ?? '')
+        setFormData((prev) => ({
+          ...prev,
+          title: prev.title.trim() ? prev.title : titleFromFilename(file.name),
+          content: text,
+        }))
+        setImportedFileName(file.name)
+      }
+      reader.readAsText(file, 'UTF-8')
+    },
+    []
+  )
 
   async function indexDocInQdrant(docId: string, data: DocFormData) {
     setIndexing(true)
@@ -443,9 +470,32 @@ export default function ContextPage() {
               </div>
 
               <div>
-                <label htmlFor="ctx-content" className="mb-1.5 block text-sm font-medium text-gray-300">
-                  Content
-                </label>
+                <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
+                  <label htmlFor="ctx-content" className="block text-sm font-medium text-gray-300">
+                    Content
+                  </label>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <input
+                      ref={contextFileInputRef}
+                      type="file"
+                      accept=".md,.txt,.markdown,text/plain"
+                      className="sr-only"
+                      aria-label="Import text from file"
+                      onChange={handleImportContextFile}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => contextFileInputRef.current?.click()}
+                      className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background/80 px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                    >
+                      <Upload className="h-3.5 w-3.5" aria-hidden="true" />
+                      Import from file
+                    </button>
+                    {importedFileName ? (
+                      <span className="text-xs text-gray-500">Loaded: {importedFileName}</span>
+                    ) : null}
+                  </div>
+                </div>
                 <textarea
                   id="ctx-content"
                   value={formData.content}

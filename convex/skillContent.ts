@@ -79,12 +79,20 @@ export const saveAuthoredSkill = mutation({
     const now = Date.now()
 
     if (existing) {
-      await ctx.db.patch(existing._id, {
-        description: args.description,
-        content: args.content,
-        references: args.references,
-        updatedAt: now,
-      })
+      if (args.references !== undefined) {
+        await ctx.db.patch(existing._id, {
+          description: args.description,
+          content: args.content,
+          references: args.references,
+          updatedAt: now,
+        })
+      } else {
+        await ctx.db.patch(existing._id, {
+          description: args.description,
+          content: args.content,
+          updatedAt: now,
+        })
+      }
       return existing._id
     }
 
