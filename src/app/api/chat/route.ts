@@ -191,14 +191,24 @@ export async function POST(req: NextRequest) {
             content: text || '(No text response)',
             threadId,
             metadata:
-              toolCalls.length > 0
+              toolCalls.length > 0 ||
+              pipelineArgs.deepResearch ||
+              pipelineArgs.targetAgent
                 ? {
-                    toolCalls: toolCalls.map((tc) => ({
-                      toolName: tc.toolName,
-                      state: tc.state,
-                      args: tc.args,
-                      result: tc.result,
-                    })),
+                    ...(toolCalls.length > 0
+                      ? {
+                          toolCalls: toolCalls.map((tc) => ({
+                            toolName: tc.toolName,
+                            state: tc.state,
+                            args: tc.args,
+                            result: tc.result,
+                          })),
+                        }
+                      : {}),
+                    ...(pipelineArgs.deepResearch ? { deepResearch: true as const } : {}),
+                    ...(pipelineArgs.targetAgent
+                      ? { targetAgent: pipelineArgs.targetAgent }
+                      : {}),
                   }
                 : undefined,
           })

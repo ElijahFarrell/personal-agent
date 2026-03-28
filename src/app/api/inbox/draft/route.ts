@@ -73,6 +73,12 @@ export async function POST(req: NextRequest) {
       text = result.text
     }
 
+    await convex.mutation(api.inboxAiUsage.record, {
+      tenantId: dbUser.tenantId,
+      userId: dbUser._id,
+      kind: mode === 'summarize' ? 'summarize' : 'draft_reply',
+    })
+
     return NextResponse.json({ text, mode })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Draft failed'

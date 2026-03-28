@@ -168,10 +168,10 @@ export function TimeSavingsWidget({
                     </button>
                   </TooltipTrigger>
                   <TooltipContent className="max-w-xs text-xs" side="bottom">
-                    Counts from your usage (research runs, ads intelligence,
-                    outreach sends, inbox replies) multiplied by per-action
-                    minutes. Defaults follow your niche; admins can tune
-                    assumptions in org config.
+                    Estimates from stored usage: prospect research, ads
+                    intelligence, chat (deep research & research agent), outreach,
+                    inbox sends, inbox AI draft/summarize — each multiplied by
+                    configurable minutes per action.
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -254,13 +254,31 @@ export function TimeSavingsWidget({
                 </span>
               </p>
               <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-                Research, unified messaging, and personalization — tuned to your
-                org&rsquo;s assumptions.{' '}
+                Totals combine research-style work and messaging tasks using
+                your org&rsquo;s minute assumptions.{' '}
                 {showChart
                   ? 'The breakdown and daily trend below show what drove this estimate.'
                   : 'The breakdown below shows what drove this estimate.'}
               </p>
             </div>
+
+            {summary.hours.totalEstimated < 0.05 &&
+              summary.counts.prospectResearch === 0 &&
+              summary.counts.adsCompleted === 0 &&
+              summary.counts.deepResearchAssistantMessages === 0 &&
+              summary.counts.researchAgentAssistantMessages === 0 &&
+              summary.counts.outreachSent === 0 &&
+              summary.counts.inboxOutbound === 0 &&
+              summary.counts.inboxDraftReply === 0 &&
+              summary.counts.inboxSummarize === 0 &&
+              summary.counts.personalizedSends === 0 &&
+              summary.counts.meetingBookedInPeriod === 0 && (
+                <p className="rounded-lg border border-dashed border-white/15 bg-background/20 px-4 py-3 text-sm text-muted-foreground">
+                  No billable activity recorded in this window yet. Use chat (with
+                  deep research or the research agent), prospect research, inbox, or
+                  outreach — estimates appear here automatically.
+                </p>
+              )}
 
             <div
               className={cn(
@@ -273,32 +291,62 @@ export function TimeSavingsWidget({
                   Breakdown
                 </p>
                 <div className="grid gap-3 sm:grid-cols-2">
-              {metricOn(TIME_SAVINGS_METRIC_IDS.RESEARCH) &&
-                (summary.flags.hasProspect || summary.flags.hasAds) && (
+              {metricOn(TIME_SAVINGS_METRIC_IDS.RESEARCH) && (
                   <div className={STAT_CARD}>
                     <p className="text-[13px] font-medium text-muted-foreground">
-                      Research (est.)
+                      {TIME_SAVINGS_METRIC_LABELS[TIME_SAVINGS_METRIC_IDS.RESEARCH]}
                     </p>
                     <p className="mt-1 text-2xl font-semibold tabular-nums text-foreground">
-                      {formatHours(summary.hours.researchTotal)} h
+                      {formatHours(
+                        summary.hours.prospectResearch + summary.hours.adsResearch
+                      )}{' '}
+                      h
                     </p>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      {summary.flags.hasProspect &&
-                        `${summary.counts.prospectResearch} prospect snapshot(s)`}
-                      {summary.flags.hasProspect &&
-                        summary.flags.hasAds &&
-                        ' · '}
-                      {summary.flags.hasAds &&
-                        `${summary.counts.adsCompleted} ads run(s)`}
+                      {summary.counts.prospectResearch} prospect snapshot(s) ·{' '}
+                      {summary.counts.adsCompleted} ads run(s)
                     </p>
                   </div>
                 )}
 
-              {metricOn(TIME_SAVINGS_METRIC_IDS.OUTREACH) &&
-                summary.flags.hasOutreach && (
+              {metricOn(TIME_SAVINGS_METRIC_IDS.CHAT_DEEP_RESEARCH) && (
                   <div className={STAT_CARD}>
                     <p className="text-[13px] font-medium text-muted-foreground">
-                      Outreach from platform
+                      {TIME_SAVINGS_METRIC_LABELS[TIME_SAVINGS_METRIC_IDS.CHAT_DEEP_RESEARCH]}
+                    </p>
+                    <p className="mt-1 text-2xl font-semibold tabular-nums text-foreground">
+                      {formatHours(summary.hours.deepResearchChat)} h
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {summary.counts.deepResearchAssistantMessages} assistant
+                      message(s) ·{' '}
+                      {summary.assumptions.minutesPerDeepResearchAssistantMessage}{' '}
+                      min each
+                    </p>
+                  </div>
+                )}
+
+              {metricOn(TIME_SAVINGS_METRIC_IDS.RESEARCH_AGENT) && (
+                  <div className={STAT_CARD}>
+                    <p className="text-[13px] font-medium text-muted-foreground">
+                      {TIME_SAVINGS_METRIC_LABELS[TIME_SAVINGS_METRIC_IDS.RESEARCH_AGENT]}
+                    </p>
+                    <p className="mt-1 text-2xl font-semibold tabular-nums text-foreground">
+                      {formatHours(summary.hours.researchAgent)} h
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {summary.counts.researchAgentAssistantMessages} assistant
+                      message(s) ·{' '}
+                      {summary.assumptions.minutesPerResearchAgentAssistantMessage}{' '}
+                      min each
+                    </p>
+                  </div>
+                )}
+
+              {metricOn(TIME_SAVINGS_METRIC_IDS.OUTREACH) && (
+                  <div className={STAT_CARD}>
+                    <p className="text-[13px] font-medium text-muted-foreground">
+                      {TIME_SAVINGS_METRIC_LABELS[TIME_SAVINGS_METRIC_IDS.OUTREACH]}
                     </p>
                     <p className="mt-1 text-2xl font-semibold tabular-nums text-foreground">
                       {formatHours(summary.hours.outreach)} h
@@ -310,28 +358,45 @@ export function TimeSavingsWidget({
                   </div>
                 )}
 
-              {metricOn(TIME_SAVINGS_METRIC_IDS.INBOX) &&
-                summary.flags.hasInbox && (
+              {metricOn(TIME_SAVINGS_METRIC_IDS.INBOX) && (
                   <div className={STAT_CARD}>
                     <p className="text-[13px] font-medium text-muted-foreground">
-                      Unified inbox replies
+                      {TIME_SAVINGS_METRIC_LABELS[TIME_SAVINGS_METRIC_IDS.INBOX]}
                     </p>
                     <p className="mt-1 text-2xl font-semibold tabular-nums text-foreground">
                       {formatHours(summary.hours.inbox)} h
                     </p>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      {summary.counts.inboxOutbound} reply(ies) ·{' '}
+                      {summary.counts.inboxOutbound} send(s) ·{' '}
                       {summary.assumptions.minutesPerInboxReply} min each
                     </p>
                   </div>
                 )}
 
-              {metricOn(TIME_SAVINGS_METRIC_IDS.PERSONALIZATION) &&
-                summary.flags.hasOutreach &&
-                summary.flags.hasProspect && (
+              {metricOn(TIME_SAVINGS_METRIC_IDS.INBOX_AI) && (
                   <div className={STAT_CARD}>
                     <p className="text-[13px] font-medium text-muted-foreground">
-                      Personalization (est.)
+                      {TIME_SAVINGS_METRIC_LABELS[TIME_SAVINGS_METRIC_IDS.INBOX_AI]}
+                    </p>
+                    <p className="mt-1 text-2xl font-semibold tabular-nums text-foreground">
+                      {formatHours(
+                        summary.hours.inboxDraftReply + summary.hours.inboxSummarize
+                      )}{' '}
+                      h
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {summary.counts.inboxDraftReply} draft(s) ·{' '}
+                      {summary.counts.inboxSummarize} summarize ·{' '}
+                      {summary.assumptions.minutesPerInboxDraftReply} /{' '}
+                      {summary.assumptions.minutesPerInboxSummarize} min
+                    </p>
+                  </div>
+                )}
+
+              {metricOn(TIME_SAVINGS_METRIC_IDS.PERSONALIZATION) && (
+                  <div className={STAT_CARD}>
+                    <p className="text-[13px] font-medium text-muted-foreground">
+                      {TIME_SAVINGS_METRIC_LABELS[TIME_SAVINGS_METRIC_IDS.PERSONALIZATION]}
                     </p>
                     <p className="mt-1 text-2xl font-semibold tabular-nums text-foreground">
                       {formatHours(summary.hours.personalization)} h
@@ -344,8 +409,7 @@ export function TimeSavingsWidget({
                   </div>
                 )}
 
-              {metricOn(TIME_SAVINGS_METRIC_IDS.VELOCITY) &&
-                summary.flags.hasProspect && (
+              {metricOn(TIME_SAVINGS_METRIC_IDS.VELOCITY) && (
                   <div className={cn(STAT_CARD, 'sm:col-span-2')}>
                     <p className="text-[13px] font-medium text-muted-foreground">
                       Avg. days to meeting booked

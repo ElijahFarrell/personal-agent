@@ -18,6 +18,7 @@ import type * as contextDocs from "../contextDocs.js";
 import type * as credits from "../credits.js";
 import type * as dailyTodos from "../dailyTodos.js";
 import type * as inbox from "../inbox.js";
+import type * as inboxAiUsage from "../inboxAiUsage.js";
 import type * as inboxOutboundEvents from "../inboxOutboundEvents.js";
 import type * as inboxSyncUsage from "../inboxSyncUsage.js";
 import type * as integrations from "../integrations.js";
@@ -58,6 +59,7 @@ declare const fullApi: ApiFromModules<{
   credits: typeof credits;
   dailyTodos: typeof dailyTodos;
   inbox: typeof inbox;
+  inboxAiUsage: typeof inboxAiUsage;
   inboxOutboundEvents: typeof inboxOutboundEvents;
   inboxSyncUsage: typeof inboxSyncUsage;
   integrations: typeof integrations;

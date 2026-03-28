@@ -239,6 +239,11 @@ export function ChatWindow({
   targetAgentRef.current = targetAgent
   const deepResearchRef = useRef(deepResearch)
   deepResearchRef.current = deepResearch
+  /** Captured per send for assistant message metadata (time savings). */
+  const lastChatRequestMetaRef = useRef<{
+    deepResearch: boolean
+    targetAgent: AgentId | null
+  }>({ deepResearch: false, targetAgent: null })
   const selectedModelRef = useRef(selectedModel)
   selectedModelRef.current = selectedModel
 
@@ -513,6 +518,11 @@ export function ChatWindow({
         threadId: activeThreadId!,
       })
 
+      lastChatRequestMetaRef.current = {
+        deepResearch: deepResearchRef.current,
+        targetAgent: targetAgentRef.current,
+      }
+
       const persistedCount = convexMessages?.length ?? 0
       if (persistedCount === 0 && !isNewThread) {
         const title = text.length > 50 ? text.slice(0, 50) + '…' : text
@@ -612,6 +622,18 @@ export function ChatWindow({
         }
       }) ?? []
 
+    const reqMeta = lastChatRequestMetaRef.current
+    const assistantMeta =
+      toolCallParts.length > 0 ||
+      reqMeta.deepResearch ||
+      reqMeta.targetAgent
+        ? {
+            ...(toolCallParts.length > 0 ? { toolCalls: toolCallParts } : {}),
+            ...(reqMeta.deepResearch ? { deepResearch: true as const } : {}),
+            ...(reqMeta.targetAgent ? { targetAgent: reqMeta.targetAgent } : {}),
+          }
+        : undefined
+
     void saveMessage({
       userId: dbUser._id,
       tenantId: dbUser.tenantId,
@@ -619,7 +641,7 @@ export function ChatWindow({
       source: CHAT_SOURCES.WEB,
       content: fullText,
       threadId: activeThreadRef.current,
-      metadata: toolCallParts.length > 0 ? { toolCalls: toolCallParts } : undefined,
+      metadata: assistantMeta,
     })
     void touchThread({ threadId: activeThreadRef.current })
 
