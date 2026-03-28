@@ -473,7 +473,7 @@ export default function InboxPage() {
         )}
       </div>
 
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 border-t border-border pt-4 lg:min-h-0 lg:flex-1 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-y-auto border-t border-border pt-4 lg:min-h-0 lg:flex-1 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
         {!selectedThread && (
           <Card className="border-dashed">
             <CardContent className="py-16 text-center text-muted-foreground">
@@ -564,7 +564,7 @@ export default function InboxPage() {
                       />
                     </>
                   ) : (
-                    <div className="whitespace-pre-wrap text-sm leading-relaxed">{draftText}</div>
+                    <InboxMessageMarkdown text={draftText} />
                   )}
                 </CardContent>
               </Card>
