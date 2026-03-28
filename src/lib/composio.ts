@@ -89,6 +89,33 @@ export async function disconnectComposioProvider(
 }
 
 /**
+ * Lists all ACTIVE connected accounts for this user (paginated).
+ * Prefer this over session.toolkits alone: toolkits batch responses can omit rows
+ * when many slugs are requested or the API paginates, which hid real connections in the UI.
+ */
+async function listActiveConnectedAccountsForUser(userId: string) {
+  const composio = getComposio()
+  const accounts: Array<{ toolkitSlug: string }> = []
+  let cursor: string | null | undefined = undefined
+
+  do {
+    const page = await composio.connectedAccounts.list({
+      userIds: [userId],
+      statuses: ['ACTIVE'],
+      limit: 100,
+      ...(cursor ? { cursor } : {}),
+    })
+    for (const account of page.items ?? []) {
+      const slug = account.toolkit?.slug
+      if (slug) accounts.push({ toolkitSlug: slug })
+    }
+    cursor = page.nextCursor ?? null
+  } while (cursor)
+
+  return accounts
+}
+
+/**
  * Returns connection status for all Composio-backed providers.
  */
 export async function getComposioConnectionStatus(
@@ -117,6 +144,14 @@ export async function getComposioConnectionStatus(
     const isConnected =
       item.connection?.isActive === true || !!item.connection?.connectedAccount
     if (provider && isConnected) {
+      status[provider] = true
+    }
+  }
+
+  const activeAccounts = await listActiveConnectedAccountsForUser(userId)
+  for (const { toolkitSlug } of activeAccounts) {
+    const provider = getProviderForToolkit(toolkitSlug)
+    if (provider) {
       status[provider] = true
     }
   }
