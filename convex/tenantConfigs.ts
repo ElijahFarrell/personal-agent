@@ -5,7 +5,17 @@ import { BILLING_MODEL, INDEXES, TABLES } from './constants'
 /** Default config shape for orgs without a tenantConfigs row (free-tier equivalent). */
 const DEFAULT_CONFIG_SHAPE = {
   allowedAgents: ['email', 'research', 'calendar', 'content'] as const,
-  allowedIntegrations: ['gmail', 'google-calendar'] as const,
+  allowedIntegrations: [
+    'gmail',
+    'google-calendar',
+    'apollo',
+    'outlook',
+    'whatsapp',
+    'metaAds',
+    'searchApi',
+    'mailchimp',
+    'lemlist',
+  ] as const,
   features: {
     customWorkflows: false,
     deepResearch: false,

@@ -164,6 +164,11 @@ export function ComposioConnectButton({
           You&apos;ll paste your API key from Apollo Settings
         </span>
       )}
+      {provider === 'lemlist' && (
+        <span className="text-xs text-gray-500">
+          Sign in with your Lemlist account to authorize outreach tools
+        </span>
+      )}
       {error && <span className="text-xs text-red-400">{error}</span>}
     </div>
   )
