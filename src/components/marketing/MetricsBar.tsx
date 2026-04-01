@@ -4,34 +4,35 @@ import * as React from 'react'
 import { metricsBar } from '@/lib/marketing/copy'
 
 function MetricsMarquee() {
+  /**
+   * One flex row with two copies and uniform `gap-8` between every item (including
+   * across the loop seam). Total width is exactly 2× one cycle, so
+   * `translateX(-50%)` in `keyframes marquee` loops seamlessly. A gap *between*
+   * two wrapper divs breaks that math and stops the strip from cycling.
+   */
   return (
     <div
       className="flex w-max shrink-0 animate-marquee gap-8 motion-reduce:animate-none"
       aria-hidden
     >
-      {[0, 1].map((dup) => (
-        <div
-          key={dup}
-          className="flex shrink-0 items-center gap-8 whitespace-nowrap"
-        >
-          {metricsBar.map((row) => (
-            <span
-              key={`${dup}-${row.label}`}
-              className="inline-flex items-baseline gap-1.5 text-xs sm:text-sm"
-            >
-              <span className="font-medium uppercase tracking-wide text-muted-foreground">
-                {row.label}
-              </span>
-              <span className="text-[10px] text-white/25 sm:text-xs" aria-hidden>
-                ·
-              </span>
-              <span className="font-display font-semibold tabular-nums text-white">
-                {row.value}
-              </span>
+      {[0, 1].map((dup) =>
+        metricsBar.map((row) => (
+          <span
+            key={`${dup}-${row.label}`}
+            className="inline-flex shrink-0 items-baseline gap-1.5 whitespace-nowrap text-xs sm:text-sm"
+          >
+            <span className="font-medium uppercase tracking-wide text-muted-foreground">
+              {row.label}
             </span>
-          ))}
-        </div>
-      ))}
+            <span className="text-[10px] text-white/25 sm:text-xs" aria-hidden>
+              ·
+            </span>
+            <span className="font-display font-semibold tabular-nums text-white">
+              {row.value}
+            </span>
+          </span>
+        ))
+      )}
     </div>
   )
 }
