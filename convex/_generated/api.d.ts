@@ -9,6 +9,7 @@
  */
 
 import type * as adsPipelineRuns from "../adsPipelineRuns.js";
+import type * as auditSubmissions from "../auditSubmissions.js";
 import type * as automationTriggers from "../automationTriggers.js";
 import type * as billing from "../billing.js";
 import type * as chatJobs from "../chatJobs.js";
@@ -50,6 +51,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   adsPipelineRuns: typeof adsPipelineRuns;
+  auditSubmissions: typeof auditSubmissions;
   automationTriggers: typeof automationTriggers;
   billing: typeof billing;
   chatJobs: typeof chatJobs;

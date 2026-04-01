@@ -66,6 +66,9 @@ export const AgentModels = {
 
   /** Competitive ads intelligence — SEARCH_API tool use + analysis */
   adsIntelligence: Models.CLAUDE_SONNET,
+
+  /** Free AI Audit — structured markdown report from intake JSON */
+  audit: Models.CLAUDE_SONNET,
 } as const
 
 /** Context window sizes (tokens) per model for usage display */
