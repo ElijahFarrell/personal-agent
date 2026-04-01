@@ -78,6 +78,13 @@ const config: Config = {
   				'system-ui',
   				'sans-serif'
   			],
+  			display: [
+  				'var(--font-display)',
+  				'var(--font-geist-sans)',
+  				'ui-sans-serif',
+  				'system-ui',
+  				'sans-serif'
+  			],
   			mono: [
   				'var(--font-geist-mono)',
   				'ui-monospace',
@@ -100,11 +107,27 @@ const config: Config = {
   				to: {
   					height: '0'
   				}
+  			},
+  			/**
+  			 * Two concatenated copies with `gap-8` between every item (including the
+  			 * seam). Total width = 2U + gap, so one loop = U + gap. That is
+  			 * `translateX(calc(-50% - 1rem))` since gap-8 = 2rem and half = 1rem.
+  			 * Plain -50% is wrong and makes the loop look stuck or jitter.
+  			 */
+  			marquee: {
+  				from: {
+  					transform: 'translateX(0)'
+  				},
+  				to: {
+  					transform: 'translateX(calc(-50% - 1rem))'
+  				}
   			}
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
-  			'accordion-up': 'accordion-up 0.2s ease-out'
+  			'accordion-up': 'accordion-up 0.2s ease-out',
+  			/** ~30s feels readable; 50s looked “static” to most viewers */
+  			marquee: 'marquee 30s linear infinite'
   		}
   	}
   },

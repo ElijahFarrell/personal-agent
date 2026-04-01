@@ -5,14 +5,12 @@ import { metricsBar } from '@/lib/marketing/copy'
 
 function MetricsMarquee() {
   /**
-   * One flex row with two copies and uniform `gap-8` between every item (including
-   * across the loop seam). Total width is exactly 2× one cycle, so
-   * `translateX(-50%)` in `keyframes marquee` loops seamlessly. A gap *between*
-   * two wrapper divs breaks that math and stops the strip from cycling.
+   * One flex row, two copies, `gap-8` between every item (including the seam).
+   * Keyframes use `calc(-50% - 1rem)` because total width is 2U + gap, not 2U.
    */
   return (
     <div
-      className="flex w-max shrink-0 animate-marquee gap-8 motion-reduce:animate-none"
+      className="flex w-max shrink-0 animate-marquee gap-8 motion-reduce:animate-none will-change-transform"
       aria-hidden
     >
       {[0, 1].map((dup) =>
