@@ -30,10 +30,10 @@ export function appDashboardUrl(): string {
   return `${getAppPlatformUrl()}/dashboard`
 }
 
-/** Cal.com or other booking URL — set NEXT_PUBLIC_BOOK_CALL_URL in production. */
+/** Cal.com or other booking URL — override with NEXT_PUBLIC_BOOK_CALL_URL if needed. */
 export function bookCallUrl(): string {
   return (
     process.env.NEXT_PUBLIC_BOOK_CALL_URL?.replace(/\/$/, '') ??
-    'https://cal.com/shiloh-ai'
+    'https://cal.com/shilohai/30min'
   )
 }
