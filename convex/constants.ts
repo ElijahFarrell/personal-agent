@@ -39,6 +39,8 @@ export const TABLES = {
   INBOX_OUTBOUND_EVENTS: 'inboxOutboundEvents',
   /** AI draft reply vs thread summarize from unified inbox (time-savings). */
   INBOX_AI_USAGE: 'inboxAiUsage',
+  /** Public marketing — free AI audit questionnaire submissions. */
+  AUDIT_SUBMISSIONS: 'auditSubmissions',
 } as const
 
 // ─── Index Names ─────────────────────────────────────────────────────────────
@@ -90,6 +92,8 @@ export const INDEXES = {
   BY_TENANT_COMPLETED_AT: 'by_tenantId_completedAt',
   /** inboxAiUsage — range on tenant + time */
   BY_TENANT_INBOX_AI_CREATED: 'by_tenantId_inboxAiCreatedAt',
+  BY_AUDIT_EMAIL: 'by_audit_email',
+  BY_AUDIT_STATUS: 'by_audit_status',
 } as const
 
 /** inboxAiUsage.kind */

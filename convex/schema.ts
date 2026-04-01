@@ -835,4 +835,37 @@ export default defineSchema({
     .index(INDEXES.BY_USER_ID, ['userId'])
     .index(INDEXES.BY_MARKETING_USER_SOURCE, ['userId', 'source'])
     .index(INDEXES.BY_MARKETING_TENANT_USER_SYNCED, ['tenantId', 'userId', 'syncedAt']),
+
+  [TABLES.AUDIT_SUBMISSIONS]: defineTable({
+    name: v.string(),
+    email: v.string(),
+    role: v.string(),
+    roleOther: v.optional(v.string()),
+    teamSize: v.string(),
+    topTasks: v.string(),
+    weeklyManualHours: v.string(),
+    oneTaskToHandOff: v.string(),
+    currentTools: v.array(v.string()),
+    toolsOther: v.optional(v.string()),
+    toolFrustration: v.string(),
+    offToolProcesses: v.string(),
+    biggestChallenge: v.string(),
+    biggestChallengeOther: v.optional(v.string()),
+    aiExperience: v.string(),
+    aiWishIn30Days: v.string(),
+    monthlyLeads: v.string(),
+    annualRevenue: v.optional(v.string()),
+    status: v.union(
+      v.literal('pending'),
+      v.literal('processing'),
+      v.literal('delivered')
+    ),
+    reportUrl: v.optional(v.string()),
+    reportMarkdown: v.optional(v.string()),
+    hoursSavedPerWeekMin: v.optional(v.number()),
+    hoursSavedPerWeekMax: v.optional(v.number()),
+    submittedAt: v.number(),
+  })
+    .index(INDEXES.BY_AUDIT_EMAIL, ['email'])
+    .index(INDEXES.BY_AUDIT_STATUS, ['status']),
 })
