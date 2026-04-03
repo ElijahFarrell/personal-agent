@@ -15,6 +15,11 @@ const DEFAULT_CONFIG_SHAPE = {
     'searchApi',
     'mailchimp',
     'lemlist',
+    'retellai',
+    'sms-alert',
+    'callingly',
+    'follow-up-boss',
+    'calendly',
   ] as const,
   features: {
     customWorkflows: false,

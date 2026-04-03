@@ -12,7 +12,7 @@ import { getMarketingSiteUrl } from '@/lib/marketing/site'
 export const metadata: Metadata = {
   title: 'AI for real estate teams',
   description:
-    'Shiloh AI OS for agents and brokerages: lead qualification, reactivation, unified inbox, Retell voice, and CRM automation — with secure actions.',
+    'Shiloh AI OS for agents and brokerages: lead qualification, reactivation, unified inbox, AI voice, and CRM automation — with secure actions.',
   openGraph: {
     title: 'AI for real estate teams · Shiloh AI',
     url: `${getMarketingSiteUrl()}/real-estate`,
@@ -61,7 +61,7 @@ const faqs = [
   {
     question: 'Do you support voice and phone workflows?',
     answer:
-      'Yes — including patterns with Retell AI for receptionist-style flows: qualify callers, answer FAQs, and book appointments into your calendar stack.',
+      'Yes — including AI receptionist-style flows: qualify callers, answer FAQs, and book appointments into your calendar stack.',
   },
 ] as const
 
@@ -162,7 +162,7 @@ export default function RealEstatePage() {
             </li>
             <li>
               <span className="font-medium text-white">
-                Retell AI voice patterns
+                AI voice patterns
               </span>{' '}
               — qualify and book by phone.
             </li>

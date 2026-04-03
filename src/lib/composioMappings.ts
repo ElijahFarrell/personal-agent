@@ -35,6 +35,9 @@ export const PROVIDER_TO_TOOLKIT: Record<ComposioProvider, string> = {
   searchApi: 'SEARCH_API',
   whatsapp: 'WHATSAPP',
   lemlist: 'LEMLIST',
+  retellai: 'RETELLAI',
+  'sms-alert': 'SMS_ALERT',
+  callingly: 'CALLINGLY',
 } as const
 
 export const TOOLKIT_TO_PROVIDER: Record<string, ComposioProvider> = Object.fromEntries(
@@ -54,6 +57,9 @@ export function getToolkitForProvider(provider: string): string | null {
   if (p === 'searchapi') return 'SEARCH_API'
   if (p === 'whatsapp') return 'WHATSAPP'
   if (p === 'follow-up-boss' || p === 'followupboss') return 'FOLLOW_UP_BOSS'
+  if (p === 'sms-alert' || p === 'smsalert') return 'SMS_ALERT'
+  if (p === 'retellai' || p === 'retell') return 'RETELLAI'
+  if (p === 'callingly') return 'CALLINGLY'
   return PROVIDER_TO_TOOLKIT[p as ComposioProvider] ?? null
 }
 

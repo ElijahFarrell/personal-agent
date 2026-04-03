@@ -27,12 +27,16 @@ import {
   Table,
   Users,
   Video,
+  PhoneCall,
+  MessagesSquare,
 } from 'lucide-react'
 import type { ComposioProvider } from '@/types'
 
 export type IntegrationCategoryId =
   | 'email_calendar'
   | 'messaging'
+  | 'voice_calling'
+  | 'sms'
   | 'crm_sales'
   | 'productivity'
   | 'marketing_ads'
@@ -41,6 +45,8 @@ export type IntegrationCategoryId =
 export const INTEGRATION_CATEGORY_ORDER: IntegrationCategoryId[] = [
   'email_calendar',
   'messaging',
+  'voice_calling',
+  'sms',
   'crm_sales',
   'productivity',
   'marketing_ads',
@@ -50,6 +56,8 @@ export const INTEGRATION_CATEGORY_ORDER: IntegrationCategoryId[] = [
 export const INTEGRATION_CATEGORY_LABELS: Record<IntegrationCategoryId, string> = {
   email_calendar: 'Email & calendar',
   messaging: 'Messaging',
+  voice_calling: 'Voice & AI calling',
+  sms: 'SMS',
   crm_sales: 'CRM & sales',
   productivity: 'Productivity',
   marketing_ads: 'Marketing & ads',
@@ -182,6 +190,39 @@ export const INTEGRATION_CATALOG: IntegrationCatalogEntry[] = [
     iconBg: 'bg-pink-500/10',
     iconColor: 'text-pink-400',
     category: 'messaging',
+  },
+  {
+    id: 'retellai',
+    name: 'Retell AI',
+    description:
+      'AI voice agents, outbound calls, web calls, phone numbers, transcripts, and knowledge bases.',
+    provider: 'retellai',
+    Icon: PhoneCall,
+    iconBg: 'bg-violet-500/10',
+    iconColor: 'text-violet-400',
+    category: 'voice_calling',
+  },
+  {
+    id: 'callingly',
+    name: 'Callingly',
+    description:
+      'Lead response: outbound calls, SMS follow-ups, and CRM sync (e.g. Follow Up Boss).',
+    provider: 'callingly',
+    Icon: Phone,
+    iconBg: 'bg-emerald-600/10',
+    iconColor: 'text-emerald-400',
+    category: 'voice_calling',
+  },
+  {
+    id: 'sms-alert',
+    name: 'SMS Alert',
+    description:
+      'Send SMS and multi-channel messages via Composio (templates, contacts, campaigns).',
+    provider: 'sms-alert',
+    Icon: MessagesSquare,
+    iconBg: 'bg-amber-500/10',
+    iconColor: 'text-amber-400',
+    category: 'sms',
   },
   {
     id: 'hubspot',

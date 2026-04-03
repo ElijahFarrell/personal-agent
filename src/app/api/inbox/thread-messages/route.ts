@@ -39,7 +39,10 @@ export async function GET(req: NextRequest) {
 
     const userEmailLower = dbUser.email.toLowerCase().trim()
 
-    if (thread.provider === INBOX_PROVIDER.WHATSAPP) {
+    if (
+      thread.provider === INBOX_PROVIDER.WHATSAPP ||
+      thread.provider === INBOX_PROVIDER.SMS
+    ) {
       const rows = await convex.query(api.inbox.listMessagesForThread, {
         threadId,
         limit: 200,

@@ -1,13 +1,19 @@
 /**
- * Send a reply in an inbox thread via Composio (Gmail / Outlook).
+ * Send a reply in an inbox thread via Composio (Gmail / Outlook) or SMS provider.
  */
 import { INBOX_PROVIDER } from '@convex/constants'
 import { reply as gmailReplyToThread } from '@/services/gmailService'
 import { replyToOutlookMessage } from '@/services/outlookService'
 import { fetchLiveThreadMessages } from '@/services/inboxLiveMessagesService'
+import { executeComposioTool } from '@/lib/composio'
+import { COMPOSIO_WORKFLOW_DEFAULT_TOOLS } from '@/constants/composioWorkflowTools'
 
 export type InboxThreadLike = {
-  provider: typeof INBOX_PROVIDER.GMAIL | typeof INBOX_PROVIDER.OUTLOOK | typeof INBOX_PROVIDER.WHATSAPP
+  provider:
+    | typeof INBOX_PROVIDER.GMAIL
+    | typeof INBOX_PROVIDER.OUTLOOK
+    | typeof INBOX_PROVIDER.WHATSAPP
+    | typeof INBOX_PROVIDER.SMS
   externalThreadId: string
 }
 
@@ -23,8 +29,24 @@ export async function sendInboxThreadReply(params: {
     throw new Error('Reply body is empty')
   }
 
+  if (thread.provider === INBOX_PROVIDER.SMS) {
+    const phone = thread.externalThreadId
+    if (!phone) throw new Error('No phone number on this SMS thread')
+    await executeComposioTool(clerkUserId, COMPOSIO_WORKFLOW_DEFAULT_TOOLS.smsSend, {
+      body: trimmed,
+      to: phone,
+    })
+    return
+  }
+
   if (thread.provider === INBOX_PROVIDER.WHATSAPP) {
-    throw new Error('Reply from the inbox UI is not available for WhatsApp. Use your phone or the chat agent.')
+    const phone = thread.externalThreadId
+    if (!phone) throw new Error('No WhatsApp ID on this thread')
+    await executeComposioTool(clerkUserId, COMPOSIO_WORKFLOW_DEFAULT_TOOLS.smsSend, {
+      body: trimmed,
+      to: phone,
+    })
+    return
   }
 
   if (thread.provider === INBOX_PROVIDER.GMAIL) {
@@ -32,6 +54,7 @@ export async function sendInboxThreadReply(params: {
     return
   }
 
+  // Outlook
   const messages = await fetchLiveThreadMessages(
     clerkUserId,
     INBOX_PROVIDER.OUTLOOK,

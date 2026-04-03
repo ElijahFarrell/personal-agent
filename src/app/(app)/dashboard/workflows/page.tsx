@@ -40,6 +40,10 @@ import { WORKFLOW_RUN_STATUS } from '@convex/constants'
 import { useOrgConfig } from '@/hooks/useOrgConfig'
 import { isFeatureEnabled } from '@/constants/featureGating'
 import { Textarea } from '@/components/ui/textarea'
+import {
+  REAL_ESTATE_WORKFLOW_TEMPLATES,
+  WARM_LEAD_WORKFLOW_TEMPLATES,
+} from '@/constants/workflowTemplates'
 
 function WorkflowCard({
   wf,
@@ -221,6 +225,21 @@ export default function WorkflowsPage() {
     api.workflowDefinitions.listByTenantId,
     dbUser ? { tenantId: dbUser.tenantId } : 'skip'
   )
+  const recentRuns = useQuery(
+    api.workflowRuns.listByTenantId,
+    dbUser ? { tenantId: dbUser.tenantId, limit: 50 } : 'skip'
+  )
+  const nurtureRunMetrics = (() => {
+    if (!recentRuns) return { total: 0, success: 0, failed: 0, suspended: 0 }
+    const totals = { total: 0, success: 0, failed: 0, suspended: 0 }
+    for (const run of recentRuns) {
+      totals.total += 1
+      if (run.status === WORKFLOW_RUN_STATUS.SUCCESS) totals.success += 1
+      if (run.status === WORKFLOW_RUN_STATUS.FAILED) totals.failed += 1
+      if (run.status === WORKFLOW_RUN_STATUS.SUSPENDED) totals.suspended += 1
+    }
+    return totals
+  })()
 
   const handleRun = async (workflowId: Id<'workflowDefinitions'>, autoApprove: boolean) => {
     setRunLoadingId(workflowId)
@@ -290,6 +309,32 @@ export default function WorkflowsPage() {
     }
   }
 
+  const handleCreateFromTemplate = async (templateId: string) => {
+    const allTemplates = [
+      ...REAL_ESTATE_WORKFLOW_TEMPLATES,
+      ...WARM_LEAD_WORKFLOW_TEMPLATES,
+    ]
+    const t = allTemplates.find((x) => x.id === templateId)
+    if (!t) return
+    try {
+      const res = await fetch('/api/workflows', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: t.name,
+          description: t.description,
+          definition: t.definition,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? 'Failed to create workflow')
+      const workflowId = data.workflowId as Id<'workflowDefinitions'>
+      window.location.href = `/dashboard/workflows/builder?id=${workflowId}`
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : 'Failed')
+    }
+  }
+
   const handleDelete = async (workflowId: Id<'workflowDefinitions'>) => {
     setDeletingId(workflowId)
     try {
@@ -323,6 +368,71 @@ export default function WorkflowsPage() {
           </Button>
         </div>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm">Real estate templates</CardTitle>
+          <CardDescription>
+            Pre-built graphs for SMS, voice, and email campaigns — open in the builder to
+            adjust tool settings and prompts.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-wrap gap-2">
+          {REAL_ESTATE_WORKFLOW_TEMPLATES.map((tpl) => (
+            <Button
+              key={tpl.id}
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={() => void handleCreateFromTemplate(tpl.id)}
+            >
+              {tpl.name}
+            </Button>
+          ))}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm">Warm lead nurture quick-start</CardTitle>
+          <CardDescription>
+            Admin-friendly sequence presets for past clients and referral
+            follow-up. Recommended: install a template, review copy in builder,
+            then schedule recurring runs.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <ol className="list-decimal pl-5 text-sm text-muted-foreground space-y-1">
+            <li>Pick a warm-lead template below.</li>
+            <li>Adjust message copy and tool params in graph builder.</li>
+            <li>Create a schedule in the Schedules page.</li>
+          </ol>
+          <div className="flex flex-wrap gap-2">
+            {WARM_LEAD_WORKFLOW_TEMPLATES.map((tpl) => (
+              <Button
+                key={tpl.id}
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => void handleCreateFromTemplate(tpl.id)}
+              >
+                {tpl.name}
+              </Button>
+            ))}
+            <Button asChild variant="outline" size="sm">
+              <Link href="/dashboard/schedules">Open schedules</Link>
+            </Button>
+          </div>
+          <div className="rounded-lg border border-border p-3 text-sm text-muted-foreground">
+            <p className="font-medium text-foreground">Recent automation outcomes</p>
+            <p className="mt-1">
+              Runs: {nurtureRunMetrics.total} · Success: {nurtureRunMetrics.success} ·
+              Failed: {nurtureRunMetrics.failed} · Awaiting approval:{' '}
+              {nurtureRunMetrics.suspended}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
 
       {nlEnabled && (
         <Card>

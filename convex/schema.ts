@@ -34,6 +34,15 @@ import {
   WORKFLOW_RUN_STATUS,
   WORKFLOW_STEP_STATUS,
   INBOX_AI_USAGE_KIND,
+  CALL_LOG_PROVIDER,
+  CALL_DIRECTION,
+  CALL_LOG_STATUS,
+  SMS_LOG_PROVIDER,
+  SMS_LOG_STATUS,
+  COMPLIANCE_CHANNEL,
+  COMPLIANCE_DECISION,
+  CONSENT_KIND,
+  SUPPRESSION_REASON,
 } from './constants'
 
 export default defineSchema({
@@ -607,7 +616,8 @@ export default defineSchema({
     provider: v.union(
       v.literal(INBOX_PROVIDER.GMAIL),
       v.literal(INBOX_PROVIDER.OUTLOOK),
-      v.literal(INBOX_PROVIDER.WHATSAPP)
+      v.literal(INBOX_PROVIDER.WHATSAPP),
+      v.literal(INBOX_PROVIDER.SMS)
     ),
     sentAt: v.number(),
   })
@@ -689,7 +699,8 @@ export default defineSchema({
     provider: v.union(
       v.literal(INBOX_PROVIDER.GMAIL),
       v.literal(INBOX_PROVIDER.OUTLOOK),
-      v.literal(INBOX_PROVIDER.WHATSAPP)
+      v.literal(INBOX_PROVIDER.WHATSAPP),
+      v.literal(INBOX_PROVIDER.SMS)
     ),
     externalThreadId: v.string(),
     subject: v.optional(v.string()),
@@ -868,4 +879,227 @@ export default defineSchema({
   })
     .index(INDEXES.BY_AUDIT_EMAIL, ['email'])
     .index(INDEXES.BY_AUDIT_STATUS, ['status']),
+
+  // ─── Voice / SMS activity (Retell, Callingly, SMS providers) ───────────────
+
+  [TABLES.CALL_LOGS]: defineTable({
+    tenantId: v.id(TABLES.TENANTS),
+    userId: v.optional(v.id(TABLES.USERS)),
+    prospectId: v.optional(v.id(TABLES.PROSPECTS)),
+    provider: v.union(
+      v.literal(CALL_LOG_PROVIDER.RETELL),
+      v.literal(CALL_LOG_PROVIDER.CALLINGLY),
+      v.literal(CALL_LOG_PROVIDER.OTHER)
+    ),
+    externalCallId: v.string(),
+    direction: v.union(
+      v.literal(CALL_DIRECTION.INBOUND),
+      v.literal(CALL_DIRECTION.OUTBOUND)
+    ),
+    durationMs: v.optional(v.number()),
+    transcript: v.optional(v.string()),
+    recordingUrl: v.optional(v.string()),
+    analysis: v.optional(v.any()),
+    status: v.union(
+      v.literal(CALL_LOG_STATUS.INITIATED),
+      v.literal(CALL_LOG_STATUS.RINGING),
+      v.literal(CALL_LOG_STATUS.IN_PROGRESS),
+      v.literal(CALL_LOG_STATUS.ENDED),
+      v.literal(CALL_LOG_STATUS.FAILED),
+      v.literal(CALL_LOG_STATUS.ANALYZED)
+    ),
+    retellAgentId: v.optional(v.string()),
+    workflowRunId: v.optional(v.id(TABLES.WORKFLOW_RUNS)),
+    complianceSnapshot: v.optional(
+      v.object({
+        policyVersion: v.string(),
+        decision: v.union(
+          v.literal(COMPLIANCE_DECISION.ALLOW),
+          v.literal(COMPLIANCE_DECISION.BLOCK)
+        ),
+        reasonCodes: v.array(v.string()),
+      })
+    ),
+    rawPayload: v.optional(v.any()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index(INDEXES.BY_TENANT_ID, ['tenantId'])
+    .index(INDEXES.BY_PROSPECT_ID, ['prospectId'])
+    .index(INDEXES.BY_EXTERNAL_CALL_ID, ['externalCallId']),
+
+  [TABLES.SMS_LOGS]: defineTable({
+    tenantId: v.id(TABLES.TENANTS),
+    userId: v.optional(v.id(TABLES.USERS)),
+    prospectId: v.optional(v.id(TABLES.PROSPECTS)),
+    provider: v.union(
+      v.literal(SMS_LOG_PROVIDER.SMS_ALERT),
+      v.literal(SMS_LOG_PROVIDER.TWILIO),
+      v.literal(SMS_LOG_PROVIDER.TELNYX),
+      v.literal(SMS_LOG_PROVIDER.OTHER)
+    ),
+    externalMessageId: v.optional(v.string()),
+    direction: v.union(
+      v.literal(CALL_DIRECTION.INBOUND),
+      v.literal(CALL_DIRECTION.OUTBOUND)
+    ),
+    body: v.string(),
+    status: v.union(
+      v.literal(SMS_LOG_STATUS.QUEUED),
+      v.literal(SMS_LOG_STATUS.SENT),
+      v.literal(SMS_LOG_STATUS.DELIVERED),
+      v.literal(SMS_LOG_STATUS.FAILED),
+      v.literal(SMS_LOG_STATUS.RECEIVED),
+      v.literal(SMS_LOG_STATUS.REPLIED)
+    ),
+    replyBody: v.optional(v.string()),
+    workflowRunId: v.optional(v.id(TABLES.WORKFLOW_RUNS)),
+    complianceSnapshot: v.optional(
+      v.object({
+        policyVersion: v.string(),
+        decision: v.union(
+          v.literal(COMPLIANCE_DECISION.ALLOW),
+          v.literal(COMPLIANCE_DECISION.BLOCK)
+        ),
+        reasonCodes: v.array(v.string()),
+      })
+    ),
+    rawPayload: v.optional(v.any()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index(INDEXES.BY_TENANT_ID, ['tenantId'])
+    .index(INDEXES.BY_PROSPECT_ID, ['prospectId']),
+
+  [TABLES.COMPLIANCE_CONTACTS]: defineTable({
+    tenantId: v.id(TABLES.TENANTS),
+    prospectId: v.optional(v.id(TABLES.PROSPECTS)),
+    phone: v.string(),
+    timezone: v.optional(v.string()),
+    stateCode: v.optional(v.string()),
+    source: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index(INDEXES.BY_TENANT_ID, ['tenantId'])
+    .index(INDEXES.BY_TENANT_PHONE, ['tenantId', 'phone'])
+    .index(INDEXES.BY_TENANT_STATE, ['tenantId', 'stateCode']),
+
+  [TABLES.DNC_ENTRIES]: defineTable({
+    tenantId: v.id(TABLES.TENANTS),
+    phone: v.string(),
+    scope: v.union(
+      v.literal('national'),
+      v.literal('state'),
+      v.literal('internal')
+    ),
+    stateCode: v.optional(v.string()),
+    source: v.optional(v.string()),
+    checkedAt: v.number(),
+    expiresAt: v.optional(v.number()),
+    active: v.boolean(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index(INDEXES.BY_TENANT_ID, ['tenantId'])
+    .index(INDEXES.BY_TENANT_PHONE, ['tenantId', 'phone'])
+    .index(INDEXES.BY_TENANT_STATE, ['tenantId', 'stateCode']),
+
+  [TABLES.CONSENT_RECORDS]: defineTable({
+    tenantId: v.id(TABLES.TENANTS),
+    phone: v.string(),
+    kind: v.union(
+      v.literal(CONSENT_KIND.VOICE),
+      v.literal(CONSENT_KIND.SMS),
+      v.literal(CONSENT_KIND.EMAIL)
+    ),
+    evidenceUrl: v.optional(v.string()),
+    evidenceHash: v.optional(v.string()),
+    signedAt: v.optional(v.number()),
+    revokedAt: v.optional(v.number()),
+    scope: v.optional(v.string()),
+    notes: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index(INDEXES.BY_TENANT_ID, ['tenantId'])
+    .index(INDEXES.BY_TENANT_PHONE, ['tenantId', 'phone']),
+
+  [TABLES.COMPLIANCE_POLICIES]: defineTable({
+    tenantId: v.id(TABLES.TENANTS),
+    stateCode: v.string(),
+    policyVersion: v.string(),
+    quietHoursStart: v.number(),
+    quietHoursEnd: v.number(),
+    requireSmsConsent: v.boolean(),
+    requireVoiceConsent: v.boolean(),
+    requireAiDisclosure: v.boolean(),
+    requireOptOutPrompt: v.boolean(),
+    updatedAt: v.number(),
+    updatedBy: v.string(),
+  })
+    .index(INDEXES.BY_TENANT_ID, ['tenantId'])
+    .index(INDEXES.BY_TENANT_STATE, ['tenantId', 'stateCode']),
+
+  [TABLES.SUPPRESSION_LISTS]: defineTable({
+    tenantId: v.id(TABLES.TENANTS),
+    phone: v.string(),
+    channel: v.union(
+      v.literal(COMPLIANCE_CHANNEL.VOICE_CALL),
+      v.literal(COMPLIANCE_CHANNEL.SMS),
+      v.literal(COMPLIANCE_CHANNEL.EMAIL)
+    ),
+    reason: v.union(
+      v.literal(SUPPRESSION_REASON.DNC),
+      v.literal(SUPPRESSION_REASON.OPTOUT),
+      v.literal(SUPPRESSION_REASON.MANUAL)
+    ),
+    active: v.boolean(),
+    source: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index(INDEXES.BY_TENANT_ID, ['tenantId'])
+    .index(INDEXES.BY_TENANT_PHONE, ['tenantId', 'phone'])
+    .index(INDEXES.BY_TENANT_CHANNEL_PHONE, ['tenantId', 'channel', 'phone']),
+
+  [TABLES.COMPLIANCE_AUDIT_EVENTS]: defineTable({
+    tenantId: v.id(TABLES.TENANTS),
+    userId: v.optional(v.id(TABLES.USERS)),
+    workflowRunId: v.optional(v.id(TABLES.WORKFLOW_RUNS)),
+    channel: v.union(
+      v.literal(COMPLIANCE_CHANNEL.VOICE_CALL),
+      v.literal(COMPLIANCE_CHANNEL.SMS),
+      v.literal(COMPLIANCE_CHANNEL.EMAIL)
+    ),
+    phone: v.string(),
+    stateCode: v.optional(v.string()),
+    timezone: v.optional(v.string()),
+    policyVersion: v.string(),
+    decision: v.union(
+      v.literal(COMPLIANCE_DECISION.ALLOW),
+      v.literal(COMPLIANCE_DECISION.BLOCK)
+    ),
+    reasonCodes: v.array(v.string()),
+    payload: v.optional(v.any()),
+    createdAt: v.number(),
+  })
+    .index(INDEXES.BY_TENANT_ID, ['tenantId'])
+    .index(INDEXES.BY_TENANT_DECISION_CREATED, ['tenantId', 'decision', 'createdAt']),
+
+  [TABLES.LEGAL_ACCEPTANCES]: defineTable({
+    tenantId: v.id(TABLES.TENANTS),
+    userId: v.id(TABLES.USERS),
+    documentKey: v.union(
+      v.literal('terms'),
+      v.literal('privacy'),
+      v.literal('compliance_agreement')
+    ),
+    version: v.string(),
+    acceptedAt: v.number(),
+    ipAddress: v.optional(v.string()),
+    userAgent: v.optional(v.string()),
+  })
+    .index(INDEXES.BY_TENANT_ID, ['tenantId'])
+    .index(INDEXES.BY_TENANT_USER_DOC_VERSION, ['tenantId', 'userId', 'documentKey', 'version']),
 })

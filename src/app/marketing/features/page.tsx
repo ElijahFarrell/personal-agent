@@ -7,7 +7,7 @@ import { getMarketingSiteUrl } from '@/lib/marketing/site'
 export const metadata: Metadata = {
   title: 'Features',
   description:
-    'Lead qualification agents, reactivation, unified inbox, workflows, Retell voice, and CRM automation — Shiloh AI OS capabilities.',
+    'Lead qualification agents, reactivation, unified inbox, workflows, AI voice, and CRM automation — Shiloh AI OS capabilities.',
   openGraph: {
     title: 'Features · Shiloh AI',
     url: `${getMarketingSiteUrl()}/features`,

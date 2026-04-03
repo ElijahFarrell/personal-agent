@@ -4,6 +4,7 @@
 export const API_ROUTES = {
   chat: '/api/chat',
   voiceTranscribe: '/api/voice/transcribe',
+  voiceRetellWebCall: '/api/voice/retell/web-call',
   threadSummarize: '/api/thread/summarize',
   prospectsEnrich: '/api/prospects/enrich',
   prospectsDraftsCrmSync: '/api/prospects/drafts/crm-sync',

@@ -36,7 +36,7 @@ const items = [
   },
   {
     icon: Phone,
-    title: 'Voice + Retell',
+    title: 'AI voice',
     body: 'AI receptionist workflows that qualify callers, answer FAQs, and book appointments.',
   },
 ] as const

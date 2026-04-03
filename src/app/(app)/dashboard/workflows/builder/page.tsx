@@ -31,6 +31,9 @@ import {
   Loader2,
   ArrowLeft,
   Shield,
+  PhoneCall,
+  MessagesSquare,
+  Mail,
 } from 'lucide-react'
 import { api } from '@convex/_generated/api'
 import type { Id } from '@convex/_generated/dataModel'
@@ -42,7 +45,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
 import { AGENT_REGISTRY } from '@/constants/agents'
 
-const NODE_TYPES = ['agent', 'tool', 'suspend', 'sleep'] as const
+const NODE_TYPES = [
+  'agent',
+  'tool',
+  'suspend',
+  'sleep',
+  'sms',
+  'voice_call',
+  'email',
+] as const
 
 function AgentNode({ data }: { data: { label?: string; agentId?: string } }) {
   return (
@@ -110,11 +121,59 @@ function SleepNode({ data }: { data: { label?: string; milliseconds?: number } }
   )
 }
 
+function SmsNode({ data }: { data: { label?: string } }) {
+  return (
+    <Card className="min-w-[180px] border-sky-500/40">
+      <Handle type="target" position={Position.Left} />
+      <CardHeader className="p-3">
+        <CardTitle className="flex items-center gap-2 text-sm">
+          <MessagesSquare className="h-4 w-4" />
+          {data.label ?? 'SMS'}
+        </CardTitle>
+      </CardHeader>
+      <Handle type="source" position={Position.Right} />
+    </Card>
+  )
+}
+
+function VoiceCallNode({ data }: { data: { label?: string } }) {
+  return (
+    <Card className="min-w-[180px] border-violet-500/40">
+      <Handle type="target" position={Position.Left} />
+      <CardHeader className="p-3">
+        <CardTitle className="flex items-center gap-2 text-sm">
+          <PhoneCall className="h-4 w-4" />
+          {data.label ?? 'Voice call'}
+        </CardTitle>
+      </CardHeader>
+      <Handle type="source" position={Position.Right} />
+    </Card>
+  )
+}
+
+function EmailNode({ data }: { data: { label?: string } }) {
+  return (
+    <Card className="min-w-[180px] border-amber-500/40">
+      <Handle type="target" position={Position.Left} />
+      <CardHeader className="p-3">
+        <CardTitle className="flex items-center gap-2 text-sm">
+          <Mail className="h-4 w-4" />
+          {data.label ?? 'Email'}
+        </CardTitle>
+      </CardHeader>
+      <Handle type="source" position={Position.Right} />
+    </Card>
+  )
+}
+
 const nodeTypes: NodeTypes = {
   agent: AgentNode,
   tool: ToolNode,
   suspend: SuspendNode,
   sleep: SleepNode,
+  sms: SmsNode,
+  voice_call: VoiceCallNode,
+  email: EmailNode,
 }
 
 const initialNodes: Node[] = [
@@ -149,7 +208,19 @@ function WorkflowBuilderContent() {
   useEffect(() => {
     if (editId && existingWorkflow?.definition) {
       const def = existingWorkflow.definition as { nodes?: Node[]; edges?: Edge[] }
-      if (def.nodes?.length) setNodes(def.nodes)
+      if (def.nodes?.length) {
+        setNodes(
+          def.nodes.map((node) => {
+            const raw = (node.data ?? {}) as Record<string, unknown>
+            const cfg = raw.config as Record<string, unknown> | undefined
+            const data: Record<string, unknown> =
+              cfg && typeof cfg === 'object'
+                ? { ...raw, ...cfg, config: cfg }
+                : { ...raw }
+            return { ...node, data } as Node
+          })
+        )
+      }
       if (def.edges?.length) setEdges(def.edges)
     }
   }, [editId, existingWorkflow?._id])
@@ -166,13 +237,22 @@ function WorkflowBuilderContent() {
 
   const addNode = (type: (typeof NODE_TYPES)[number], agentId?: string) => {
     const id = `${type}-${Date.now()}`
+    const labels: Partial<Record<(typeof NODE_TYPES)[number], string>> = {
+      sms: 'Send SMS',
+      voice_call: 'Voice call',
+      email: 'Marketing email',
+    }
     const newNode: Node = {
       id,
       type,
       position: { x: 250 + Math.random() * 100, y: 150 + Math.random() * 100 },
       data: {
-        label: type === 'agent' && agentId ? AGENT_REGISTRY.find((a) => a.id === agentId)?.displayName ?? agentId : type,
+        label:
+          type === 'agent' && agentId
+            ? AGENT_REGISTRY.find((a) => a.id === agentId)?.displayName ?? agentId
+            : (labels[type] ?? type),
         agentId: type === 'agent' ? agentId : undefined,
+        emailProvider: type === 'email' ? 'mailchimp' : undefined,
       },
     }
     setNodes((nds) => [...nds, newNode])
@@ -254,22 +334,30 @@ function WorkflowBuilderContent() {
   }
 
   const getDefinition = () => ({
-    nodes: nodes.map((n) => ({
-      id: n.id,
-      type: n.type ?? 'agent',
-      data: {
-        label: n.data?.label,
-        config: {
-          agentId: n.data?.agentId,
-          prompt: n.data?.prompt,
-          toolName: n.data?.toolName,
-          reason: n.data?.reason,
-          milliseconds: n.data?.milliseconds,
-          guardrails: n.data?.guardrails,
+    nodes: nodes.map((n) => {
+      const d = n.data as Record<string, unknown> | undefined
+      const nested = (d?.config as Record<string, unknown> | undefined) ?? {}
+      return {
+        id: n.id,
+        type: n.type ?? 'agent',
+        data: {
+          label: d?.label,
+          config: {
+            ...nested,
+            agentId: d?.agentId ?? nested.agentId,
+            prompt: d?.prompt ?? nested.prompt,
+            toolName: d?.toolName ?? nested.toolName,
+            toolParams: d?.toolParams ?? nested.toolParams,
+            composioToolName: d?.composioToolName ?? nested.composioToolName,
+            emailProvider: d?.emailProvider ?? nested.emailProvider,
+            reason: d?.reason ?? nested.reason,
+            milliseconds: d?.milliseconds ?? nested.milliseconds,
+            guardrails: d?.guardrails ?? nested.guardrails,
+          },
         },
-      },
-      position: n.position,
-    })),
+        position: n.position,
+      }
+    }),
     edges: edges.map((e) => ({
       id: e.id,
       source: e.source,
@@ -361,6 +449,33 @@ function WorkflowBuilderContent() {
             >
               <Timer className="mr-2 h-4 w-4" />
               Sleep
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full justify-start"
+              onClick={() => addNode('sms')}
+            >
+              <MessagesSquare className="mr-2 h-4 w-4" />
+              Send SMS
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full justify-start"
+              onClick={() => addNode('voice_call')}
+            >
+              <PhoneCall className="mr-2 h-4 w-4" />
+              Voice call
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full justify-start"
+              onClick={() => addNode('email')}
+            >
+              <Mail className="mr-2 h-4 w-4" />
+              Send email
             </Button>
           </div>
         </div>
@@ -537,6 +652,68 @@ function WorkflowBuilderContent() {
                       }
                     />
                   </div>
+                )}
+                {(selectedNode.type === 'sms' ||
+                  selectedNode.type === 'voice_call' ||
+                  selectedNode.type === 'email') && (
+                  <>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">
+                        Tool slug (optional override)
+                      </Label>
+                      <Input
+                        placeholder="e.g. SMS_ALERT_SEND_SMS"
+                        value={(selectedNode.data?.composioToolName as string) ?? ''}
+                        onChange={(e) =>
+                          updateNodeData(selectedNode.id, {
+                            composioToolName: e.target.value || undefined,
+                          })
+                        }
+                      />
+                    </div>
+                    {selectedNode.type === 'email' && (
+                      <div>
+                        <Label>Provider</Label>
+                        <select
+                          className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                          value={(selectedNode.data?.emailProvider as string) ?? 'mailchimp'}
+                          onChange={(e) =>
+                            updateNodeData(selectedNode.id, {
+                              emailProvider: e.target.value as 'mailchimp' | 'lemlist',
+                            })
+                          }
+                        >
+                          <option value="mailchimp">Mailchimp</option>
+                          <option value="lemlist">Lemlist</option>
+                        </select>
+                      </div>
+                    )}
+                    <div>
+                      <Label>Tool arguments (JSON)</Label>
+                      <textarea
+                        key={`${selectedNode.id}-toolParams`}
+                        className="w-full rounded-md border bg-background px-3 py-2 font-mono text-xs"
+                        rows={6}
+                        placeholder='{"to": "+1...", "body": "Hello"}'
+                        defaultValue={JSON.stringify(
+                          (selectedNode.data?.toolParams as Record<string, unknown>) ?? {},
+                          null,
+                          2
+                        )}
+                        onBlur={(e) => {
+                          try {
+                            const parsed = JSON.parse(e.target.value || '{}') as Record<
+                              string,
+                              unknown
+                            >
+                            updateNodeData(selectedNode.id, { toolParams: parsed })
+                          } catch {
+                            window.alert('Invalid JSON in tool arguments')
+                          }
+                        }}
+                      />
+                    </div>
+                  </>
                 )}
               </CardContent>
             </Card>
