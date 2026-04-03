@@ -80,16 +80,6 @@ const NAV_CONFIG: (NavItem | NavGroup)[] = [
   { type: 'item', href: '/dashboard/prospects', label: 'Prospects', icon: Users },
   {
     type: 'group',
-    label: 'Marketing',
-    icon: Megaphone,
-    storageKey: 'marketing',
-    children: [
-      { type: 'item', href: '/dashboard/marketing', label: 'Overview', icon: LayoutGrid },
-      { type: 'item', href: '/dashboard/marketing/campaigns', label: 'Campaigns', icon: BarChart3 },
-    ],
-  },
-  {
-    type: 'group',
     label: 'AI',
     icon: Sparkles,
     storageKey: 'ai',
@@ -99,6 +89,16 @@ const NAV_CONFIG: (NavItem | NavGroup)[] = [
       { type: 'item', href: '/dashboard/workflows', label: 'Workflows', icon: GitBranch },
       { type: 'item', href: '/dashboard/schedules', label: 'Schedules', icon: Clock },
       { type: 'item', href: '/dashboard/compliance', label: 'Compliance', icon: Shield },
+    ],
+  },
+  {
+    type: 'group',
+    label: 'Marketing',
+    icon: Megaphone,
+    storageKey: 'marketing',
+    children: [
+      { type: 'item', href: '/dashboard/marketing', label: 'Overview', icon: LayoutGrid },
+      { type: 'item', href: '/dashboard/marketing/campaigns', label: 'Campaigns', icon: BarChart3 },
     ],
   },
   {
@@ -246,7 +246,7 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupLabel className="sr-only">Main navigation</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="gap-1.5">
               {standaloneItems.map((entry) => {
                 const isActive = entry.exact
                   ? pathname === entry.href
@@ -254,7 +254,11 @@ export function AppSidebar() {
                 const Icon = entry.icon
                 return (
                   <SidebarMenuItem key={entry.href}>
-                    <SidebarMenuButton asChild isActive={isActive}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive}
+                      className="h-9 rounded-xl px-2.5 text-[14px] font-medium tracking-tight text-sidebar-foreground/90"
+                    >
                       <Link
                         href={entry.href}
                         aria-current={isActive ? 'page' : undefined}
@@ -277,9 +281,9 @@ export function AppSidebar() {
         {groupedItems.length > 0 && (
           <>
             <SidebarSeparator className="mx-2" />
-            <SidebarGroup>
-              <SidebarGroupContent>
-                <SidebarMenu>
+            <SidebarGroup className="px-2 pb-2 pt-1.5">
+              <SidebarGroupContent className="rounded-3xl border border-white/15 bg-gradient-to-b from-white/[0.12] via-white/[0.06] to-white/[0.02] p-2 shadow-[0_20px_45px_rgba(3,6,20,0.45),inset_0_1px_0_rgba(255,255,255,0.12)]">
+                <SidebarMenu className="gap-1.5">
                   {groupedItems.map((group) => {
                     const GroupIcon = group.icon
                     const isOpen =
@@ -296,32 +300,37 @@ export function AppSidebar() {
                         open={isOpen}
                         onOpenChange={() => toggleGroup(group.storageKey)}
                       >
-                        <SidebarMenuItem>
+                        <SidebarMenuItem
+                          className={cn(
+                            'rounded-xl px-1 py-0.5 transition-colors',
+                            isOpen && 'bg-black/15'
+                          )}
+                        >
                           <CollapsibleTrigger asChild>
                             <SidebarMenuButton
                               isActive={hasActiveChild}
                               className={cn(
-                                'w-full touch-action-manipulation',
+                                'h-10.5 w-full rounded-2xl px-3 text-[15px] font-semibold tracking-[-0.01em] text-sidebar-foreground/90 touch-action-manipulation',
                                 hasActiveChild &&
-                                  'bg-sidebar-accent text-sidebar-accent-foreground'
+                                  'bg-gradient-to-r from-white/[0.22] to-white/[0.08] text-sidebar-foreground shadow-[0_8px_24px_rgba(0,0,0,0.3)]'
                               )}
                             >
                               <ChevronRight
                                 className={cn(
-                                  'h-4 w-4 shrink-0 transition-transform',
+                                  'h-4 w-4 shrink-0 text-sidebar-foreground/70 transition-transform',
                                   isOpen && 'rotate-90'
                                 )}
                                 aria-hidden="true"
                               />
                               <GroupIcon
-                                className="h-4 w-4 shrink-0"
+                                className="h-4 w-4 shrink-0 text-sidebar-foreground/85"
                                 aria-hidden="true"
                               />
                               {group.label}
                             </SidebarMenuButton>
                           </CollapsibleTrigger>
-                          <CollapsibleContent>
-                            <SidebarMenuSub>
+                          <CollapsibleContent className="pb-1.5 pt-1">
+                            <SidebarMenuSub className="mx-4.5 my-1 gap-1.5 border-l-white/15 pl-4 pr-1.5">
                               {group.children.map((child) => {
                                 const isActive = child.exact
                                   ? pathname === child.href
@@ -329,7 +338,11 @@ export function AppSidebar() {
                                 const ChildIcon = child.icon
                                 return (
                                   <SidebarMenuSubItem key={child.href}>
-                                    <SidebarMenuSubButton asChild isActive={isActive}>
+                                    <SidebarMenuSubButton
+                                      asChild
+                                      isActive={isActive}
+                                      className="h-9 rounded-xl px-2.5 text-[14px] font-normal tracking-tight text-sidebar-foreground/80 data-[active=true]:bg-white/[0.13] data-[active=true]:text-sidebar-foreground data-[active=true]:font-medium"
+                                    >
                                       <Link
                                         href={child.href}
                                         aria-current={
@@ -361,17 +374,6 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border p-4 space-y-2">
-        <div className="flex flex-wrap gap-2 text-[11px] text-muted-foreground">
-          <Link href="/terms" className="hover:text-foreground">
-            Terms
-          </Link>
-          <Link href="/privacy" className="hover:text-foreground">
-            Privacy
-          </Link>
-          <Link href="/compliance-agreement" className="hover:text-foreground">
-            Compliance
-          </Link>
-        </div>
         {showAdmin && (
           <Link
             href="/dashboard/admin"
@@ -388,6 +390,17 @@ export function AppSidebar() {
             },
           }}
         />
+        <div className="pt-1 flex flex-wrap gap-2 text-[11px] text-muted-foreground">
+          <Link href="/terms" className="hover:text-foreground">
+            Terms
+          </Link>
+          <Link href="/privacy" className="hover:text-foreground">
+            Privacy
+          </Link>
+          <Link href="/compliance-agreement" className="hover:text-foreground">
+            Compliance
+          </Link>
+        </div>
       </SidebarFooter>
     </Sidebar>
   )
