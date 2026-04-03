@@ -41,6 +41,15 @@ export const TABLES = {
   INBOX_AI_USAGE: 'inboxAiUsage',
   /** Public marketing — free AI audit questionnaire submissions. */
   AUDIT_SUBMISSIONS: 'auditSubmissions',
+  CALL_LOGS: 'callLogs',
+  SMS_LOGS: 'smsLogs',
+  COMPLIANCE_CONTACTS: 'complianceContacts',
+  DNC_ENTRIES: 'dncEntries',
+  CONSENT_RECORDS: 'consentRecords',
+  COMPLIANCE_POLICIES: 'compliancePolicies',
+  COMPLIANCE_AUDIT_EVENTS: 'complianceAuditEvents',
+  SUPPRESSION_LISTS: 'suppressionLists',
+  LEGAL_ACCEPTANCES: 'legalAcceptances',
 } as const
 
 // ─── Index Names ─────────────────────────────────────────────────────────────
@@ -77,6 +86,7 @@ export const INDEXES = {
   BY_INBOX_THREAD_MESSAGE: 'by_threadId_externalMessageId',
   BY_INBOX_SYNC_USER_DATE: 'by_userId_dateKey',
   BY_COMPOSIO_TRIGGER_ID: 'by_composioTriggerId',
+  BY_EXTERNAL_CALL_ID: 'by_externalCallId',
   BY_VIDEO_JOB_USER_CREATED: 'by_userId_createdAt',
   BY_MEDIA_TENANT_CREATED: 'by_tenantId_createdAt',
   BY_ADS_PIPELINE_TENANT_CREATED: 'by_tenantId_createdAt',
@@ -94,6 +104,11 @@ export const INDEXES = {
   BY_TENANT_INBOX_AI_CREATED: 'by_tenantId_inboxAiCreatedAt',
   BY_AUDIT_EMAIL: 'by_audit_email',
   BY_AUDIT_STATUS: 'by_audit_status',
+  BY_TENANT_PHONE: 'by_tenantId_phone',
+  BY_TENANT_CHANNEL_PHONE: 'by_tenantId_channel_phone',
+  BY_TENANT_STATE: 'by_tenantId_stateCode',
+  BY_TENANT_DECISION_CREATED: 'by_tenantId_decision_createdAt',
+  BY_TENANT_USER_DOC_VERSION: 'by_tenantId_userId_documentKey_version',
 } as const
 
 /** inboxAiUsage.kind */
@@ -304,6 +319,67 @@ export const WORKFLOW_STEP_STATUS = {
   SUSPENDED: 'suspended',
 } as const
 
+/** Voice / telephony provider for callLogs */
+export const CALL_LOG_PROVIDER = {
+  RETELL: 'retell',
+  CALLINGLY: 'callingly',
+  OTHER: 'other',
+} as const
+
+export const CALL_DIRECTION = {
+  INBOUND: 'inbound',
+  OUTBOUND: 'outbound',
+} as const
+
+export const CALL_LOG_STATUS = {
+  INITIATED: 'initiated',
+  RINGING: 'ringing',
+  IN_PROGRESS: 'in_progress',
+  ENDED: 'ended',
+  FAILED: 'failed',
+  ANALYZED: 'analyzed',
+} as const
+
+/** SMS / messaging provider for smsLogs */
+export const SMS_LOG_PROVIDER = {
+  SMS_ALERT: 'sms_alert',
+  TWILIO: 'twilio',
+  TELNYX: 'telnyx',
+  OTHER: 'other',
+} as const
+
+export const SMS_LOG_STATUS = {
+  QUEUED: 'queued',
+  SENT: 'sent',
+  DELIVERED: 'delivered',
+  FAILED: 'failed',
+  RECEIVED: 'received',
+  REPLIED: 'replied',
+} as const
+
+export const COMPLIANCE_CHANNEL = {
+  VOICE_CALL: 'voice_call',
+  SMS: 'sms',
+  EMAIL: 'email',
+} as const
+
+export const COMPLIANCE_DECISION = {
+  ALLOW: 'allow',
+  BLOCK: 'block',
+} as const
+
+export const SUPPRESSION_REASON = {
+  DNC: 'dnc',
+  OPTOUT: 'optout',
+  MANUAL: 'manual',
+} as const
+
+export const CONSENT_KIND = {
+  VOICE: 'voice',
+  SMS: 'sms',
+  EMAIL: 'email',
+} as const
+
 // ─── Tenant Config / Billing Model ───────────────────────────────────────────
 
 export const BILLING_MODEL = {
@@ -343,6 +419,7 @@ export const INBOX_PROVIDER = {
   GMAIL: 'gmail',
   OUTLOOK: 'outlook',
   WHATSAPP: 'whatsapp',
+  SMS: 'sms',
 } as const
 
 export const ADS_PIPELINE_RUN_STATUS = {

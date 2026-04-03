@@ -503,7 +503,7 @@ export default function SkillsPage() {
                 <h2 className="text-sm font-medium text-white">Skills Status</h2>
                 <p className="mt-1 text-xs text-gray-500">
                   This shows whether the chat runtime can actually retrieve skills, not just whether
-                  preference rows exist in Convex.
+                  preferences have been saved.
                 </p>
               </div>
               <button

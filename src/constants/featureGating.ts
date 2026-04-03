@@ -74,6 +74,11 @@ export const DEFAULT_CONFIG: TenantConfig = {
     'searchApi',
     'lemlist',
     'mailchimp',
+    'retellai',
+    'sms-alert',
+    'callingly',
+    'follow-up-boss',
+    'calendly',
   ],
   features: {
     customWorkflows: false,

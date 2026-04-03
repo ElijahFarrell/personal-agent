@@ -1,15 +1,27 @@
 import { createWorkflow, createStep } from '@mastra/core/workflows'
 import { z } from 'zod'
 import { AGENT_BY_TOOL_ID, type AgentId } from '@/constants/agents'
+import { COMPOSIO_WORKFLOW_DEFAULT_TOOLS } from '@/constants/composioWorkflowTools'
 import { WORKFLOW_AGENT_FACTORIES } from '@/platform/agent-catalog'
 import { createAgentTools } from '@/mastra/tools/agentTools'
+import { executeComposioTool } from '@/lib/composio'
 import type { ResolvedPlatformConfig } from '@/platform/niche/types'
+import { COMPLIANCE_CHANNEL } from '@convex/constants'
+import type { Id } from '@convex/_generated/dataModel'
+import { assertComplianceOrThrow } from '@/services/compliance/policyEngine'
+import {
+  withMandatorySmsOptOut,
+  withMandatoryVoiceDisclosures,
+} from '@/constants/complianceDisclosures'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export type WorkflowNodeType =
   | 'agent'
   | 'tool'
+  | 'sms'
+  | 'voice_call'
+  | 'email'
   | 'condition'
   | 'suspend'
   | 'sleep'
@@ -28,6 +40,10 @@ export interface WorkflowNodeConfig {
   prompt?: string
   toolName?: string
   toolParams?: Record<string, unknown>
+  /** Composio tool slug override for sms / voice_call / email nodes */
+  composioToolName?: string
+  /** mailchimp | lemlist — used by email node for default tool selection */
+  emailProvider?: 'mailchimp' | 'lemlist'
   reason?: string
   resumeSchema?: Record<string, string>
   milliseconds?: number
@@ -39,9 +55,13 @@ export interface WorkflowNodeConfig {
 export interface WorkflowNode {
   id: string
   type: WorkflowNodeType
+  /** React Flow layout; ignored by the compiler */
+  position?: { x: number; y: number }
   data?: {
     label?: string
     config?: WorkflowNodeConfig
+    /** Extra keys from workflow builder / templates (mirrored config, toolParams, etc.) */
+    [key: string]: unknown
   }
 }
 
@@ -232,6 +252,127 @@ export async function compileWorkflow(
         execute: async ({ inputData }) => {
           await new Promise((r) => setTimeout(r, ms))
           return { value: (inputData as { value?: unknown })?.value }
+        },
+      })
+      steps.push(step)
+    } else if (node.type === 'sms') {
+      const toolName =
+        config.composioToolName ?? COMPOSIO_WORKFLOW_DEFAULT_TOOLS.smsSend
+      const step = createStep({
+        id: node.id,
+        description: node.data?.label ?? 'Send SMS (Composio)',
+        inputSchema: passthroughSchema,
+        outputSchema: passthroughSchemaOut,
+        execute: async ({ inputData }) => {
+          const prev = (inputData as { value?: unknown })?.value
+          const merged = {
+            ...(config.toolParams ?? {}),
+            ...(prev && typeof prev === 'object' && !Array.isArray(prev)
+              ? (prev as Record<string, unknown>)
+              : {}),
+          }
+          const phone =
+            (merged.to as string | undefined) ??
+            (merged.phone as string | undefined) ??
+            (merged.to_number as string | undefined)
+          if (phone) {
+            await assertComplianceOrThrow({
+              tenantId: tenantId as unknown as Id<'tenants'>,
+              channel: COMPLIANCE_CHANNEL.SMS,
+              phone,
+              timezone: merged.timezone as string | undefined,
+              stateCode: merged.stateCode as string | undefined,
+              payload: merged,
+            })
+          }
+          const body =
+            (merged.body as string | undefined) ??
+            (merged.message as string | undefined)
+          if (typeof body === 'string' && body.trim().length > 0) {
+            const withOptOut = withMandatorySmsOptOut(body)
+            if ('body' in merged) merged.body = withOptOut
+            else merged.message = withOptOut
+          }
+          const result = await executeComposioTool(userId, toolName, merged)
+          return { value: result }
+        },
+      })
+      steps.push(step)
+    } else if (node.type === 'voice_call') {
+      const toolName =
+        config.composioToolName ?? COMPOSIO_WORKFLOW_DEFAULT_TOOLS.retellPhoneCall
+      const step = createStep({
+        id: node.id,
+        description: node.data?.label ?? 'Voice call (Retell / Composio)',
+        inputSchema: passthroughSchema,
+        outputSchema: passthroughSchemaOut,
+        execute: async ({ inputData }) => {
+          const prev = (inputData as { value?: unknown })?.value
+          const merged = {
+            ...(config.toolParams ?? {}),
+            ...(prev && typeof prev === 'object' && !Array.isArray(prev)
+              ? (prev as Record<string, unknown>)
+              : {}),
+          }
+          const phone =
+            (merged.to as string | undefined) ??
+            (merged.to_number as string | undefined) ??
+            (merged.phone as string | undefined)
+          if (phone) {
+            await assertComplianceOrThrow({
+              tenantId: tenantId as unknown as Id<'tenants'>,
+              channel: COMPLIANCE_CHANNEL.VOICE_CALL,
+              phone,
+              timezone: merged.timezone as string | undefined,
+              stateCode: merged.stateCode as string | undefined,
+              payload: merged,
+            })
+          }
+          const script =
+            (merged.script as string | undefined) ??
+            (merged.opening_script as string | undefined)
+          const withDisclosure = withMandatoryVoiceDisclosures(script)
+          if ('script' in merged) merged.script = withDisclosure
+          else merged.opening_script = withDisclosure
+          const result = await executeComposioTool(userId, toolName, merged)
+          return { value: result }
+        },
+      })
+      steps.push(step)
+    } else if (node.type === 'email') {
+      const defaultTool =
+        config.emailProvider === 'lemlist'
+          ? COMPOSIO_WORKFLOW_DEFAULT_TOOLS.lemlistSend
+          : COMPOSIO_WORKFLOW_DEFAULT_TOOLS.mailchimpSend
+      const toolName = config.composioToolName ?? defaultTool
+      const step = createStep({
+        id: node.id,
+        description: node.data?.label ?? 'Email (Composio)',
+        inputSchema: passthroughSchema,
+        outputSchema: passthroughSchemaOut,
+        execute: async ({ inputData }) => {
+          const prev = (inputData as { value?: unknown })?.value
+          const merged = {
+            ...(config.toolParams ?? {}),
+            ...(prev && typeof prev === 'object' && !Array.isArray(prev)
+              ? (prev as Record<string, unknown>)
+              : {}),
+          }
+          const phone =
+            (merged.phone as string | undefined) ??
+            (merged.to as string | undefined)
+          if (phone) {
+            await assertComplianceOrThrow({
+              tenantId: tenantId as unknown as Id<'tenants'>,
+              channel: COMPLIANCE_CHANNEL.EMAIL,
+              phone,
+              timezone: merged.timezone as string | undefined,
+              stateCode: merged.stateCode as string | undefined,
+              payload: merged,
+            })
+          }
+          const result = await executeComposioTool(userId, toolName, merged)
+          return { value: result }
         },
       })
       steps.push(step)

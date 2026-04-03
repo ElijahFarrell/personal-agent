@@ -179,7 +179,7 @@ export function ScheduleForm({
         <DialogHeader>
           <DialogTitle>{editSchedule ? 'Edit Schedule' : 'New Schedule'}</DialogTitle>
           <DialogDescription>
-            Create a recurring task that runs on a cron schedule. Choose either an agent
+            Create a recurring task that runs on a schedule. Choose either an agent
             prompt or a saved workflow.
           </DialogDescription>
         </DialogHeader>

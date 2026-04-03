@@ -31,7 +31,7 @@ const tiers = [
       'Everything in Starter',
       'Reactivation + outreach agents',
       'CRM workflow automation',
-      'Voice / Retell patterns',
+      'Voice automation patterns',
       'Priority support',
     ],
     highlighted: true,

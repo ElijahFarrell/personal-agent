@@ -106,7 +106,7 @@ export default function MarketingHubPage() {
                 <ArrowRight className="ml-auto h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100" />
               </div>
               <p className="text-sm text-muted-foreground">
-                Lemlist campaign snapshots: sent, replies, opens — sync from Composio.
+                Lemlist campaign snapshots: sent, replies, opens — synced automatically.
               </p>
             </Link>
             {metaOk && (

@@ -112,8 +112,8 @@ export default function MarketingCampaignsPage() {
         <div>
           <h1 className="text-xl font-semibold tracking-tight">Campaign metrics</h1>
           <p className="text-sm text-muted-foreground">
-            Lemlist campaign stats (last 30 days per sync). Pull from Composio, stored for quick
-            viewing.
+            Lemlist campaign stats (last 30 days per sync). Synced automatically and stored for
+            quick viewing.
           </p>
         </div>
         {lemlistAllowed && (

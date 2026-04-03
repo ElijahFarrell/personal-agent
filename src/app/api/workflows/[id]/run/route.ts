@@ -9,6 +9,7 @@ import {
 } from '@/services/workflowCompilerService'
 import { resolvePlatformForClerkUser } from '@/platform/niche'
 import { WORKFLOW_RUN_STATUS } from '@convex/constants'
+import { ensureLegalAcceptance } from '@/services/compliance/legalGate'
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
 
@@ -32,6 +33,10 @@ export async function POST(
     if (!dbUser) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
+    await ensureLegalAcceptance({
+      tenantId: dbUser.tenantId,
+      userId: dbUser._id,
+    })
 
     const workflowDef = await convex.query(api.workflowDefinitions.getById, {
       workflowId: workflowDefinitionId,

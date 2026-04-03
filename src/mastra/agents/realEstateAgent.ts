@@ -7,7 +7,13 @@ import { getComposioToolsForProviders } from '@/lib/composio'
 import { REAL_ESTATE_PROMPT } from '../prompts/realEstate'
 import type { ComposioProvider } from '@/types'
 
-const REAL_ESTATE_PROVIDERS: ComposioProvider[] = ['follow-up-boss', 'calendly']
+const REAL_ESTATE_PROVIDERS: ComposioProvider[] = [
+  'follow-up-boss',
+  'calendly',
+  'retellai',
+  'sms-alert',
+  'callingly',
+]
 
 export interface RealEstateAgentResult {
   agent: Agent

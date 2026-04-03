@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useOrganization, useUser, UserButton } from '@clerk/nextjs'
@@ -98,6 +98,7 @@ const NAV_CONFIG: (NavItem | NavGroup)[] = [
       { type: 'item', href: '/dashboard/agents', label: 'Agents', icon: Bot },
       { type: 'item', href: '/dashboard/workflows', label: 'Workflows', icon: GitBranch },
       { type: 'item', href: '/dashboard/schedules', label: 'Schedules', icon: Clock },
+      { type: 'item', href: '/dashboard/compliance', label: 'Compliance', icon: Shield },
     ],
   },
   {
@@ -156,7 +157,8 @@ function getDefaultGroupState(pathname: string): Record<string, boolean> {
       pathname.startsWith('/dashboard/chat') ||
       pathname.startsWith('/dashboard/agents') ||
       pathname.startsWith('/dashboard/workflows') ||
-      pathname.startsWith('/dashboard/schedules'),
+      pathname.startsWith('/dashboard/schedules') ||
+      pathname.startsWith('/dashboard/compliance'),
     content: pathname.startsWith('/dashboard/content'),
     workspace:
       pathname.startsWith('/dashboard/context') ||
@@ -178,10 +180,11 @@ export function AppSidebar() {
   const { config } = useOrgConfig()
 
   const brandLabel = organization?.name?.trim() || 'AI OS'
-  const [mounted, setMounted] = useState(false)
-  const [groupOpen, setGroupOpen] = useState<Record<string, boolean>>(() =>
-    getDefaultGroupState(pathname)
-  )
+  const [groupOpen, setGroupOpen] = useState<Record<string, boolean>>(() => {
+    const defaults = getDefaultGroupState(pathname)
+    const stored = loadGroupState()
+    return { ...defaults, ...stored }
+  })
   const showAdmin = isSuperAdmin(user?.id ?? null)
 
   const { standaloneItems, groupedItems } = useMemo(() => {
@@ -212,16 +215,6 @@ export function AppSidebar() {
     }
     return { standaloneItems: items, groupedItems: groups }
   }, [config.features.prospectTable, config.features.workflowBuilder, config.features.scheduledTasks])
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  useEffect(() => {
-    if (mounted) {
-      setGroupOpen(loadGroupState())
-    }
-  }, [mounted])
 
   const toggleGroup = useCallback((key: string) => {
     setGroupOpen((prev) => {
@@ -368,6 +361,17 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border p-4 space-y-2">
+        <div className="flex flex-wrap gap-2 text-[11px] text-muted-foreground">
+          <Link href="/terms" className="hover:text-foreground">
+            Terms
+          </Link>
+          <Link href="/privacy" className="hover:text-foreground">
+            Privacy
+          </Link>
+          <Link href="/compliance-agreement" className="hover:text-foreground">
+            Compliance
+          </Link>
+        </div>
         {showAdmin && (
           <Link
             href="/dashboard/admin"
@@ -377,20 +381,13 @@ export function AppSidebar() {
             Admin
           </Link>
         )}
-        {mounted ? (
-          <UserButton
-            appearance={{
-              elements: {
-                avatarBox: 'h-7 w-7',
-              },
-            }}
-          />
-        ) : (
-          <div
-            className="h-7 w-7 rounded-full bg-sidebar-accent animate-pulse"
-            aria-hidden="true"
-          />
-        )}
+        <UserButton
+          appearance={{
+            elements: {
+              avatarBox: 'h-7 w-7',
+            },
+          }}
+        />
       </SidebarFooter>
     </Sidebar>
   )

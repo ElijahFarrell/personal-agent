@@ -7,8 +7,9 @@ import { ConvexClientProvider } from '@/components/ConvexClientProvider'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'AI OS',
-  description: 'Personal AI Operating System',
+  title: 'Shiloh AI',
+  description: 'AI-powered automation platform',
+  icons: { icon: '/icon.svg' },
 }
 
 export default function RootLayout({

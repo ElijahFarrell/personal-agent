@@ -1,6 +1,8 @@
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import { AppSidebar } from '@/components/AppSidebar'
 import { OnboardUser } from '@/components/OnboardUser'
+import { VoiceCallWidget } from '@/components/voice/VoiceCallWidget'
+import { LegalComplianceGate } from '@/components/LegalComplianceGate'
 
 export default function DashboardLayout({
   children,
@@ -24,6 +26,10 @@ export default function DashboardLayout({
         <SidebarInset>
           <main id="main-content" className="flex flex-1 flex-col overflow-hidden">
             <OnboardUser />
+            <LegalComplianceGate />
+            <div className="fixed bottom-4 right-4 z-40 w-[min(100vw-2rem,22rem)]">
+              <VoiceCallWidget />
+            </div>
             {children}
           </main>
         </SidebarInset>

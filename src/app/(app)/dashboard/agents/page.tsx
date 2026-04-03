@@ -339,7 +339,7 @@ const AGENTS: AgentDef[] = [
     name: 'Ads Scraper',
     role: 'Search API — ad libraries',
     description:
-      'Runs competitive searches across Meta, LinkedIn, TikTok, and Google ad transparency surfaces via Composio SEARCH_API. Uses parallel SEARCH_API_SEARCH calls per engine when multiple platforms are selected.',
+      'Runs competitive searches across Meta, LinkedIn, TikTok, and Google ad transparency surfaces. Uses parallel searches per engine when multiple platforms are selected.',
     model: 'Claude Sonnet',
     icon: Radar,
     iconBg: 'bg-violet-500/10',
@@ -356,7 +356,7 @@ const AGENTS: AgentDef[] = [
     name: 'Ad Analyzer',
     role: 'Competitive analysis',
     description:
-      'Turns Search API results into structured competitive insights: themes, messaging, creative patterns, and gaps.',
+      'Turns ad search results into structured competitive insights: themes, messaging, creative patterns, and gaps.',
     model: 'Claude Sonnet',
     icon: Target,
     iconBg: 'bg-rose-500/10',

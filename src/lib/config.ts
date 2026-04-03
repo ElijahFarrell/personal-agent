@@ -66,6 +66,16 @@ export const config = {
   composio: {
     apiKey: optionalEnv('COMPOSIO_API_KEY'),
   },
+  retell: {
+    /** Server-side Retell API key for web calls and webhooks (not Composio). */
+    apiKey: optionalEnv('RETELL_API_KEY'),
+  },
+  webhooks: {
+    /** Shared secret for Convex webhook mutations and inbound verification. */
+    internalSecret: optionalEnv('INTERNAL_WEBHOOK_SECRET'),
+    retell: optionalEnv('RETELL_WEBHOOK_SECRET'),
+    sms: optionalEnv('SMS_WEBHOOK_SECRET'),
+  },
   replicate: {
     apiToken: optionalEnv('REPLICATE_API_TOKEN'),
   },

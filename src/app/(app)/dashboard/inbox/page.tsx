@@ -14,6 +14,7 @@ import {
   ChevronRight,
   Copy,
   Send,
+  Phone,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -132,6 +133,17 @@ export default function InboxPage() {
 
   const [messagesRefreshEpoch, setMessagesRefreshEpoch] = useState(0)
 
+  const selectedProviderRaw = threads?.find((t) => t._id === selectedId)?.provider
+  const isRealtimeProvider =
+    selectedProviderRaw === 'sms' || selectedProviderRaw === 'whatsapp'
+
+  // Real-time Convex subscription for SMS / WhatsApp threads
+  const realtimeMessages = useQuery(
+    api.inbox.listMessagesForThread,
+    selectedId && isRealtimeProvider ? { threadId: selectedId, limit: 200 } : 'skip'
+  )
+
+  // Keep threadMessages in sync: reactive for SMS/WA, fetch for email
   useEffect(() => {
     if (!selectedId || !dbUser) {
       setThreadMessages(null)
@@ -139,6 +151,25 @@ export default function InboxPage() {
       setThreadMessagesLoading(false)
       return
     }
+    if (isRealtimeProvider) {
+      if (realtimeMessages) {
+        setThreadMessages(
+          realtimeMessages.map((m) => ({
+            externalMessageId: m.externalMessageId,
+            sentAt: m.sentAt,
+            fromEmail: m.fromEmail,
+            isOutbound: m.isOutbound,
+            bodyPlain: m.bodyPreview,
+            senderLabel: m.senderLabel,
+          }))
+        )
+        setThreadMessagesLoading(false)
+      } else {
+        setThreadMessagesLoading(true)
+      }
+      return
+    }
+    // Email providers — fetch from API
     let cancelled = false
     setThreadMessagesLoading(true)
     setThreadMessagesError(null)
@@ -174,7 +205,7 @@ export default function InboxPage() {
     return () => {
       cancelled = true
     }
-  }, [selectedId, dbUser, messagesRefreshEpoch])
+  }, [selectedId, dbUser, messagesRefreshEpoch, isRealtimeProvider, realtimeMessages])
 
   /** One automatic sync when you open Inbox (once per tab session), if under daily limit. */
   useEffect(() => {
@@ -213,7 +244,7 @@ export default function InboxPage() {
     })()
   }, [enabled, dbUser, refreshSyncStatus])
 
-  /** Background pull sync while Inbox stays open: every 5 minutes, only if under daily limit. */
+  /** Background pull sync while Inbox stays open: every 30 seconds for near-real-time email. */
   useEffect(() => {
     if (!enabled || !dbUser) return
     const id = window.setInterval(() => {
@@ -239,7 +270,7 @@ export default function InboxPage() {
           /* ignore */
         }
       })()
-    }, 300_000)
+    }, 30_000)
     return () => window.clearInterval(id)
   }, [enabled, dbUser, refreshSyncStatus])
 
@@ -349,16 +380,17 @@ export default function InboxPage() {
               Inbox
             </h1>
             <p className="text-xs text-muted-foreground">
-              Gmail, Outlook, WhatsApp (webhook). ~30 days. Auto-sync when you open this page & every
-              5 min.
+              Gmail, Outlook, WhatsApp, SMS. SMS &amp; WhatsApp update in real time via webhooks.
+              Email syncs every ~30s.
             </p>
             <details className="mt-1 text-xs text-muted-foreground [&_summary]:cursor-pointer [&_summary]:text-muted-foreground">
               <summary className="list-none [&::-webkit-details-marker]:hidden">
                 How sync works
               </summary>
               <p className="mt-1.5 pl-0 text-muted-foreground">
-                Sync pulls the last ~30 days. Auto-sync runs once when you open Inbox (per tab session)
-                and every 5 minutes while you stay on this page.
+                SMS and WhatsApp messages appear instantly.
+                Email syncs from your connected Gmail/Outlook every ~30 seconds while you stay on
+                this page.
               </p>
             </details>
             {syncMeta && syncMeta.limit >= 0 && (
@@ -417,7 +449,7 @@ export default function InboxPage() {
           {threads && threads.length === 0 && (
             <Card>
               <CardContent className="py-8 text-center text-sm text-muted-foreground">
-                No threads yet. Connect Gmail or Outlook and sync.
+                No threads yet. Connect Gmail, Outlook, or an SMS provider and sync.
               </CardContent>
             </Card>
           )}
@@ -526,6 +558,27 @@ export default function InboxPage() {
                 >
                   Summarize
                 </Button>
+                {(selectedThread.provider === 'sms' || selectedThread.provider === 'whatsapp') && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="gap-1.5"
+                    onClick={() => {
+                      const phone = selectedThread.externalThreadId
+                      if (phone) {
+                        window.dispatchEvent(
+                          new CustomEvent('shiloh:start-call', {
+                            detail: { phone, prospectId: selectedThread.prospectId },
+                          })
+                        )
+                      }
+                    }}
+                  >
+                    <Phone className="h-3.5 w-3.5" />
+                    Call
+                  </Button>
+                )}
               </CardContent>
             </Card>
 
@@ -628,9 +681,11 @@ export default function InboxPage() {
               <CardHeader className="space-y-1 p-4 py-3">
                 <CardTitle className="text-sm">Reply</CardTitle>
                 <CardDescription>
-                  {selectedThread.provider === 'whatsapp'
-                    ? 'Sending from this screen is not available for WhatsApp. Use the chat agent or your phone.'
-                    : 'Sends through your connected Gmail or Outlook account (Composio).'}
+                  {selectedThread.provider === 'sms'
+                    ? 'Sends SMS via your connected SMS provider.'
+                    : selectedThread.provider === 'whatsapp'
+                      ? 'Sends via your connected WhatsApp/SMS provider.'
+                      : 'Sends through your connected Gmail or Outlook account.'}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-2 px-4 pb-4">
@@ -647,19 +702,19 @@ export default function InboxPage() {
                 <Textarea
                   value={composeReply}
                   onChange={(e) => setComposeReply(e.target.value)}
-                  placeholder="Write a reply…"
-                  disabled={selectedThread.provider === 'whatsapp' || sendReplyLoading}
+                  placeholder={
+                    selectedThread.provider === 'sms'
+                      ? 'Write an SMS reply…'
+                      : 'Write a reply…'
+                  }
+                  disabled={sendReplyLoading}
                   className="min-h-[120px] resize-y font-sans text-sm"
                 />
                 <div className="flex flex-wrap gap-2">
                   <Button
                     type="button"
                     size="sm"
-                    disabled={
-                      selectedThread.provider === 'whatsapp' ||
-                      sendReplyLoading ||
-                      !composeReply.trim()
-                    }
+                    disabled={sendReplyLoading || !composeReply.trim()}
                     onClick={() => void sendReply()}
                     className="gap-1.5"
                   >
@@ -668,14 +723,13 @@ export default function InboxPage() {
                     ) : (
                       <Send className="h-3.5 w-3.5" />
                     )}
-                    Send reply
+                    {selectedThread.provider === 'sms' ? 'Send SMS' : 'Send reply'}
                   </Button>
                   {draftMode === 'reply' && replyDraft && (
                     <Button
                       type="button"
                       size="sm"
                       variant="outline"
-                      disabled={selectedThread.provider === 'whatsapp'}
                       onClick={() => setComposeReply(replyDraft)}
                     >
                       Use AI draft

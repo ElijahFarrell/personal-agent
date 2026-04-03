@@ -110,9 +110,20 @@ export function MarketingFooter() {
         </div>
         <div className="mt-12 flex flex-col gap-4 border-t border-white/[0.06] pt-8 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} Shiloh AI. All rights reserved.</p>
-          <p className="text-muted-foreground/80">
-            Shiloh AI OS — AI automation for real estate teams.
-          </p>
+          <div className="flex flex-wrap items-center gap-3">
+            <p className="text-muted-foreground/80">
+              Shiloh AI OS — AI automation for real estate teams.
+            </p>
+            <Link href="/terms" className="hover:text-white">
+              Terms
+            </Link>
+            <Link href="/privacy" className="hover:text-white">
+              Privacy
+            </Link>
+            <Link href="/compliance-agreement" className="hover:text-white">
+              Compliance
+            </Link>
+          </div>
         </div>
       </div>
     </footer>
