@@ -99,7 +99,19 @@ const handler = clerkMiddleware(async (auth, request) => {
   }
 
   if (isProtectedRoute(request)) {
-    await auth.protect()
+    const { userId, has } = await auth()
+
+    if (!userId) {
+      await auth.protect()
+      return
+    }
+
+    const hasOrgAccess =
+      has({ role: 'org:admin' }) || has({ role: 'org:member' })
+    if (!hasOrgAccess) {
+      const deniedUrl = new URL('/access-denied', request.url)
+      return NextResponse.redirect(deniedUrl)
+    }
   }
 })
 
