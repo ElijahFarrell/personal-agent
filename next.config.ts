@@ -20,8 +20,11 @@ function marketingHostHasPattern(): string {
 const nextConfig: NextConfig = {
   serverExternalPackages: [
     '@mastra/core',
+    '@mastra/ai-sdk',
     '@mastra/memory',
     '@mastra/libsql',
+    '@mastra/qdrant',
+    '@mastra/mcp',
     'telegraf',
     'chokidar',
     'apify-client',

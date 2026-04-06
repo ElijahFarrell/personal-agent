@@ -38,6 +38,11 @@ export const config = {
   linkedin: {
     apiKey: optionalEnv('LINKEDAPI_KEY'),
   },
+  unipile: {
+    dsn: optionalEnv('UNIPILE_DSN'),
+    apiKey: optionalEnv('UNIPILE_API_KEY'),
+    webhookSecret: optionalEnv('UNIPILE_WEBHOOK_SECRET'),
+  },
   apify: {
     apiToken: optionalEnv('APIFY_API_TOKEN'),
   },

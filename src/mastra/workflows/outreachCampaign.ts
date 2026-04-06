@@ -57,8 +57,9 @@ export async function executeOutreachCampaign(
 
   for (const target of targets) {
     try {
-      const profile = await linkedinService.getProfile(target.profileUrl)
+      const profile = await linkedinService.getProfile(userId, target.profileUrl)
       const connectionDegree = await linkedinService.getConnectionDegree(
+        userId,
         target.profileUrl
       )
 

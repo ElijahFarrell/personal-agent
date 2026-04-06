@@ -156,6 +156,27 @@ export default defineSchema({
     .index(INDEXES.BY_TENANT_ID, ['tenantId'])
     .index(INDEXES.BY_CONNECTION_ID, ['connectionId']),
 
+  [TABLES.UNIPILE_ACCOUNTS]: defineTable({
+    tenantId: v.id(TABLES.TENANTS),
+    userId: v.id(TABLES.USERS),
+    provider: v.union(
+      v.literal(INBOX_PROVIDER.LINKEDIN),
+      v.literal(INBOX_PROVIDER.WHATSAPP)
+    ),
+    externalAccountId: v.string(),
+    status: v.union(
+      v.literal('operational'),
+      v.literal('credentials_required'),
+      v.literal('paused')
+    ),
+    connectedAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index(INDEXES.BY_USER_ID, ['userId'])
+    .index(INDEXES.BY_TENANT_ID, ['tenantId'])
+    .index(INDEXES.BY_USER_PROVIDER, ['userId', 'provider'])
+    .index(INDEXES.BY_EXTERNAL_ACCOUNT_ID, ['externalAccountId']),
+
   [TABLES.TENANT_SKILLS]: defineTable({
     tenantId: v.id(TABLES.TENANTS),
     userId: v.optional(v.id(TABLES.USERS)),
@@ -358,7 +379,8 @@ export default defineSchema({
       v.literal(PROSPECT_SOURCE.LINKEDIN_SEARCH),
       v.literal(PROSPECT_SOURCE.CRM_IMPORT),
       v.literal(PROSPECT_SOURCE.CSV_IMPORT),
-      v.literal(PROSPECT_SOURCE.EXA_WEBSET)
+      v.literal(PROSPECT_SOURCE.EXA_WEBSET),
+      v.literal(PROSPECT_SOURCE.MARKETING_CHAT)
     ),
     notes: v.optional(v.string()),
     customFields: v.optional(v.any()),
@@ -616,6 +638,7 @@ export default defineSchema({
     provider: v.union(
       v.literal(INBOX_PROVIDER.GMAIL),
       v.literal(INBOX_PROVIDER.OUTLOOK),
+      v.literal(INBOX_PROVIDER.LINKEDIN),
       v.literal(INBOX_PROVIDER.WHATSAPP),
       v.literal(INBOX_PROVIDER.SMS)
     ),
@@ -699,6 +722,7 @@ export default defineSchema({
     provider: v.union(
       v.literal(INBOX_PROVIDER.GMAIL),
       v.literal(INBOX_PROVIDER.OUTLOOK),
+      v.literal(INBOX_PROVIDER.LINKEDIN),
       v.literal(INBOX_PROVIDER.WHATSAPP),
       v.literal(INBOX_PROVIDER.SMS)
     ),
@@ -1102,4 +1126,21 @@ export default defineSchema({
   })
     .index(INDEXES.BY_TENANT_ID, ['tenantId'])
     .index(INDEXES.BY_TENANT_USER_DOC_VERSION, ['tenantId', 'userId', 'documentKey', 'version']),
+
+  // ─── Marketing Chat Leads ──────────────────────────────────────────────────
+
+  [TABLES.MARKETING_CHAT_LEADS]: defineTable({
+    name: v.optional(v.string()),
+    email: v.optional(v.string()),
+    phone: v.optional(v.string()),
+    company: v.optional(v.string()),
+    useCase: v.optional(v.string()),
+    sessionId: v.string(),
+    ipAddress: v.optional(v.string()),
+    prospectId: v.optional(v.id(TABLES.PROSPECTS)),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index(INDEXES.BY_MARKETING_LEAD_EMAIL, ['email'])
+    .index(INDEXES.BY_MARKETING_LEAD_SESSION, ['sessionId']),
 })

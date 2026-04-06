@@ -49,6 +49,7 @@ export async function POST(req: NextRequest) {
             throw new Error('No LinkedIn URL on prospect')
           }
           await sendLinkedInDM({
+            clerkUserId: tenantCtx.userId,
             profileUrl: prospect.linkedinUrl,
             message: draft.body,
           })

@@ -7,7 +7,7 @@ import { ComposioConnectButton } from '@/components/ComposioConnectButton'
 import { TelegramConnectButton } from '@/components/TelegramConnectButton'
 import { useOrgConfig } from '@/hooks/useOrgConfig'
 import { isIntegrationAllowed } from '@/constants/featureGating'
-import type { ComposioProvider } from '@/types'
+import type { IntegrationProvider } from '@/types'
 import { Lock, Send } from 'lucide-react'
 import { API_ROUTES } from '@/constants/api'
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -34,33 +34,43 @@ export default function IntegrationsPage() {
   const { user } = useUser()
   const { config } = useOrgConfig()
   const [composioStatus, setComposioStatus] = useState<Record<string, boolean>>({})
+  const [unipileStatus, setUnipileStatus] = useState<Record<string, boolean>>({})
 
   const dbUser = useQuery(
     api.users.getUserByClerkUserId,
     user ? { clerkUserId: user.id } : 'skip'
   )
 
-  const refreshComposioStatus = useCallback(() => {
+  const refreshConnectionStatus = useCallback(() => {
     fetch(API_ROUTES.composioStatus)
       .then((r) => r.json())
       .then((data) => setComposioStatus(data))
       .catch(() => setComposioStatus({}))
+    fetch(API_ROUTES.unipileStatus)
+      .then((r) => r.json())
+      .then((data) => setUnipileStatus(data))
+      .catch(() => setUnipileStatus({}))
   }, [])
 
   useEffect(() => {
-    refreshComposioStatus()
-  }, [refreshComposioStatus])
+    refreshConnectionStatus()
+  }, [refreshConnectionStatus])
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
-    if (params.get('composio') === 'connected') {
-      refreshComposioStatus()
+    if (
+      params.get('composio') === 'connected' ||
+      params.get('unipile') === 'connected'
+    ) {
+      refreshConnectionStatus()
       window.history.replaceState({}, '', '/dashboard/integrations')
     }
-  }, [refreshComposioStatus])
+  }, [refreshConnectionStatus])
 
   const connectedCount =
     COMPOSIO_PROVIDERS.filter((p) => composioStatus[p]).length +
+    (unipileStatus.linkedin ? 1 : 0) +
+    (unipileStatus.whatsapp ? 1 : 0) +
     (!!dbUser?.telegramId ? 1 : 0)
 
   const byCategory = useMemo(() => {
@@ -82,7 +92,10 @@ export default function IntegrationsPage() {
     iconBg: string,
     iconColor: string
   ) {
-    const isConnected = !!composioStatus[provider]
+    const isConnected =
+      provider === 'linkedin' || provider === 'whatsapp'
+        ? !!unipileStatus[provider]
+        : !!composioStatus[provider]
     const locked = !isIntegrationAllowed(config, provider)
     return (
       <div
@@ -119,9 +132,9 @@ export default function IntegrationsPage() {
             </span>
           ) : (
             <ComposioConnectButton
-              provider={provider as ComposioProvider}
+              provider={provider as IntegrationProvider}
               isConnected={isConnected}
-              onSuccess={refreshComposioStatus}
+              onSuccess={refreshConnectionStatus}
             />
           )}
         </div>

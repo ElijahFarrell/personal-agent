@@ -154,8 +154,12 @@ export type IntegrationProvider =
   | 'sms-alert'
   | 'callingly'
 
-/** Composio-backed providers (excludes jira). Pipedrive may require BYO OAuth in Composio. */
-export type ComposioProvider = IntegrationProvider
+export type UnipileProvider = 'linkedin' | 'whatsapp'
+
+/** Composio-backed providers. LinkedIn/WhatsApp are handled via Unipile. */
+export type ComposioProvider = Exclude<IntegrationProvider, UnipileProvider>
+
+export type IntegrationBackend = 'composio' | 'unipile'
 
 export interface UserIntegration {
   id: string
@@ -211,6 +215,7 @@ export interface LinkedInProfile {
 }
 
 export interface LinkedInDMParams {
+  clerkUserId: string
   profileUrl: string
   message: string
 }
@@ -368,6 +373,8 @@ export type ProspectSource =
   | 'linkedin_search'
   | 'crm_import'
   | 'csv_import'
+  | 'exa_webset'
+  | 'marketing_chat'
 
 export type OutreachChannel = 'linkedin' | 'email' | 'outlook' | 'instagram'
 

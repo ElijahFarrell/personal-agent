@@ -89,6 +89,7 @@ export {
 } from './agents'
 /** Re-exported from file to satisfy Turbopack static analysis for API routes. */
 export { createAuditAgent } from './agents/auditAgent'
+export { createMarketingChatAgent } from './agents/marketingChatAgent'
 export { createVoice } from './voice'
 export { executeMorningBrief, morningBriefWorkflow } from './workflows/morningBrief'
 export {

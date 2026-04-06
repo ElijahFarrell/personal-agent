@@ -11,7 +11,6 @@ const MESSAGING_PROVIDERS: ComposioProvider[] = [
   'slack',
   'microsoft-teams',
   'discord',
-  'whatsapp',
 ]
 
 export interface MessagingAgentResult {

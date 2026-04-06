@@ -38,7 +38,8 @@ const sourceValidator = v.union(
   v.literal(PROSPECT_SOURCE.LINKEDIN_SEARCH),
   v.literal(PROSPECT_SOURCE.CRM_IMPORT),
   v.literal(PROSPECT_SOURCE.CSV_IMPORT),
-  v.literal(PROSPECT_SOURCE.EXA_WEBSET)
+  v.literal(PROSPECT_SOURCE.EXA_WEBSET),
+  v.literal(PROSPECT_SOURCE.MARKETING_CHAT)
 )
 
 const channelValidator = v.union(

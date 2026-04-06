@@ -40,6 +40,7 @@ import { AGENT_BY_ID, type AgentId } from '@/constants/agents'
 import { CHAT_CREDIT_ACTION, CHAT_LIMITS, CHAT_ROLES, type AgentMessage } from '@/constants/chat'
 import { DEFAULT_CONFIG } from '@/constants/featureGating'
 import { getComposioConnectionStatus } from '@/lib/composio'
+import { getUnipileConnectionStatus } from '@/services/unipileService'
 import {
   chatGatewayReportingContext,
   mergeAgentStreamOptionsWithGatewayReporting,
@@ -140,7 +141,13 @@ export async function prepareChatAgentStream(
   if (dbUser) {
     try {
       const composioStatus = await getComposioConnectionStatus(userId)
-      connectedProviders = (Object.entries(composioStatus) as [string, boolean][])
+      const unipileStatus = await getUnipileConnectionStatus(userId)
+      connectedProviders = (
+        Object.entries({
+          ...composioStatus,
+          ...unipileStatus,
+        }) as [string, boolean][]
+      )
         .filter(([, connected]) => connected)
         .map(([provider]) => provider)
     } catch {
