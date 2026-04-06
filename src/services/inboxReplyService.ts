@@ -7,11 +7,13 @@ import { replyToOutlookMessage } from '@/services/outlookService'
 import { fetchLiveThreadMessages } from '@/services/inboxLiveMessagesService'
 import { executeComposioTool } from '@/lib/composio'
 import { COMPOSIO_WORKFLOW_DEFAULT_TOOLS } from '@/constants/composioWorkflowTools'
+import { sendLinkedInReply, sendWhatsAppReply } from '@/services/unipileService'
 
 export type InboxThreadLike = {
   provider:
     | typeof INBOX_PROVIDER.GMAIL
     | typeof INBOX_PROVIDER.OUTLOOK
+    | typeof INBOX_PROVIDER.LINKEDIN
     | typeof INBOX_PROVIDER.WHATSAPP
     | typeof INBOX_PROVIDER.SMS
   externalThreadId: string
@@ -39,12 +41,24 @@ export async function sendInboxThreadReply(params: {
     return
   }
 
-  if (thread.provider === INBOX_PROVIDER.WHATSAPP) {
-    const phone = thread.externalThreadId
-    if (!phone) throw new Error('No WhatsApp ID on this thread')
-    await executeComposioTool(clerkUserId, COMPOSIO_WORKFLOW_DEFAULT_TOOLS.smsSend, {
+  if (thread.provider === INBOX_PROVIDER.LINKEDIN) {
+    const chatId = thread.externalThreadId
+    if (!chatId) throw new Error('No LinkedIn chat ID on this thread')
+    await sendLinkedInReply({
+      clerkUserId,
+      externalThreadId: chatId,
       body: trimmed,
-      to: phone,
+    })
+    return
+  }
+
+  if (thread.provider === INBOX_PROVIDER.WHATSAPP) {
+    const threadRef = thread.externalThreadId
+    if (!threadRef) throw new Error('No WhatsApp ID on this thread')
+    await sendWhatsAppReply({
+      clerkUserId,
+      externalThreadId: threadRef,
+      body: trimmed,
     })
     return
   }

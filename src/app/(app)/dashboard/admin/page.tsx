@@ -13,6 +13,7 @@ import {
   Plus,
   Loader2,
   Search,
+  MessageCircle,
 } from 'lucide-react'
 import { api } from '@convex/_generated/api'
 import { isSuperAdmin } from '@/middleware/adminGuard'
@@ -99,6 +100,17 @@ export default function AdminPage() {
           <span>/</span>
           <span className="text-foreground">Organizations</span>
         </nav>
+
+        {/* Quick nav */}
+        <div className="flex flex-wrap gap-3">
+          <Link
+            href="/dashboard/admin/leads"
+            className="flex items-center gap-2 rounded-lg border border-border bg-card/50 px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-card/80"
+          >
+            <MessageCircle className="h-4 w-4 text-brand-400" />
+            Website Leads
+          </Link>
+        </div>
 
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>

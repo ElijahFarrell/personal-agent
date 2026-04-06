@@ -13,6 +13,7 @@ import {
   extractGmailMessagesFromToolData,
   extractPlainTextFromGmailPayload,
 } from '@/lib/gmailPayloadPlain'
+import { fetchUnipileThreadMessages } from '@/services/unipileService'
 
 export type LiveInboxMessage = {
   externalMessageId: string
@@ -230,12 +231,23 @@ async function fetchOutlookThreadMessagesLive(
 
 export async function fetchLiveThreadMessages(
   clerkUserId: string,
-  provider: typeof INBOX_PROVIDER.GMAIL | typeof INBOX_PROVIDER.OUTLOOK | typeof INBOX_PROVIDER.WHATSAPP,
+  provider:
+    | typeof INBOX_PROVIDER.GMAIL
+    | typeof INBOX_PROVIDER.OUTLOOK
+    | typeof INBOX_PROVIDER.LINKEDIN
+    | typeof INBOX_PROVIDER.WHATSAPP,
   externalThreadId: string,
   userEmailLower: string
 ): Promise<LiveInboxMessage[]> {
-  if (provider === INBOX_PROVIDER.WHATSAPP) {
-    return []
+  if (
+    provider === INBOX_PROVIDER.WHATSAPP ||
+    provider === INBOX_PROVIDER.LINKEDIN
+  ) {
+    return await fetchUnipileThreadMessages({
+      clerkUserId,
+      provider,
+      externalThreadId,
+    })
   }
   if (provider === INBOX_PROVIDER.GMAIL) {
     return fetchGmailThreadMessagesLive(clerkUserId, externalThreadId)

@@ -5,6 +5,7 @@ export const TABLES = {
   TENANT_CONFIGS: 'tenantConfigs',
   USERS: 'users',
   USER_INTEGRATIONS: 'userIntegrations',
+  UNIPILE_ACCOUNTS: 'unipileAccounts',
   TENANT_SKILLS: 'tenantSkills',
   SKILL_CONTENT: 'skillContent',
   MESSAGES: 'messages',
@@ -50,6 +51,7 @@ export const TABLES = {
   COMPLIANCE_AUDIT_EVENTS: 'complianceAuditEvents',
   SUPPRESSION_LISTS: 'suppressionLists',
   LEGAL_ACCEPTANCES: 'legalAcceptances',
+  MARKETING_CHAT_LEADS: 'marketingChatLeads',
 } as const
 
 // ─── Index Names ─────────────────────────────────────────────────────────────
@@ -59,7 +61,9 @@ export const INDEXES = {
   BY_CLERK_USER_ID: 'by_clerkUserId',
   BY_TENANT_ID: 'by_tenantId',
   BY_USER_ID: 'by_userId',
+  BY_USER_PROVIDER: 'by_userId_provider',
   BY_CONNECTION_ID: 'by_connectionId',
+  BY_EXTERNAL_ACCOUNT_ID: 'by_externalAccountId',
   BY_USER_CREATED: 'by_userId_createdAt',
   BY_USER_UPDATED: 'by_userId_updatedAt',
   BY_THREAD_CREATED: 'by_threadId_createdAt',
@@ -109,6 +113,8 @@ export const INDEXES = {
   BY_TENANT_STATE: 'by_tenantId_stateCode',
   BY_TENANT_DECISION_CREATED: 'by_tenantId_decision_createdAt',
   BY_TENANT_USER_DOC_VERSION: 'by_tenantId_userId_documentKey_version',
+  BY_MARKETING_LEAD_EMAIL: 'by_marketingLead_email',
+  BY_MARKETING_LEAD_SESSION: 'by_marketingLead_sessionId',
 } as const
 
 /** inboxAiUsage.kind */
@@ -254,6 +260,7 @@ export const PROSPECT_SOURCE = {
   CRM_IMPORT: 'crm_import',
   CSV_IMPORT: 'csv_import',
   EXA_WEBSET: 'exa_webset',
+  MARKETING_CHAT: 'marketing_chat',
 } as const
 
 export const OUTREACH_CHANNEL = {
@@ -418,6 +425,7 @@ export const FEATURE_FLAGS = {
 export const INBOX_PROVIDER = {
   GMAIL: 'gmail',
   OUTLOOK: 'outlook',
+  LINKEDIN: 'linkedin',
   WHATSAPP: 'whatsapp',
   SMS: 'sms',
 } as const

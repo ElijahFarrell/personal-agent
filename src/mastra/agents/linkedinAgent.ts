@@ -6,6 +6,9 @@ import { createMem0RecallTool } from '../tools/mem0Recall'
 import { createLinkedInProfileTool } from '../tools/linkedinTools'
 import { createLinkedInDMTool } from '../tools/linkedinTools'
 import { createLinkedInSearchTool } from '../tools/linkedinTools'
+import { createLinkedInInMailTool } from '../tools/linkedinTools'
+import { createLinkedInInviteTool } from '../tools/linkedinTools'
+import { createLinkedInChatHistoryTool } from '../tools/linkedinTools'
 import { webSearchTool } from '../tools/webSearchTool'
 import { LINKEDIN_PROMPT } from '../prompts'
 
@@ -23,6 +26,9 @@ export function createLinkedInAgent(userId: string, workspace?: Workspace): Agen
       linkedinProfile: createLinkedInProfileTool(userId),
       linkedinDM: createLinkedInDMTool(userId),
       linkedinSearch: createLinkedInSearchTool(userId),
+      linkedinInMail: createLinkedInInMailTool(userId),
+      linkedinInvite: createLinkedInInviteTool(userId),
+      linkedinChatHistory: createLinkedInChatHistoryTool(userId),
       webSearch: webSearchTool,
       mem0Recall: createMem0RecallTool(userId),
       mem0Memorize: createMem0MemorizeTool(userId),

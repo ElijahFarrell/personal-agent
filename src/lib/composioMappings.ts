@@ -10,7 +10,6 @@ export const PROVIDER_TO_TOOLKIT: Record<ComposioProvider, string> = {
   'follow-up-boss': 'FOLLOW_UP_BOSS',
   'google-calendar': 'GOOGLECALENDAR',
   slack: 'SLACK',
-  linkedin: 'LINKEDIN',
   instagram: 'INSTAGRAM',
   notion: 'NOTION',
   hubspot: 'HUBSPOT',
@@ -33,7 +32,6 @@ export const PROVIDER_TO_TOOLKIT: Record<ComposioProvider, string> = {
   tiktok: 'TIKTOK',
   metaAds: 'METAADS',
   searchApi: 'SEARCH_API',
-  whatsapp: 'WHATSAPP',
   lemlist: 'LEMLIST',
   retellai: 'RETELLAI',
   'sms-alert': 'SMS_ALERT',
@@ -55,7 +53,6 @@ export function getToolkitForProvider(provider: string): string | null {
   const p = provider.toLowerCase()
   if (p === 'metaads') return 'METAADS'
   if (p === 'searchapi') return 'SEARCH_API'
-  if (p === 'whatsapp') return 'WHATSAPP'
   if (p === 'follow-up-boss' || p === 'followupboss') return 'FOLLOW_UP_BOSS'
   if (p === 'sms-alert' || p === 'smsalert') return 'SMS_ALERT'
   if (p === 'retellai' || p === 'retell') return 'RETELLAI'

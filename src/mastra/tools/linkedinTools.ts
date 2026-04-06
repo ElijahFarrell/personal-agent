@@ -2,13 +2,12 @@ import { createTool } from '@mastra/core/tools'
 import { z } from 'zod'
 import * as apifyService from '@/services/apifyService'
 import * as linkedinService from '@/services/linkedinService'
-import { search } from '@/services/searchService'
 
 /**
  * Research a LinkedIn profile via Apify, with web search fallback.
  * Returns profile details and recent posts.
  */
-export function createLinkedInProfileTool(_userId: string) {
+export function createLinkedInProfileTool(userId: string) {
   return createTool({
     id: 'linkedin-profile',
     description:
@@ -19,13 +18,14 @@ export function createLinkedInProfileTool(_userId: string) {
     }),
     execute: async ({ profileUrl }) => {
       try {
-        const [profile, posts] = await Promise.all([
+        const [profile, posts, unipileProfile] = await Promise.all([
           apifyService.getLinkedInProfile(profileUrl),
           apifyService.getLinkedInPosts(profileUrl, 3),
+          linkedinService.getProfile(userId, profileUrl).catch(() => null),
         ])
         return {
-          name: profile?.name,
-          headline: profile?.headline,
+          name: profile?.name ?? unipileProfile?.name,
+          headline: profile?.headline ?? unipileProfile?.headline,
           about: profile?.about,
           location: profile?.location,
           profileUrl: profile?.profileUrl ?? profileUrl,
@@ -33,16 +33,20 @@ export function createLinkedInProfileTool(_userId: string) {
           education: profile?.education,
           skills: profile?.skills,
           recentPosts: posts.map((p) => ({ text: p.text.slice(0, 200), date: p.date, reactions: p.reactions })),
+          messagingProfile: unipileProfile,
         }
       } catch (err) {
-        console.warn('[LinkedInTool] Apify failed, falling back to web search:', (err as Error).message)
+        console.warn(
+          '[LinkedInTool] Apify failed, falling back to Unipile profile:',
+          (err as Error).message
+        )
         try {
-          const results = await search(`${profileUrl} site:linkedin.com`, 'fast')
-          if (results.length > 0) {
+          const unipileProfile = await linkedinService.getProfile(userId, profileUrl)
+          if (unipileProfile) {
             return {
-              name: undefined,
-              headline: results[0].content.slice(0, 200),
-              about: results.slice(1, 3).map((r) => r.content.slice(0, 150)).join('\n'),
+              name: unipileProfile.name,
+              headline: unipileProfile.headline,
+              about: unipileProfile.recentActivity,
               profileUrl,
               recentPosts: [],
             }
@@ -58,7 +62,7 @@ export function createLinkedInProfileTool(_userId: string) {
  * Send a LinkedIn DM. Only call after showing draft and receiving explicit confirmation.
  * Falls back gracefully if linkedapi.io is not configured.
  */
-export function createLinkedInDMTool(_userId: string) {
+export function createLinkedInDMTool(userId: string) {
   return createTool({
     id: 'linkedin-dm',
     description:
@@ -83,14 +87,18 @@ export function createLinkedInDMTool(_userId: string) {
       }
 
       try {
-        await linkedinService.sendDM({ profileUrl, message })
+        await linkedinService.sendDM({ clerkUserId: userId, profileUrl, message })
         return { success: true, message: 'DM sent successfully.' }
       } catch (error) {
         const msg = error instanceof Error ? error.message : 'Failed to send DM'
-        if (msg.includes('LINKEDAPI_KEY') || msg.includes('not configured')) {
+        if (
+          msg.includes('No active linkedin Unipile account') ||
+          msg.includes('not configured')
+        ) {
           return {
             success: false,
-            message: 'LinkedIn DM sending is not configured. Copy the message from the prospects table and paste it manually.',
+            message:
+              'LinkedIn is not connected in Unipile. Connect LinkedIn in Integrations, then try again.',
             draft: message,
           }
         }
@@ -104,7 +112,7 @@ export function createLinkedInDMTool(_userId: string) {
  * Search for LinkedIn profiles using web search (Apify doesn't have a direct people search).
  * Parses LinkedIn profile URLs from search results.
  */
-export function createLinkedInSearchTool(_userId: string) {
+export function createLinkedInSearchTool(userId: string) {
   return createTool({
     id: 'linkedin-search',
     description:
@@ -116,20 +124,105 @@ export function createLinkedInSearchTool(_userId: string) {
     }),
     execute: async ({ query, maxResults }) => {
       try {
-        const results = await search(`${query} site:linkedin.com/in/`, 'fast')
-        const profiles = results
-          .filter((r) => r.url.includes('linkedin.com/in/'))
-          .slice(0, maxResults)
-          .map((r) => ({
-            name: r.title.replace(/\s*[-|].*$/, ''),
-            url: r.url,
-            headline: r.content.slice(0, 200),
-          }))
+        const results = await linkedinService.searchPeople(userId, query, undefined, maxResults)
+        const profiles = results.map((r) => ({
+          name: r.name,
+          url: r.publicUrl,
+          headline: r.headline,
+        }))
 
         return { results: profiles, count: profiles.length }
       } catch (error) {
         const msg = error instanceof Error ? error.message : 'Search failed'
         throw new Error(msg)
+      }
+    },
+  })
+}
+
+export function createLinkedInInMailTool(userId: string) {
+  return createTool({
+    id: 'linkedin-inmail',
+    description:
+      'Send a LinkedIn InMail (for users outside your direct network). Always require explicit confirmation before sending.',
+    inputSchema: z.object({
+      profileUrl: z.string().url().describe('LinkedIn profile URL'),
+      message: z.string().describe('InMail text'),
+      confirmed: z.boolean().describe('Must be true to send'),
+    }),
+    execute: async ({ profileUrl, message, confirmed }) => {
+      if (!confirmed) {
+        return {
+          draft: true,
+          profileUrl,
+          message,
+          instruction:
+            'InMail draft ready. Ask the user for explicit confirmation before sending.',
+        }
+      }
+      await linkedinService.sendInMail({
+        clerkUserId: userId,
+        profileUrl,
+        message,
+      })
+      return { success: true, message: 'InMail sent successfully.' }
+    },
+  })
+}
+
+export function createLinkedInInviteTool(userId: string) {
+  return createTool({
+    id: 'linkedin-invite',
+    description:
+      'Send a LinkedIn connection invitation. Use a short personalized note when available.',
+    inputSchema: z.object({
+      profileUrl: z.string().url().describe('LinkedIn profile URL'),
+      message: z.string().optional().describe('Optional invitation note'),
+      confirmed: z.boolean().describe('Must be true to send'),
+    }),
+    execute: async ({ profileUrl, message, confirmed }) => {
+      if (!confirmed) {
+        return {
+          draft: true,
+          profileUrl,
+          message,
+          instruction:
+            'Invitation draft ready. Ask the user for explicit confirmation before sending.',
+        }
+      }
+      await linkedinService.sendInvitation({
+        clerkUserId: userId,
+        profileUrl,
+        message,
+      })
+      return { success: true, message: 'Invitation sent successfully.' }
+    },
+  })
+}
+
+export function createLinkedInChatHistoryTool(userId: string) {
+  return createTool({
+    id: 'linkedin-chat-history',
+    description:
+      'List recent LinkedIn chats and participants from Unipile.',
+    inputSchema: z.object({
+      query: z.string().optional().describe('Optional attendee filter'),
+      maxResults: z.number().min(1).max(50).optional().default(20),
+    }),
+    execute: async ({ query, maxResults }) => {
+      const results = await linkedinService.searchPeople(
+        userId,
+        query ?? '',
+        undefined,
+        maxResults
+      )
+      return {
+        results: results.map((r) => ({
+          name: r.name,
+          profileUrl: r.publicUrl,
+          headline: r.headline,
+        })),
+        count: results.length,
       }
     },
   })

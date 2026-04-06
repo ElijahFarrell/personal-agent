@@ -30,7 +30,7 @@ import {
   PhoneCall,
   MessagesSquare,
 } from 'lucide-react'
-import type { ComposioProvider } from '@/types'
+import type { IntegrationProvider } from '@/types'
 
 export type IntegrationCategoryId =
   | 'email_calendar'
@@ -81,7 +81,7 @@ export interface IntegrationCatalogEntry {
   id: string
   name: string
   description: string
-  provider: ComposioProvider
+  provider: IntegrationProvider
   Icon: LucideIcon
   iconBg: string
   iconColor: string
@@ -164,7 +164,7 @@ export const INTEGRATION_CATALOG: IntegrationCatalogEntry[] = [
   {
     id: 'whatsapp',
     name: 'WhatsApp Business',
-    description: 'Business messaging (session rules apply).',
+    description: 'Unipile-powered WhatsApp messaging and unified inbox sync.',
     provider: 'whatsapp',
     Icon: Phone,
     iconBg: 'bg-emerald-500/10',
@@ -174,7 +174,8 @@ export const INTEGRATION_CATALOG: IntegrationCatalogEntry[] = [
   {
     id: 'linkedin',
     name: 'LinkedIn',
-    description: 'Profile and professional network actions supported by Composio.',
+    description:
+      'Unipile-powered LinkedIn messaging, InMail, invitations, and chat history.',
     provider: 'linkedin',
     Icon: Link2,
     iconBg: 'bg-blue-600/10',

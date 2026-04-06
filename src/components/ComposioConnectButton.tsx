@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { API_ROUTES } from '@/constants/api'
-import type { ComposioProvider } from '@/types'
+import type { IntegrationProvider } from '@/types'
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -15,9 +15,13 @@ import {
 } from '@/components/ui/alert-dialog'
 
 interface ComposioConnectButtonProps {
-  provider: ComposioProvider
+  provider: IntegrationProvider
   isConnected: boolean
   onSuccess?: () => void
+}
+
+function isUnipileProvider(provider: IntegrationProvider): boolean {
+  return provider === 'linkedin' || provider === 'whatsapp'
 }
 
 export function ComposioConnectButton({
@@ -36,11 +40,16 @@ export function ComposioConnectButton({
     setError(null)
 
     try {
-      const res = await fetch(API_ROUTES.composioAuthorize, {
+      const res = await fetch(
+        isUnipileProvider(provider)
+          ? API_ROUTES.unipileAuthorize
+          : API_ROUTES.composioAuthorize,
+        {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ provider }),
-      })
+      }
+      )
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
@@ -64,11 +73,16 @@ export function ComposioConnectButton({
     setError(null)
 
     try {
-      const res = await fetch(API_ROUTES.composioDisconnect, {
+      const res = await fetch(
+        isUnipileProvider(provider)
+          ? API_ROUTES.unipileDisconnect
+          : API_ROUTES.composioDisconnect,
+        {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ provider }),
-      })
+      }
+      )
 
       const data = (await res.json().catch(() => ({}))) as {
         error?: string

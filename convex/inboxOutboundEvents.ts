@@ -11,6 +11,7 @@ export const recordOutbound = mutation({
     provider: v.union(
       v.literal(INBOX_PROVIDER.GMAIL),
       v.literal(INBOX_PROVIDER.OUTLOOK),
+      v.literal(INBOX_PROVIDER.LINKEDIN),
       v.literal(INBOX_PROVIDER.WHATSAPP),
       v.literal(INBOX_PROVIDER.SMS)
     ),

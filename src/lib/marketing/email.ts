@@ -42,6 +42,75 @@ function buildAuditEmailHtml(opts: {
 </html>`
 }
 
+// ─── Lead notification ────────────────────────────────────────────────────────
+
+const LEAD_NOTIFY_TO =
+  process.env.LEAD_NOTIFY_EMAIL ?? 'you@example.com'
+
+function buildLeadNotificationHtml(opts: {
+  name?: string
+  email?: string
+  phone?: string
+  company?: string
+  useCase?: string
+}): string {
+  const rows = [
+    opts.name && `<tr><td style="color:#a3a3a3;padding:4px 0;width:90px">Name</td><td style="color:#fafafa;padding:4px 0">${escapeHtml(opts.name)}</td></tr>`,
+    opts.email && `<tr><td style="color:#a3a3a3;padding:4px 0">Email</td><td style="color:#fafafa;padding:4px 0"><a href="mailto:${escapeHtml(opts.email)}" style="color:#a78bfa">${escapeHtml(opts.email)}</a></td></tr>`,
+    opts.phone && `<tr><td style="color:#a3a3a3;padding:4px 0">Phone</td><td style="color:#fafafa;padding:4px 0">${escapeHtml(opts.phone)}</td></tr>`,
+    opts.company && `<tr><td style="color:#a3a3a3;padding:4px 0">Company</td><td style="color:#fafafa;padding:4px 0">${escapeHtml(opts.company)}</td></tr>`,
+    opts.useCase && `<tr><td style="color:#a3a3a3;padding:4px 0">Use case</td><td style="color:#fafafa;padding:4px 0">${escapeHtml(opts.useCase)}</td></tr>`,
+  ].filter(Boolean).join('\n')
+
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" /></head>
+<body style="margin:0;background:#0a0a0c;color:#e5e5e5;font-family:system-ui,-apple-system,sans-serif;line-height:1.5;padding:24px;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;margin:0 auto;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:28px;">
+    <tr><td>
+      <p style="margin:0 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:#a78bfa;">Shiloh AI</p>
+      <h1 style="margin:0 0 16px;font-size:18px;color:#fafafa;">New website lead</h1>
+      <p style="margin:0 0 16px;color:#a3a3a3;font-size:14px;">Someone reached out via the chat widget on example.com.</p>
+      <table cellpadding="0" cellspacing="0" style="width:100%;font-size:14px;border-top:1px solid rgba(255,255,255,0.08);padding-top:12px;margin-top:4px;">
+        ${rows}
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`
+}
+
+export async function sendLeadNotificationEmail(opts: {
+  name?: string
+  email?: string
+  phone?: string
+  company?: string
+  useCase?: string
+}): Promise<void> {
+  const key = process.env.RESEND_API_KEY
+  if (!key) return
+
+  const from =
+    process.env.RESEND_FROM_EMAIL ?? 'Shiloh AI <onboarding@resend.dev>'
+  const resend = new Resend(key)
+
+  const displayName = opts.name || opts.email || opts.phone || 'Someone'
+  const subject = `New lead: ${displayName}${opts.company ? ` (${opts.company})` : ''}`
+
+  const { error } = await resend.emails.send({
+    from,
+    to: LEAD_NOTIFY_TO,
+    subject,
+    html: buildLeadNotificationHtml(opts),
+  })
+
+  if (error) {
+    console.error('[lead-notify] Email failed:', error.message)
+  }
+}
+
+// ─── Audit report ─────────────────────────────────────────────────────────────
+
 export async function sendAuditReportEmail(opts: {
   to: string
   name: string
