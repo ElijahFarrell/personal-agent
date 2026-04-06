@@ -49,7 +49,7 @@ export async function indexMarketingChunk(chunk: MarketingChunk): Promise<void> 
 export async function clearMarketingKnowledge(): Promise<void> {
   const indexes = await qdrantVector.listIndexes()
   if (indexes.includes(COLLECTION)) {
-    await qdrantVector.deleteIndex(COLLECTION)
+    await qdrantVector.deleteIndex({ indexName: COLLECTION })
   }
   await qdrantVector.createIndex({
     indexName: COLLECTION,
