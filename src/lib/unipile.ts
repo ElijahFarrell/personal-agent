@@ -1,6 +1,6 @@
 import { UnipileClient } from 'unipile-node-sdk'
 import { config } from '@/lib/config'
-import type { UnipileProvider } from '@/types'
+export type { UnipileProvider } from '@/types'
 
 type HostedAuthProvider = 'LINKEDIN' | 'WHATSAPP'
 
