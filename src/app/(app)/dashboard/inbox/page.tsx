@@ -10,15 +10,20 @@ import {
   Loader2,
   RefreshCw,
   Sparkles,
-  ListOrdered,
   ChevronRight,
   Copy,
   Send,
   Phone,
+  Mail,
+  MessageSquare,
+  ArrowUp,
+  Clock,
+  CheckCheck,
+  FileText,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import {
   Select,
   SelectContent,
@@ -30,6 +35,7 @@ import { useOrgConfig } from '@/hooks/useOrgConfig'
 import { isFeatureEnabled } from '@/constants/featureGating'
 import { normalizeEmailPlainText } from '@/lib/inboxEmailText'
 import { InboxMessageMarkdown } from '@/components/inbox/InboxMessageMarkdown'
+import { cn } from '@/lib/utils'
 
 type SortOrder = 'recent' | 'lead_score' | 'needs_reply_first'
 
@@ -38,6 +44,33 @@ type ProviderSyncPayload = { threadsSynced: number; error?: string }
 type LastSyncSummary = {
   gmail: ProviderSyncPayload
   outlook: ProviderSyncPayload
+}
+
+function providerIcon(provider: string) {
+  switch (provider) {
+    case 'gmail':
+    case 'outlook':
+      return <Mail className="h-3 w-3" />
+    case 'sms':
+      return <MessageSquare className="h-3 w-3" />
+    case 'whatsapp':
+      return <MessageSquare className="h-3 w-3" />
+    default:
+      return <Mail className="h-3 w-3" />
+  }
+}
+
+function formatRelativeTime(ms: number): string {
+  const now = Date.now()
+  const diff = now - ms
+  const minutes = Math.floor(diff / 60_000)
+  if (minutes < 1) return 'just now'
+  if (minutes < 60) return `${minutes}m ago`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours}h ago`
+  const days = Math.floor(hours / 24)
+  if (days < 7) return `${days}d ago`
+  return new Date(ms).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 }
 
 export default function InboxPage() {
@@ -104,6 +137,8 @@ export default function InboxPage() {
   const [sendReplyError, setSendReplyError] = useState<string | null>(null)
   const [sendReplyOk, setSendReplyOk] = useState(false)
 
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+
   const refreshSyncStatus = useCallback(() => {
     fetch('/api/inbox/sync-status', { credentials: 'same-origin' })
       .then((r) => r.json())
@@ -137,13 +172,11 @@ export default function InboxPage() {
   const isRealtimeProvider =
     selectedProviderRaw === 'sms' || selectedProviderRaw === 'whatsapp'
 
-  // Real-time Convex subscription for SMS / WhatsApp threads
   const realtimeMessages = useQuery(
     api.inbox.listMessagesForThread,
     selectedId && isRealtimeProvider ? { threadId: selectedId, limit: 200 } : 'skip'
   )
 
-  // Keep threadMessages in sync: reactive for SMS/WA, fetch for email
   useEffect(() => {
     if (!selectedId || !dbUser) {
       setThreadMessages(null)
@@ -169,7 +202,6 @@ export default function InboxPage() {
       }
       return
     }
-    // Email providers — fetch from API
     let cancelled = false
     setThreadMessagesLoading(true)
     setThreadMessagesError(null)
@@ -207,7 +239,6 @@ export default function InboxPage() {
     }
   }, [selectedId, dbUser, messagesRefreshEpoch, isRealtimeProvider, realtimeMessages])
 
-  /** One automatic sync when you open Inbox (once per tab session), if under daily limit. */
   useEffect(() => {
     if (!enabled || !dbUser || typeof window === 'undefined') return
     const SESSION_KEY = 'inbox.autoSyncSession.v1'
@@ -244,7 +275,6 @@ export default function InboxPage() {
     })()
   }, [enabled, dbUser, refreshSyncStatus])
 
-  /** Background pull sync while Inbox stays open: every 30 seconds for near-real-time email. */
   useEffect(() => {
     if (!enabled || !dbUser) return
     const id = window.setInterval(() => {
@@ -273,6 +303,12 @@ export default function InboxPage() {
     }, 30_000)
     return () => window.clearInterval(id)
   }, [enabled, dbUser, refreshSyncStatus])
+
+  useEffect(() => {
+    if (threadMessages && threadMessages.length > 0) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [threadMessages])
 
   async function sync() {
     setSyncing(true)
@@ -355,74 +391,91 @@ export default function InboxPage() {
 
   if (!enabled) {
     return (
-      <div className="p-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Unified inbox</CardTitle>
-            <CardDescription>
-              This feature is not enabled for your organization. Contact your admin.
-            </CardDescription>
-          </CardHeader>
-        </Card>
+      <div className="flex h-full items-center justify-center p-6">
+        <div className="text-center">
+          <Inbox className="mx-auto mb-3 h-10 w-10 text-muted-foreground/50" />
+          <h2 className="text-lg font-semibold">Unified Inbox</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            This feature is not enabled for your organization. Contact your admin.
+          </p>
+        </div>
       </div>
     )
   }
 
   const selectedThread = threads?.find((t) => t._id === selectedId)
 
+  const gmailCount = threads?.filter((t) => t.provider === 'gmail').length ?? 0
+  const outlookCount = threads?.filter((t) => t.provider === 'outlook').length ?? 0
+
   return (
-    <div className="flex h-full min-h-0 flex-1 flex-col gap-3 p-3 md:p-4 lg:flex-row">
-      <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col gap-3 lg:max-w-md lg:shrink-0 lg:overflow-hidden">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="min-w-0">
-            <h1 className="flex items-center gap-1.5 text-lg font-semibold tracking-tight">
-              <Inbox className="h-5 w-5 shrink-0 text-muted-foreground" />
-              Inbox
-            </h1>
-            <p className="text-xs text-muted-foreground">
-              Gmail, Outlook, WhatsApp, SMS. SMS &amp; WhatsApp update in real time via webhooks.
-              Email syncs every ~30s.
-            </p>
-            <details className="mt-1 text-xs text-muted-foreground [&_summary]:cursor-pointer [&_summary]:text-muted-foreground">
-              <summary className="list-none [&::-webkit-details-marker]:hidden">
-                How sync works
-              </summary>
-              <p className="mt-1.5 pl-0 text-muted-foreground">
-                SMS and WhatsApp messages appear instantly.
-                Email syncs from your connected Gmail/Outlook every ~30 seconds while you stay on
-                this page.
-              </p>
-            </details>
-            {syncMeta && syncMeta.limit >= 0 && (
-              <p className="mt-1 text-xs text-muted-foreground tabular-nums">
-                Syncs today: {syncMeta.usedToday} / {syncMeta.limit}
-              </p>
-            )}
-            {lastSyncSummary && (
-              <p className="mt-1 text-xs text-muted-foreground tabular-nums">
-                Last sync — Gmail: {lastSyncSummary.gmail.threadsSynced} threads · Outlook:{' '}
-                {lastSyncSummary.outlook.threadsSynced} threads
-              </p>
-            )}
+    <div className="flex h-full min-h-0 flex-1 flex-col lg:flex-row">
+      {/* ─── Thread list panel ─── */}
+      <div className="flex min-h-0 w-full min-w-0 flex-col border-b border-border/50 lg:w-[380px] lg:shrink-0 lg:border-b-0 lg:border-r">
+        {/* Header */}
+        <div className="shrink-0 border-b border-border/50 px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                <Inbox className="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-sm font-semibold tracking-tight">Inbox</h1>
+                <p className="text-[11px] text-muted-foreground">
+                  {threads ? `${threads.length} threads` : 'Loading…'}
+                  {gmailCount > 0 && ` · Gmail: ${gmailCount}`}
+                  {outlookCount > 0 && ` · Outlook: ${outlookCount}`}
+                </p>
+              </div>
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => void sync()}
+              disabled={syncing}
+              className="h-8 w-8 rounded-lg"
+            >
+              {syncing ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <RefreshCw className="h-3.5 w-3.5" />
+              )}
+            </Button>
           </div>
-          <Button type="button" variant="secondary" size="sm" onClick={() => void sync()} disabled={syncing}>
-            {syncing ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <RefreshCw className="mr-2 h-4 w-4" />
-            )}
-            Sync
-          </Button>
+
+          {syncMeta && syncMeta.limit >= 0 && (
+            <div className="mt-2 flex items-center gap-2">
+              <div className="h-1 flex-1 overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-full rounded-full bg-primary/60 transition-all"
+                  style={{ width: `${Math.min((syncMeta.usedToday / syncMeta.limit) * 100, 100)}%` }}
+                />
+              </div>
+              <span className="text-[10px] tabular-nums text-muted-foreground">
+                {syncMeta.usedToday}/{syncMeta.limit}
+              </span>
+            </div>
+          )}
+
+          {lastSyncSummary && (
+            <p className="mt-1.5 text-[10px] text-muted-foreground/70">
+              Last sync — Gmail: {lastSyncSummary.gmail.threadsSynced} · Outlook:{' '}
+              {lastSyncSummary.outlook.threadsSynced}
+            </p>
+          )}
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <ListOrdered className="h-4 w-4 text-muted-foreground" />
-          <span className="text-xs text-muted-foreground">Sort</span>
+        {/* Sort bar */}
+        <div className="flex shrink-0 items-center gap-2 border-b border-border/30 px-4 py-2">
+          <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground/70">
+            Sort
+          </span>
           <Select
             value={sortOrder}
             onValueChange={(v) => setSortOrder(v as SortOrder)}
           >
-            <SelectTrigger className="h-8 w-[180px] text-xs">
+            <SelectTrigger className="h-7 w-auto min-w-[140px] border-0 bg-transparent px-2 text-[11px] shadow-none focus:ring-0">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -434,28 +487,31 @@ export default function InboxPage() {
         </div>
 
         {syncError && (
-          <p className="text-sm text-destructive" role="alert">
+          <div className="mx-4 mt-2 rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive" role="alert">
             {syncError}
-          </p>
+          </div>
         )}
 
-        <div className="flex min-h-0 flex-1 flex-col">
+        {/* Thread list */}
+        <div className="min-h-0 flex-1 overflow-y-auto">
           {!threads && (
-            <div className="flex flex-1 items-center justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground/50" />
             </div>
           )}
 
           {threads && threads.length === 0 && (
-            <Card>
-              <CardContent className="py-8 text-center text-sm text-muted-foreground">
-                No threads yet. Connect Gmail, Outlook, or an SMS provider and sync.
-              </CardContent>
-            </Card>
+            <div className="flex flex-col items-center justify-center px-4 py-16 text-center">
+              <Mail className="mb-3 h-8 w-8 text-muted-foreground/30" />
+              <p className="text-sm text-muted-foreground">No threads yet</p>
+              <p className="mt-1 text-xs text-muted-foreground/60">
+                Connect Gmail, Outlook, or an SMS provider and sync.
+              </p>
+            </div>
           )}
 
           {threads && threads.length > 0 && (
-            <ul className="min-h-0 flex-1 space-y-1.5 overflow-y-auto pr-1">
+            <div className="divide-y divide-border/30">
               {threads.map((t) => {
                 const score =
                   leadScoring && t.prospectId
@@ -463,107 +519,152 @@ export default function InboxPage() {
                     : undefined
                 const active = selectedId === t._id
                 return (
-                  <li key={t._id}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedId(t._id)
-                        setDraftText(null)
-                        setDraftMode(null)
-                        setReplyDraft('')
-                        setDraftError(null)
-                        setComposeReply('')
-                        setSendReplyError(null)
-                        setSendReplyOk(false)
-                      }}
-                      className={`flex w-full items-start gap-2 rounded-lg border p-2 text-left text-sm transition-colors ${
-                        active ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/50'
-                      }`}
+                  <button
+                    key={t._id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedId(t._id)
+                      setDraftText(null)
+                      setDraftMode(null)
+                      setReplyDraft('')
+                      setDraftError(null)
+                      setComposeReply('')
+                      setSendReplyError(null)
+                      setSendReplyOk(false)
+                    }}
+                    className={cn(
+                      'group flex w-full items-start gap-3 px-4 py-3 text-left transition-all',
+                      active
+                        ? 'bg-primary/5 shadow-[inset_3px_0_0_0] shadow-primary'
+                        : 'hover:bg-muted/30'
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        'mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-medium',
+                        active
+                          ? 'bg-primary/15 text-primary'
+                          : 'bg-muted text-muted-foreground'
+                      )}
                     >
-                      <ChevronRight
-                        className={`mt-0.5 h-4 w-4 shrink-0 ${active ? 'text-primary' : 'text-muted-foreground'}`}
-                      />
-                      <span className="min-w-0 flex-1">
-                        <span className="line-clamp-1 font-medium">
+                      {providerIcon(t.provider)}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className={cn(
+                          'line-clamp-1 flex-1 text-[13px]',
+                          t.needsReply ? 'font-semibold text-foreground' : 'font-medium text-foreground/80'
+                        )}>
                           {t.subject ?? '(no subject)'}
                         </span>
-                        <span className="mt-0.5 line-clamp-2 block text-xs text-muted-foreground break-words">
-                          {normalizeEmailPlainText(t.snippet ?? '')}
-                        </span>
-                        <span className="mt-1.5 flex flex-wrap gap-1.5">
-                          <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
-                            {t.provider}
+                        {t.lastMessageAt && (
+                          <span className="shrink-0 text-[10px] tabular-nums text-muted-foreground/60">
+                            {formatRelativeTime(t.lastMessageAt)}
                           </span>
-                          {t.needsReply && (
-                            <span className="rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] text-amber-700 dark:text-amber-400">
-                              Needs reply
-                            </span>
-                          )}
-                          {score !== undefined && (
-                            <span className="rounded bg-violet-500/15 px-1.5 py-0.5 text-[10px] text-violet-700 dark:text-violet-300">
-                              Score {score}
-                            </span>
-                          )}
-                        </span>
-                      </span>
-                    </button>
-                  </li>
+                        )}
+                      </div>
+                      <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground/70">
+                        {normalizeEmailPlainText(t.snippet ?? '')}
+                      </p>
+                      <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                        <Badge
+                          variant="secondary"
+                          className="h-[18px] gap-1 rounded-md border-0 bg-muted/80 px-1.5 py-0 text-[10px] font-normal uppercase tracking-wide text-muted-foreground"
+                        >
+                          {t.provider}
+                        </Badge>
+                        {t.needsReply && (
+                          <Badge className="h-[18px] rounded-md border-0 bg-amber-500/10 px-1.5 py-0 text-[10px] font-medium text-amber-600 dark:text-amber-400">
+                            Needs reply
+                          </Badge>
+                        )}
+                        {score !== undefined && (
+                          <Badge className="h-[18px] rounded-md border-0 bg-violet-500/10 px-1.5 py-0 text-[10px] font-medium text-violet-600 dark:text-violet-300">
+                            Score {score}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </button>
                 )
               })}
-            </ul>
+            </div>
           )}
         </div>
       </div>
 
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3 overflow-y-auto border-t border-border pt-3 lg:min-h-0 lg:flex-1 lg:border-l lg:border-t-0 lg:pl-4 lg:pt-0">
+      {/* ─── Detail panel ─── */}
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         {!selectedThread && (
-          <Card className="border-dashed">
-            <CardContent className="py-10 text-center text-sm text-muted-foreground">
-              Select a thread to view messages and run AI draft or summary.
-            </CardContent>
-          </Card>
+          <div className="flex h-full flex-col items-center justify-center p-6 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted/50">
+              <Mail className="h-7 w-7 text-muted-foreground/40" />
+            </div>
+            <p className="mt-4 text-sm font-medium text-muted-foreground/70">
+              Select a conversation
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground/50">
+              Choose a thread from the left to view messages
+            </p>
+          </div>
         )}
 
         {selectedThread && (
-          <div className="flex min-h-0 flex-1 flex-col gap-3">
-            <Card className="shrink-0">
-              <CardHeader className="space-y-1.5 p-4 pb-2">
-                <CardTitle className="text-base">{selectedThread.subject ?? '(no subject)'}</CardTitle>
-                <CardDescription className="line-clamp-3 break-words">
-                  {normalizeEmailPlainText(selectedThread.snippet ?? '')}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-wrap gap-2 border-t border-border px-4 pb-4 pt-3">
+          <>
+            {/* Thread header */}
+            <div className="shrink-0 border-b border-border/50 px-5 py-3.5">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-[15px] font-semibold leading-tight tracking-tight">
+                    {selectedThread.subject ?? '(no subject)'}
+                  </h2>
+                  {selectedThread.snippet && (
+                    <p className="mt-1 line-clamp-1 text-xs text-muted-foreground/60">
+                      {normalizeEmailPlainText(selectedThread.snippet)}
+                    </p>
+                  )}
+                </div>
+                <Badge
+                  variant="secondary"
+                  className="shrink-0 gap-1 rounded-md border-0 bg-muted/60 text-[10px] uppercase"
+                >
+                  {providerIcon(selectedThread.provider)}
+                  {selectedThread.provider}
+                </Badge>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-1.5">
                 <Button
                   type="button"
                   size="sm"
                   variant="secondary"
                   disabled={draftLoading}
                   onClick={() => void runDraft('reply')}
-                  className="gap-1.5"
+                  className="h-7 gap-1.5 rounded-lg px-3 text-xs"
                 >
-                  {draftLoading ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  {draftLoading && draftMode !== 'summarize' ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
                   ) : (
-                    <Sparkles className="h-3.5 w-3.5" />
+                    <Sparkles className="h-3 w-3" />
                   )}
                   Draft reply
                 </Button>
                 <Button
                   type="button"
                   size="sm"
-                  variant="outline"
+                  variant="ghost"
                   disabled={draftLoading}
                   onClick={() => void runDraft('summarize')}
+                  className="h-7 gap-1.5 rounded-lg px-3 text-xs"
                 >
+                  <FileText className="h-3 w-3" />
                   Summarize
                 </Button>
                 {(selectedThread.provider === 'sms' || selectedThread.provider === 'whatsapp') && (
                   <Button
                     type="button"
                     size="sm"
-                    variant="outline"
-                    className="gap-1.5"
+                    variant="ghost"
+                    className="h-7 gap-1.5 rounded-lg px-3 text-xs"
                     onClick={() => {
                       const phone = selectedThread.externalThreadId
                       if (phone) {
@@ -575,31 +676,35 @@ export default function InboxPage() {
                       }
                     }}
                   >
-                    <Phone className="h-3.5 w-3.5" />
+                    <Phone className="h-3 w-3" />
                     Call
                   </Button>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
+            {/* AI draft/summary card */}
             {draftError && (
-              <p className="text-sm text-destructive" role="alert">
+              <div className="mx-5 mt-3 rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive" role="alert">
                 {draftError}
-              </p>
+              </div>
             )}
             {draftText && draftMode && (
-              <Card className="shrink-0">
-                <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 space-y-0 p-4 py-3">
-                  <CardTitle className="text-sm">
-                    {draftMode === 'reply' ? 'Reply draft' : 'Summary'}
-                  </CardTitle>
+              <div className="mx-5 mt-3 shrink-0 overflow-hidden rounded-xl border border-primary/20 bg-primary/[0.03]">
+                <div className="flex items-center justify-between border-b border-primary/10 px-4 py-2.5">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-3.5 w-3.5 text-primary/70" />
+                    <span className="text-xs font-medium text-primary/80">
+                      {draftMode === 'reply' ? 'AI Draft' : 'Summary'}
+                    </span>
+                  </div>
                   {draftMode === 'reply' && (
-                    <div className="flex gap-2">
+                    <div className="flex gap-1.5">
                       <Button
                         type="button"
                         size="sm"
-                        variant="outline"
-                        className="gap-1.5"
+                        variant="ghost"
+                        className="h-6 gap-1 px-2 text-[11px]"
                         onClick={() => {
                           void navigator.clipboard.writeText(replyDraft || draftText).then(() => {
                             setCopyDone(true)
@@ -607,98 +712,131 @@ export default function InboxPage() {
                           })
                         }}
                       >
-                        <Copy className="h-3.5 w-3.5" />
+                        <Copy className="h-3 w-3" />
                         {copyDone ? 'Copied' : 'Copy'}
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 px-2 text-[11px]"
+                        onClick={() => setComposeReply(replyDraft || draftText)}
+                      >
+                        Use in reply
                       </Button>
                     </div>
                   )}
-                </CardHeader>
-                <CardContent className="space-y-2 px-4 pb-4">
+                </div>
+                <div className="px-4 py-3">
                   {draftMode === 'reply' ? (
-                    <>
-                      <p className="text-xs text-muted-foreground">
-                        Edit and copy to paste into Gmail or your mail client.
-                      </p>
-                      <Textarea
-                        value={replyDraft}
-                        onChange={(e) => setReplyDraft(e.target.value)}
-                        className="min-h-[140px] font-sans text-sm"
-                        placeholder="Draft reply will appear here…"
-                      />
-                    </>
+                    <Textarea
+                      value={replyDraft}
+                      onChange={(e) => setReplyDraft(e.target.value)}
+                      className="min-h-[80px] resize-y border-0 bg-transparent p-0 text-sm shadow-none focus-visible:ring-0"
+                      placeholder="Draft reply will appear here…"
+                    />
                   ) : (
                     <InboxMessageMarkdown text={draftText} density="compact" />
                   )}
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             )}
 
-            <Card className="flex min-h-0 flex-1 flex-col overflow-hidden">
-              <CardHeader className="shrink-0 space-y-0 p-4 py-3">
-                <CardTitle className="text-sm">Messages</CardTitle>
-              </CardHeader>
-              <CardContent className="min-h-0 flex-1 overflow-y-auto px-4 pb-4 pr-3 pt-0">
-                {threadMessagesLoading && (
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                )}
-                {threadMessagesError && (
-                  <p className="text-sm text-destructive" role="alert">
-                    {threadMessagesError}
-                  </p>
-                )}
-                {!threadMessagesLoading && threadMessages && threadMessages.length === 0 && !threadMessagesError && (
-                  <p className="text-sm text-muted-foreground">No messages in this thread.</p>
-                )}
-                {!threadMessagesLoading && threadMessages && threadMessages.length > 0 && (
-                  <ul className="space-y-3">
-                    {threadMessages.map((m) => (
-                      <li
+            {/* Messages */}
+            <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+              {threadMessagesLoading && (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground/40" />
+                </div>
+              )}
+              {threadMessagesError && (
+                <div className="rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive" role="alert">
+                  {threadMessagesError}
+                </div>
+              )}
+              {!threadMessagesLoading && threadMessages && threadMessages.length === 0 && !threadMessagesError && (
+                <p className="py-8 text-center text-sm text-muted-foreground/50">
+                  No messages in this thread.
+                </p>
+              )}
+              {!threadMessagesLoading && threadMessages && threadMessages.length > 0 && (
+                <div className="space-y-3">
+                  {threadMessages.map((m, idx) => {
+                    const isLast = idx === threadMessages.length - 1
+                    return (
+                      <div
                         key={m.externalMessageId}
-                        className={`rounded-md border p-3 ${
-                          m.isOutbound ? 'border-muted bg-muted/30' : 'border-border'
-                        }`}
+                        className={cn(
+                          'group/msg relative',
+                          m.isOutbound ? 'pl-8' : 'pr-8'
+                        )}
                       >
-                        <div className="mb-2 flex flex-wrap gap-2 text-xs text-muted-foreground">
-                          <span className="font-medium text-foreground">
-                            {m.isOutbound ? 'You' : m.senderLabel || m.fromEmail}
-                          </span>
-                          <span className="tabular-nums">
-                            {new Date(m.sentAt).toLocaleString()}
-                          </span>
+                        <div
+                          className={cn(
+                            'rounded-2xl px-4 py-3 transition-colors',
+                            m.isOutbound
+                              ? 'ml-auto bg-primary/[0.07] dark:bg-primary/10'
+                              : 'bg-muted/40'
+                          )}
+                        >
+                          <div className="mb-2 flex items-center gap-2">
+                            <div
+                              className={cn(
+                                'flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-semibold',
+                                m.isOutbound
+                                  ? 'bg-primary/20 text-primary'
+                                  : 'bg-foreground/10 text-foreground/60'
+                              )}
+                            >
+                              {m.isOutbound ? (
+                                <ArrowUp className="h-2.5 w-2.5" />
+                              ) : (
+                                (m.senderLabel || m.fromEmail || '?')[0].toUpperCase()
+                              )}
+                            </div>
+                            <span className="text-xs font-medium text-foreground/80">
+                              {m.isOutbound ? 'You' : (m.senderLabel || m.fromEmail)}
+                            </span>
+                            <span className="flex items-center gap-1 text-[10px] text-muted-foreground/50">
+                              <Clock className="h-2.5 w-2.5" />
+                              {new Date(m.sentAt).toLocaleString(undefined, {
+                                month: 'short',
+                                day: 'numeric',
+                                hour: 'numeric',
+                                minute: '2-digit',
+                              })}
+                            </span>
+                            {m.isOutbound && isLast && (
+                              <CheckCheck className="h-3 w-3 text-primary/50" />
+                            )}
+                          </div>
+                          <InboxMessageMarkdown
+                            text={normalizeEmailPlainText(m.bodyPlain ?? '') || '—'}
+                            density="compact"
+                          />
                         </div>
-                        <InboxMessageMarkdown
-                          text={normalizeEmailPlainText(m.bodyPlain ?? '') || '—'}
-                          density="compact"
-                        />
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </CardContent>
-            </Card>
+                      </div>
+                    )
+                  })}
+                  <div ref={messagesEndRef} />
+                </div>
+              )}
+            </div>
 
-            <Card className="shrink-0">
-              <CardHeader className="space-y-1 p-4 py-3">
-                <CardTitle className="text-sm">Reply</CardTitle>
-                <CardDescription>
-                  {selectedThread.provider === 'sms'
-                    ? 'Sends SMS via your connected SMS provider.'
-                    : selectedThread.provider === 'whatsapp'
-                      ? 'Sends via your connected WhatsApp/SMS provider.'
-                      : 'Sends through your connected Gmail or Outlook account.'}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-2 px-4 pb-4">
-                {sendReplyError && (
-                  <p className="text-sm text-destructive" role="alert">
-                    {sendReplyError}
-                  </p>
-                )}
-                {sendReplyOk && (
-                  <p className="text-sm text-emerald-600 dark:text-emerald-400" role="status">
-                    Reply sent.
-                  </p>
-                )}
+            {/* Reply composer — compact inline bar */}
+            <div className="shrink-0 border-t border-border/50 bg-background/50 px-5 py-3">
+              {sendReplyError && (
+                <div className="mb-2 rounded-lg bg-destructive/10 px-3 py-1.5 text-xs text-destructive" role="alert">
+                  {sendReplyError}
+                </div>
+              )}
+              {sendReplyOk && (
+                <div className="mb-2 flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400" role="status">
+                  <CheckCheck className="h-3.5 w-3.5" />
+                  Reply sent
+                </div>
+              )}
+              <div className="flex items-end gap-2">
                 <Textarea
                   value={composeReply}
                   onChange={(e) => setComposeReply(e.target.value)}
@@ -708,37 +846,43 @@ export default function InboxPage() {
                       : 'Write a reply…'
                   }
                   disabled={sendReplyLoading}
-                  className="min-h-[120px] resize-y font-sans text-sm"
+                  className="min-h-[40px] max-h-[120px] flex-1 resize-none rounded-xl border-border/50 bg-muted/30 px-3.5 py-2.5 text-sm placeholder:text-muted-foreground/40"
+                  rows={1}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                      e.preventDefault()
+                      void sendReply()
+                    }
+                  }}
                 />
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    type="button"
-                    size="sm"
-                    disabled={sendReplyLoading || !composeReply.trim()}
-                    onClick={() => void sendReply()}
-                    className="gap-1.5"
-                  >
-                    {sendReplyLoading ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <Send className="h-3.5 w-3.5" />
-                    )}
-                    {selectedThread.provider === 'sms' ? 'Send SMS' : 'Send reply'}
-                  </Button>
-                  {draftMode === 'reply' && replyDraft && (
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setComposeReply(replyDraft)}
-                    >
-                      Use AI draft
-                    </Button>
+                <Button
+                  type="button"
+                  size="icon"
+                  disabled={sendReplyLoading || !composeReply.trim()}
+                  onClick={() => void sendReply()}
+                  className="h-[40px] w-[40px] shrink-0 rounded-xl"
+                >
+                  {sendReplyLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
                   )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                </Button>
+              </div>
+              <div className="mt-1.5 flex items-center gap-3">
+                <span className="text-[10px] text-muted-foreground/40">
+                  {selectedThread.provider === 'sms'
+                    ? 'Sends via SMS'
+                    : selectedThread.provider === 'whatsapp'
+                      ? 'Sends via WhatsApp'
+                      : 'Sends via Gmail / Outlook'}
+                </span>
+                <span className="text-[10px] text-muted-foreground/30">
+                  {navigator.userAgent.includes('Mac') ? '⌘' : 'Ctrl'}+Enter to send
+                </span>
+              </div>
+            </div>
+          </>
         )}
       </div>
     </div>
