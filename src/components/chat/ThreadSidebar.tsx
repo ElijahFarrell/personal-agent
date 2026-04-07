@@ -21,7 +21,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Plus, MessageSquare, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
+import {
+  Plus,
+  MessageSquare,
+  MoreHorizontal,
+  Pencil,
+  Trash2,
+} from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface ThreadSidebarProps {
@@ -126,28 +132,40 @@ export function ThreadSidebar({ activeThreadId, onSelectThread, onNewThread }: T
 
   return (
     <div className="flex h-full flex-col bg-sidebar border-l border-sidebar-border">
-      <div className="flex items-center justify-between gap-2 px-3 py-2 border-b border-sidebar-border">
+      <div className="flex items-center justify-between gap-2 border-b border-sidebar-border px-3 py-2.5">
         <span className="text-xs font-medium text-sidebar-foreground">Chats</span>
         <div className="flex items-center gap-0.5">
           <Button
             onClick={onNewThread}
             variant="ghost"
             size="icon"
-            className="h-7 w-7 rounded-md text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            className="h-8 w-8 rounded-md text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             aria-label="New chat"
           >
             <Plus className="h-4 w-4" />
           </Button>
           {threadCount > 0 ? (
-            <Button
-              onClick={() => setShowClearAllDialog(true)}
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-              aria-label="Clear all"
-            >
-              <Trash2 className="h-3 w-3" />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 rounded-md text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                  aria-label="Chat list options"
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem
+                  onSelect={() => setShowClearAllDialog(true)}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Clear all conversations
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ) : null}
         </div>
       </div>
@@ -194,25 +212,25 @@ export function ThreadSidebar({ activeThreadId, onSelectThread, onNewThread }: T
                       type="button"
                       onClick={() => onSelectThread(thread._id)}
                       className={cn(
-                        'flex min-w-0 flex-1 items-center gap-2 rounded-lg px-3 py-2 pr-20 text-left text-xs transition-colors',
+                        'flex min-w-0 flex-1 items-center gap-2 rounded-lg px-3 py-2.5 pr-16 text-left text-xs transition-colors',
                         isActive
                           ? 'bg-sidebar-accent text-sidebar-accent-foreground'
                           : 'text-muted-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
                       )}
                     >
                       <MessageSquare className="h-4 w-4 shrink-0 opacity-70" />
-                      <span className="flex-1 truncate">{thread.title}</span>
-                      <span className="shrink-0 text-xs text-muted-foreground">
+                      <span className="min-w-0 flex-1 truncate">{thread.title}</span>
+                      <span
+                        className="shrink-0 text-xs text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
+                      >
                         {formatRelativeTime(thread.updatedAt)}
                       </span>
                     </button>
 
                     <div
                       className={cn(
-                        'absolute right-2 top-1/2 z-10 flex shrink-0 -translate-y-1/2 items-center gap-0.5 rounded-md border border-sidebar-border/60 bg-sidebar/95 p-0.5 shadow-sm backdrop-blur-sm transition-opacity',
-                        isActive
-                          ? 'opacity-100'
-                          : 'opacity-70 hover:opacity-100'
+                        'absolute right-1.5 top-1/2 z-10 flex shrink-0 -translate-y-1/2 items-center gap-0.5 rounded-md border border-sidebar-border/50 bg-sidebar/95 p-0.5 shadow-sm backdrop-blur-sm transition-opacity',
+                        'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100'
                       )}
                     >
                       <button
