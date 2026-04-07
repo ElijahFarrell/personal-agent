@@ -43,11 +43,21 @@ interface ChartRendererProps {
   spec: ChartSpec
 }
 
+const CHART_FALLBACK = (i: number) => `var(--chart-${(i % 5) + 1})` as const
+
+/** Normalize colors so invalid LLM/tool output does not resolve to black bars. */
 function toChartConfig(config: ChartSpec['config']): ChartConfig {
+  const entries = Object.entries(config)
   const result: ChartConfig = {}
-  for (const [key, value] of Object.entries(config)) {
-    result[key] = { label: value.label, color: value.color }
-  }
+  entries.forEach(([key, value], i) => {
+    const raw = value.color?.trim() ?? ''
+    const validVar = /^var\(--chart-[1-5]\)$/i.test(raw)
+    const literal =
+      /^#[\da-f]{3,8}$/i.test(raw) ||
+      /^(hsl|hsla|rgb|rgba|oklch)\(/i.test(raw)
+    const color = validVar || literal ? raw : CHART_FALLBACK(i)
+    result[key] = { label: value.label, color }
+  })
   return result
 }
 
@@ -150,12 +160,17 @@ function PieChartView({ spec, chartConfig }: { spec: ChartSpec; chartConfig: Cha
   const dataKey = spec.series[0]
   const nameKey = spec.xAxisKey ?? 'name'
 
-  const pieData = spec.data.map((item) => ({
-    ...item,
-    fill: spec.config[String(item[nameKey])]?.color
-      ?? spec.config[String(item[dataKey])]?.color
-      ?? `var(--chart-${(spec.data.indexOf(item) % 5) + 1})`,
-  }))
+  const pieData = spec.data.map((item, idx) => {
+    const name = String(item[nameKey])
+    const fromName = chartConfig[name]
+    const fromDataKey = chartConfig[String(item[dataKey])]
+    const entry = fromName ?? fromDataKey
+    const fill =
+      entry && 'color' in entry && entry.color
+        ? entry.color
+        : CHART_FALLBACK(idx)
+    return { ...item, fill }
+  })
 
   return (
     <ChartContainer config={chartConfig} className="mx-auto aspect-square max-h-[300px]">

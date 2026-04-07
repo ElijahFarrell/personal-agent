@@ -44,10 +44,14 @@ export const generateChartTool = createTool({
   execute: async ({ type, title, description, xAxisKey, series, data }) => {
     const config: Record<string, { label: string; color: string }> = {}
     series.forEach((s, i) => {
-      const colorIndex = s.color ?? String(i + 1)
+      const parsed = parseInt(String(s.color ?? '').trim(), 10)
+      const index =
+        Number.isFinite(parsed) && parsed >= 1 && parsed <= 5
+          ? parsed
+          : (i % 5) + 1
       config[s.key] = {
         label: s.label,
-        color: `var(--chart-${colorIndex})`,
+        color: `var(--chart-${index})`,
       }
     })
 

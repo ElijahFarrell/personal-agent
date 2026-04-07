@@ -34,6 +34,13 @@
     --ring: 263 84% 58%;
     --radius: 0.5rem;
 
+    /* Recharts — must be defined; generateChartTool uses var(--chart-1)…5 */
+    --chart-1: hsl(263 84% 58%);
+    --chart-2: hsl(199 89% 52%);
+    --chart-3: hsl(142 71% 48%);
+    --chart-4: hsl(38 92% 54%);
+    --chart-5: hsl(330 78% 60%);
+
     color-scheme: dark;
 
     --sidebar-background: 0 0% 4%;
