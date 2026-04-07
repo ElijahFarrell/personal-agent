@@ -39,7 +39,10 @@ export function AssistantMessageContent({
           return (
             <MessageResponse
               key={`text-${i}`}
-              className={cn(isStreaming && 'streaming-cursor')}
+              className={cn(
+                'chat-assistant-markdown',
+                isStreaming && 'streaming-cursor'
+              )}
             >
               {segment}
             </MessageResponse>

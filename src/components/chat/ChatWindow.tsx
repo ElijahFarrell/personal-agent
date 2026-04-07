@@ -61,6 +61,8 @@ import {
   Linkedin,
   Inbox,
   Users,
+  Loader2,
+  SlidersHorizontal,
   type LucideIcon,
 } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -72,6 +74,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 import { chatToolTitle } from '@/constants/chatToolUi'
 import { CHAT_JOB_STATUS } from '@convex/constants'
@@ -136,7 +139,7 @@ function VoiceInputButton() {
     <SpeechInput
       size="icon"
       variant="ghost"
-      className="h-7 w-7 shrink-0"
+      className="size-8 shrink-0"
       onTranscriptionChange={handleTranscription}
       onAudioRecorded={handleAudioRecorded}
     />
@@ -691,8 +694,8 @@ export function ChatWindow({
   if (!historyLoaded) {
     return (
       <div className="flex h-full flex-col">
-        <div className="flex-1 overflow-hidden p-4">
-          <div className="mx-auto max-w-4xl space-y-3">
+        <div className="flex-1 overflow-hidden px-6 py-8 sm:px-8">
+          <div className="mx-auto max-w-4xl flex flex-col gap-4">
             {[...Array(4)].map((_, i) => (
               <div
                 key={i}
@@ -719,7 +722,7 @@ export function ChatWindow({
   return (
     <div className="flex h-full flex-col">
       <Conversation className="flex-1">
-        <ConversationContent className="mx-auto flex min-h-full w-full max-w-4xl flex-col gap-4 px-4 py-4">
+        <ConversationContent className="mx-auto flex min-h-full w-full max-w-4xl flex-col gap-8 px-6 py-8 sm:px-8 sm:py-10">
           {displayMessages.length === 0 && !isStreaming && !isLoading ? (
             <ConversationEmptyState
               className="flex-1 py-12"
@@ -732,7 +735,7 @@ export function ChatWindow({
               }
             >
               <div className="mt-4 flex w-full justify-center">
-                <div className="grid w-full max-w-xl grid-cols-1 gap-2 sm:grid-cols-2">
+                <div className="grid w-full max-w-xl grid-cols-1 gap-3 sm:grid-cols-2">
                   {SUGGESTED_PROMPTS.map(({ text, icon: Icon }) => (
                     <button
                       key={text}
@@ -838,148 +841,168 @@ export function ChatWindow({
       )}
 
       {isLoading && !runInBackground && (
-        <div className="mx-4 mb-2">
-          <Alert className="border-muted bg-muted/30">
-            <AlertDescription className="text-xs text-muted-foreground">
-              Closing or refreshing this tab may interrupt the reply. Turn on{' '}
-              <strong className="font-medium text-foreground">Continue in background</strong> so the
-              assistant can finish after you leave.
-            </AlertDescription>
-          </Alert>
+        <div
+          className="mx-auto flex max-w-4xl items-center justify-center gap-2 px-4 pb-2 text-xs text-muted-foreground"
+          role="status"
+          aria-live="polite"
+        >
+          <Loader2 className="size-3.5 shrink-0 animate-spin" aria-hidden />
+          <span>Streaming… Closing this tab may interrupt the reply.</span>
         </div>
       )}
 
-      <div ref={inputAreaRef} className="border-t border-white/5 px-4 py-3">
+      <div ref={inputAreaRef} className="px-4 pb-3 pt-2 sm:px-6">
         <PromptInputProvider>
           <div
             className={cn(
-              'mx-auto max-w-4xl rounded-3xl border border-white/10 bg-card/30 p-1 shadow-md ring-1 ring-white/5',
-              'backdrop-blur-sm transition-shadow duration-200 hover:shadow-lg hover:ring-white/10'
+              'mx-auto max-w-4xl rounded-2xl border border-white/8 bg-card/40 shadow-lg backdrop-blur-md',
+              'transition-shadow duration-200 hover:shadow-xl'
             )}
           >
-          <PromptInput
-            onSubmit={async ({ text }) => {
-              if (text.trim()) await handleSend(text.trim())
-            }}
-            className="[&_[data-slot=input-group]]:!bg-transparent [&_[data-slot=input-group]]:rounded-2xl [&_[data-slot=input-group]]:border-white/10"
-          >
-            <PromptInputTextarea placeholder="Send a message…" />
-            {!lockTargetAgent && (
-              <AgentMentionPopover anchorRef={inputAreaRef} onSelect={setTargetAgent} />
-            )}
-            <PromptInputFooter>
-              <PromptInputTools className="flex-1 flex-wrap gap-1.5">
-                {targetAgent && (
-                  <Badge
-                    variant="secondary"
-                    className="gap-1 text-xs shrink-0"
-                  >
-                    @{AGENT_BY_ID.get(targetAgent)?.displayName ?? targetAgent}
-                    {!lockTargetAgent && (
-                      <button
-                        type="button"
-                        onClick={() => setTargetAgent(null)}
-                        className="rounded p-0.5 hover:bg-muted"
-                        aria-label="Clear agent"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    )}
-                  </Badge>
-                )}
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      type="button"
-                      variant={deepResearch ? 'default' : 'ghost'}
-                      size="icon"
-                      className={cn(
-                        'h-7 w-7 shrink-0',
-                        deepResearch && 'bg-primary text-primary-foreground shadow-sm shadow-primary/25'
+            <PromptInput
+              onSubmit={async ({ text }) => {
+                if (text.trim()) await handleSend(text.trim())
+              }}
+              className="[&_[data-slot=input-group]]:!bg-transparent [&_[data-slot=input-group]]:rounded-2xl [&_[data-slot=input-group]]:border-white/10"
+            >
+              <PromptInputTextarea placeholder="Send a message…" />
+              {!lockTargetAgent && (
+                <AgentMentionPopover anchorRef={inputAreaRef} onSelect={setTargetAgent} />
+              )}
+              <PromptInputFooter>
+                <PromptInputTools className="min-w-0 flex-1 flex-wrap gap-2">
+                  {targetAgent && (
+                    <Badge variant="secondary" className="shrink-0 gap-1 text-xs">
+                      @{AGENT_BY_ID.get(targetAgent)?.displayName ?? targetAgent}
+                      {!lockTargetAgent && (
+                        <button
+                          type="button"
+                          onClick={() => setTargetAgent(null)}
+                          className="rounded p-0.5 hover:bg-muted"
+                          aria-label="Clear agent"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
                       )}
-                      onClick={() => setDeepResearch((v) => !v)}
-                      aria-label="Toggle deep research"
-                      aria-pressed={deepResearch}
+                    </Badge>
+                  )}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        variant={deepResearch ? 'default' : 'ghost'}
+                        size="icon"
+                        className={cn(
+                          'size-8 shrink-0',
+                          deepResearch &&
+                            'bg-primary text-primary-foreground shadow-sm shadow-primary/25'
+                        )}
+                        onClick={() => setDeepResearch((v) => !v)}
+                        aria-label="Toggle deep research"
+                        aria-pressed={deepResearch}
+                      >
+                        <Telescope />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">
+                      {deepResearch ? 'Deep Research on' : 'Deep Research'}
+                    </TooltipContent>
+                  </Tooltip>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="size-8 shrink-0 text-muted-foreground"
+                        aria-label="More tools: skills, context, background run"
+                      >
+                        <SlidersHorizontal />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      align="start"
+                      side="top"
+                      className="flex w-[min(100vw-2rem,20rem)] max-h-[min(70vh,28rem)] flex-col gap-4 overflow-y-auto"
                     >
-                      <Telescope />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top">
-                    {deepResearch ? 'Deep Research ON' : 'Deep Research'}
-                  </TooltipContent>
-                </Tooltip>
-                {deepResearch && (
-                  <Badge variant="secondary" className="gap-1 text-xs shrink-0">
-                    Deep Research
-                    <button
-                      type="button"
-                      onClick={() => setDeepResearch(false)}
-                      className="rounded p-0.5 hover:bg-muted"
-                      aria-label="Disable deep research"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </Badge>
-                )}
-                <SkillPicker
-                  skills={tenantSkills}
-                  pinnedIds={pinnedSkillIds}
-                  onToggle={handleToggleSkill}
-                />
-                <Context
-                  usedTokens={cumulativeUsage.inputTokens + cumulativeUsage.outputTokens}
-                  maxTokens={DEFAULT_CONTEXT_WINDOW}
-                  modelId={
-                    selectedModel === 'auto' ? DEFAULT_CHAT_MODEL_ID : selectedModel
-                  }
-                >
-                  <ContextTrigger className="h-7 px-2 text-xs" />
-                  <ContextContent>
-                    <ContextContentHeader />
-                    <ContextContentBody>
-                      <ContextInputUsage />
-                      <ContextOutputUsage />
-                    </ContextContentBody>
-                  </ContextContent>
-                </Context>
-                <ActiveSkillsCard
-                  skills={activeSkills}
-                  pinnedIds={pinnedSkillIds}
-                  className="shrink-0"
-                />
-                <div className="flex items-center gap-2 rounded-md border border-border/60 px-2 py-1">
-                  <Switch
-                    id="chat-bg"
-                    checked={runInBackground}
-                    onCheckedChange={setRunInBackground}
-                    disabled={streamBusy}
-                  />
-                  <Label
-                    htmlFor="chat-bg"
-                    className="cursor-pointer text-xs text-muted-foreground max-w-[140px] leading-snug"
-                  >
-                    Continue in background
-                  </Label>
+                      <div className="flex flex-col gap-2">
+                        <p className="text-xs font-medium text-muted-foreground">
+                          Skills &amp; context
+                        </p>
+                        <SkillPicker
+                          skills={tenantSkills}
+                          pinnedIds={pinnedSkillIds}
+                          onToggle={handleToggleSkill}
+                        />
+                        <Context
+                          usedTokens={
+                            cumulativeUsage.inputTokens + cumulativeUsage.outputTokens
+                          }
+                          maxTokens={DEFAULT_CONTEXT_WINDOW}
+                          modelId={
+                            selectedModel === 'auto'
+                              ? DEFAULT_CHAT_MODEL_ID
+                              : selectedModel
+                          }
+                        >
+                          <ContextTrigger className="h-8 w-full justify-start px-2 text-xs" />
+                          <ContextContent>
+                            <ContextContentHeader />
+                            <ContextContentBody>
+                              <ContextInputUsage />
+                              <ContextOutputUsage />
+                            </ContextContentBody>
+                          </ContextContent>
+                        </Context>
+                        <ActiveSkillsCard
+                          skills={activeSkills}
+                          pinnedIds={pinnedSkillIds}
+                          className="shrink-0"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-2 border-t border-border/60 pt-3">
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            id="chat-bg"
+                            checked={runInBackground}
+                            onCheckedChange={setRunInBackground}
+                            disabled={streamBusy}
+                          />
+                          <Label
+                            htmlFor="chat-bg"
+                            className="cursor-pointer text-sm leading-snug text-muted-foreground"
+                          >
+                            Continue in background
+                          </Label>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Finish the reply after you leave this tab.
+                        </p>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </PromptInputTools>
+                <div className="flex shrink-0 items-center gap-1">
+                  <ModelSelector value={selectedModel} onChange={setSelectedModel} />
+                  <VoiceInputButton />
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <PromptInputSubmit
+                        status={status}
+                        onStop={stop}
+                        disabled={!dbUser || creditError || streamBusy}
+                      />
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-xs text-xs text-muted-foreground">
+                      AI can make mistakes. Destructive actions always require confirmation.
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
-              </PromptInputTools>
-              <div className="flex shrink-0 items-center gap-1">
-                <ModelSelector value={selectedModel} onChange={setSelectedModel} />
-                <VoiceInputButton />
-                <PromptInputSubmit
-                  status={status}
-                  onStop={stop}
-                  disabled={!dbUser || creditError || streamBusy}
-                />
-              </div>
-            </PromptInputFooter>
-          </PromptInput>
+              </PromptInputFooter>
+            </PromptInput>
           </div>
         </PromptInputProvider>
       </div>
-
-      <p className="pb-2 text-center text-[10px] text-muted-foreground">
-        AI can make mistakes. Destructive actions always require confirmation.
-      </p>
     </div>
   )
 }

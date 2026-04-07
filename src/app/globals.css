@@ -65,17 +65,17 @@ body {
   background:
     radial-gradient(
       ellipse 120% 100% at 50% -20%,
-      hsl(263 75% 28%),
+      hsl(263 75% 28% / 0.38),
       transparent 55%
     ),
     radial-gradient(
       ellipse 90% 70% at 100% 90%,
-      hsl(240 65% 22%),
+      hsl(240 65% 22% / 0.32),
       transparent 55%
     ),
     radial-gradient(
       ellipse 70% 60% at 0% 90%,
-      hsl(280 60% 20%),
+      hsl(280 60% 20% / 0.28),
       transparent 55%
     ),
     hsl(var(--background));
@@ -124,6 +124,38 @@ h1, h2, h3, h4 {
 /* text-wrap: balance utility */
 .text-wrap-balance {
   text-wrap: balance;
+}
+
+/* Assistant chat markdown — airy paragraph and list rhythm */
+.chat-assistant-markdown {
+  --assistant-md-p: 0.875rem;
+}
+.chat-assistant-markdown p {
+  margin-bottom: var(--assistant-md-p);
+}
+.chat-assistant-markdown p:last-child {
+  margin-bottom: 0;
+}
+.chat-assistant-markdown ul,
+.chat-assistant-markdown ol {
+  margin-top: 0.5rem;
+  margin-bottom: var(--assistant-md-p);
+  padding-left: 1.25rem;
+}
+.chat-assistant-markdown li {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+.chat-assistant-markdown h1,
+.chat-assistant-markdown h2,
+.chat-assistant-markdown h3 {
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+.chat-assistant-markdown h1:first-child,
+.chat-assistant-markdown h2:first-child,
+.chat-assistant-markdown h3:first-child {
+  margin-top: 0;
 }
 
 /* Glassmorphism utility */

@@ -282,7 +282,7 @@ export function AppSidebar() {
           <>
             <SidebarSeparator className="mx-2" />
             <SidebarGroup className="px-2 pb-2 pt-1.5">
-              <SidebarGroupContent className="rounded-3xl border border-white/15 bg-gradient-to-b from-white/[0.12] via-white/[0.06] to-white/[0.02] p-2 shadow-[0_20px_45px_rgba(3,6,20,0.45),inset_0_1px_0_rgba(255,255,255,0.12)]">
+              <SidebarGroupContent className="rounded-2xl border border-white/10 bg-sidebar/80 p-2 shadow-[0_8px_24px_rgba(0,0,0,0.25)]">
                 <SidebarMenu className="gap-1.5">
                   {groupedItems.map((group) => {
                     const GroupIcon = group.icon
@@ -312,7 +312,7 @@ export function AppSidebar() {
                               className={cn(
                                 'h-10.5 w-full rounded-2xl px-3 text-[15px] font-semibold tracking-[-0.01em] text-sidebar-foreground/90 touch-action-manipulation',
                                 hasActiveChild &&
-                                  'bg-gradient-to-r from-white/[0.22] to-white/[0.08] text-sidebar-foreground shadow-[0_8px_24px_rgba(0,0,0,0.3)]'
+                                  'bg-gradient-to-r from-white/[0.18] to-white/[0.06] text-sidebar-foreground shadow-[0_4px_14px_rgba(0,0,0,0.22)]'
                               )}
                             >
                               <ChevronRight
