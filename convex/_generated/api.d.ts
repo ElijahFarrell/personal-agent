@@ -47,6 +47,8 @@ import type * as videoGeneration from "../videoGeneration.js";
 import type * as workflowDefinitions from "../workflowDefinitions.js";
 import type * as workflowRuns from "../workflowRuns.js";
 import type * as workflowSnapshots from "../workflowSnapshots.js";
+import type * as workspaceDocuments from "../workspaceDocuments.js";
+import type * as workspaceFolders from "../workspaceFolders.js";
 
 import type {
   ApiFromModules,
@@ -94,6 +96,8 @@ declare const fullApi: ApiFromModules<{
   workflowDefinitions: typeof workflowDefinitions;
   workflowRuns: typeof workflowRuns;
   workflowSnapshots: typeof workflowSnapshots;
+  workspaceDocuments: typeof workspaceDocuments;
+  workspaceFolders: typeof workspaceFolders;
 }>;
 
 /**

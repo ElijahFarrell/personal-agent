@@ -125,6 +125,62 @@ export async function getLinkedInPosts(
   })
 }
 
+/**
+ * YouTube transcript via Apify. Override with `APIFY_YOUTUBE_TRANSCRIPT_ACTOR_ID`.
+ * Default: streamers/youtube-transcript-scraper (startUrls input).
+ */
+const YOUTUBE_TRANSCRIPT_ACTOR_ID =
+  typeof process !== 'undefined'
+    ? (process.env.APIFY_YOUTUBE_TRANSCRIPT_ACTOR_ID?.trim() ||
+        'streamers/youtube-transcript-scraper')
+    : 'streamers/youtube-transcript-scraper'
+
+/**
+ * Fetch transcript text for a YouTube watch or youtu.be URL using a configured Apify Actor.
+ */
+export async function getYoutubeTranscriptFromUrl(videoUrl: string): Promise<{
+  title: string
+  transcript: string
+}> {
+  const url = videoUrl.trim()
+  if (!url) throw new Error('Video URL is required')
+
+  const client = getClient()
+  const run = await client.actor(YOUTUBE_TRANSCRIPT_ACTOR_ID).call({
+    startUrls: [{ url }],
+  })
+
+  const { items } = await client.dataset(run.defaultDatasetId).listItems()
+  if (!items.length) {
+    throw new Error('No transcript data returned from Apify')
+  }
+
+  const raw = items[0] as Record<string, unknown>
+  const title =
+    asStr(raw.title) ??
+    asStr(raw.videoTitle) ??
+    asStr(raw.name) ??
+    'YouTube video'
+
+  const transcript =
+    asStr(raw.transcript) ??
+    asStr(raw.text) ??
+    asStr(raw.fullTranscript) ??
+    (Array.isArray(raw.transcripts)
+      ? (raw.transcripts as Array<Record<string, unknown>>)
+          .map((t) => asStr(t.text) ?? asStr(t.transcript) ?? '')
+          .filter(Boolean)
+          .join('\n')
+      : '') ??
+    ''
+
+  if (!transcript.trim()) {
+    throw new Error('Transcript text was empty — check APIFY_YOUTUBE_TRANSCRIPT_ACTOR_ID input format')
+  }
+
+  return { title, transcript: transcript.trim() }
+}
+
 function asStr(val: unknown): string | undefined {
   return typeof val === 'string' && val.trim() ? val.trim() : undefined
 }

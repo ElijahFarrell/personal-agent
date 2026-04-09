@@ -52,6 +52,8 @@ export const TABLES = {
   SUPPRESSION_LISTS: 'suppressionLists',
   LEGAL_ACCEPTANCES: 'legalAcceptances',
   MARKETING_CHAT_LEADS: 'marketingChatLeads',
+  WORKSPACE_DOCUMENTS: 'workspaceDocuments',
+  WORKSPACE_FOLDERS: 'workspaceFolders',
 } as const
 
 // ─── Index Names ─────────────────────────────────────────────────────────────
@@ -115,6 +117,8 @@ export const INDEXES = {
   BY_TENANT_USER_DOC_VERSION: 'by_tenantId_userId_documentKey_version',
   BY_MARKETING_LEAD_EMAIL: 'by_marketingLead_email',
   BY_MARKETING_LEAD_SESSION: 'by_marketingLead_sessionId',
+  BY_WORKSPACE_FOLDER_ID: 'by_workspaceFolderId',
+  BY_TENANT_WORKSPACE_STATUS: 'by_tenantId_workspaceDocStatus',
 } as const
 
 /** inboxAiUsage.kind */
@@ -208,6 +212,25 @@ export const CONTEXT_DOC_CATEGORY = {
 export const SCOPE = {
   ORG: 'org',
   USER: 'user',
+} as const
+
+/** Workspace knowledge documents (files, links, notes). */
+export const WORKSPACE_DOC_TYPE = {
+  PDF: 'pdf',
+  VIDEO: 'video',
+  AUDIO: 'audio',
+  IMAGE: 'image',
+  WEBPAGE: 'webpage',
+  YOUTUBE: 'youtube',
+  TEXT: 'text',
+  NOTE: 'note',
+} as const
+
+export const WORKSPACE_DOC_STATUS = {
+  PENDING: 'pending',
+  PROCESSING: 'processing',
+  READY: 'ready',
+  ERROR: 'error',
 } as const
 
 // ─── Content Drafts ───────────────────────────────────────────────────────────

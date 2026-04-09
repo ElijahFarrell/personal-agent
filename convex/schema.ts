@@ -33,6 +33,8 @@ import {
   VIDEO_JOB_STATUS,
   WORKFLOW_RUN_STATUS,
   WORKFLOW_STEP_STATUS,
+  WORKSPACE_DOC_STATUS,
+  WORKSPACE_DOC_TYPE,
   INBOX_AI_USAGE_KIND,
   CALL_LOG_PROVIDER,
   CALL_DIRECTION,
@@ -284,6 +286,64 @@ export default defineSchema({
     .index(INDEXES.BY_TENANT_ID, ['tenantId'])
     .index(INDEXES.BY_USER_ID, ['userId'])
     .index(INDEXES.BY_TENANT_SCOPE, ['tenantId', 'scope']),
+
+  [TABLES.WORKSPACE_FOLDERS]: defineTable({
+    tenantId: v.id(TABLES.TENANTS),
+    userId: v.id(TABLES.USERS),
+    name: v.string(),
+    parentId: v.optional(v.id(TABLES.WORKSPACE_FOLDERS)),
+    scope: v.union(v.literal(SCOPE.ORG), v.literal(SCOPE.USER)),
+    createdAt: v.number(),
+  })
+    .index(INDEXES.BY_TENANT_ID, ['tenantId'])
+    .index(INDEXES.BY_WORKSPACE_FOLDER_ID, ['parentId']),
+
+  [TABLES.WORKSPACE_DOCUMENTS]: defineTable({
+    tenantId: v.id(TABLES.TENANTS),
+    userId: v.id(TABLES.USERS),
+    scope: v.union(v.literal(SCOPE.ORG), v.literal(SCOPE.USER)),
+    title: v.string(),
+    type: v.union(
+      v.literal(WORKSPACE_DOC_TYPE.PDF),
+      v.literal(WORKSPACE_DOC_TYPE.VIDEO),
+      v.literal(WORKSPACE_DOC_TYPE.AUDIO),
+      v.literal(WORKSPACE_DOC_TYPE.IMAGE),
+      v.literal(WORKSPACE_DOC_TYPE.WEBPAGE),
+      v.literal(WORKSPACE_DOC_TYPE.YOUTUBE),
+      v.literal(WORKSPACE_DOC_TYPE.TEXT),
+      v.literal(WORKSPACE_DOC_TYPE.NOTE)
+    ),
+    sourceUrl: v.optional(v.string()),
+    storageId: v.optional(v.id('_storage')),
+    blobUrl: v.optional(v.string()),
+    extractedText: v.optional(v.string()),
+    summary: v.optional(v.string()),
+    transcript: v.optional(v.string()),
+    folderId: v.optional(v.id(TABLES.WORKSPACE_FOLDERS)),
+    tags: v.optional(v.array(v.string())),
+    category: v.optional(v.string()),
+    status: v.union(
+      v.literal(WORKSPACE_DOC_STATUS.PENDING),
+      v.literal(WORKSPACE_DOC_STATUS.PROCESSING),
+      v.literal(WORKSPACE_DOC_STATUS.READY),
+      v.literal(WORKSPACE_DOC_STATUS.ERROR)
+    ),
+    processingError: v.optional(v.string()),
+    mimeType: v.optional(v.string()),
+    fileSize: v.optional(v.number()),
+    /** Number of Qdrant chunks for this doc (for delete/reindex). */
+    chunkCount: v.optional(v.number()),
+    /** Set when this row was created from a legacy context doc migration. */
+    migratedFromContextDocId: v.optional(v.id(TABLES.CONTEXT_DOCS)),
+    metadata: v.optional(v.any()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index(INDEXES.BY_TENANT_ID, ['tenantId'])
+    .index(INDEXES.BY_TENANT_SCOPE, ['tenantId', 'scope'])
+    .index(INDEXES.BY_USER_ID, ['userId'])
+    .index(INDEXES.BY_WORKSPACE_FOLDER_ID, ['folderId'])
+    .index(INDEXES.BY_TENANT_WORKSPACE_STATUS, ['tenantId', 'status']),
 
   [TABLES.TENANT_BILLING]: defineTable({
     tenantId: v.id(TABLES.TENANTS),
