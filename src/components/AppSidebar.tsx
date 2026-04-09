@@ -28,6 +28,7 @@ import {
   Megaphone,
   BarChart3,
   LayoutGrid,
+  Library,
 } from 'lucide-react'
 import { useOrgConfig } from '@/hooks/useOrgConfig'
 import { isSuperAdmin } from '@/middleware/adminGuard'
@@ -124,6 +125,7 @@ const NAV_CONFIG: (NavItem | NavGroup)[] = [
     icon: FolderOpen,
     storageKey: 'workspace',
     children: [
+      { type: 'item', href: '/dashboard/workspace', label: 'Knowledge', icon: Library },
       { type: 'item', href: '/dashboard/context', label: 'Context', icon: FileText },
       { type: 'item', href: '/dashboard/skills', label: 'Skills', icon: Zap },
       { type: 'item', href: '/dashboard/skills/browse', label: 'Skill Store', icon: Store },
@@ -161,6 +163,7 @@ function getDefaultGroupState(pathname: string): Record<string, boolean> {
       pathname.startsWith('/dashboard/compliance'),
     content: pathname.startsWith('/dashboard/content'),
     workspace:
+      pathname.startsWith('/dashboard/workspace') ||
       pathname.startsWith('/dashboard/context') ||
       pathname.startsWith('/dashboard/skills') ||
       pathname.startsWith('/dashboard/integrations'),

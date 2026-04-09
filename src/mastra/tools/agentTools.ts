@@ -31,6 +31,7 @@ import { ADS_AGENT_GENERATE_OPTS } from '../agents/adsAgentOptions'
 import { createLeadAgent } from '../agents/leadAgent'
 import type { ResolvedPlatformConfig } from '@/platform/niche/types'
 import { AGENT_CATALOG } from '@/platform/agent-catalog'
+import { createWorkspaceTools } from './workspaceTools'
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
 
@@ -673,5 +674,11 @@ export function createAgentTools(
     }),
   }
 
-  return platformResolved ? filterToolsByPlatformConfig(built, platformResolved) : built
+  const filtered = platformResolved
+    ? filterToolsByPlatformConfig(built, platformResolved)
+    : built
+  return {
+    ...filtered,
+    ...createWorkspaceTools(userId, tenantId),
+  }
 }

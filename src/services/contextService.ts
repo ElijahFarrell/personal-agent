@@ -1,23 +1,23 @@
 import { qdrantVector, embedText } from '@/mastra/workspace'
 import type { ResourceScope } from '@/types'
 
-const COLLECTION = 'context_docs'
+const LEGACY_COLLECTION = 'context_docs'
 const DIMENSION = 1536
 const RELEVANCE_THRESHOLD = 0.4
 const TOP_K = 5
 
-async function ensureCollection(): Promise<void> {
+async function ensureLegacyCollection(): Promise<void> {
   const indexes = await qdrantVector.listIndexes()
-  if (!indexes.includes(COLLECTION)) {
+  if (!indexes.includes(LEGACY_COLLECTION)) {
     await qdrantVector.createIndex({
-      indexName: COLLECTION,
+      indexName: LEGACY_COLLECTION,
       dimension: DIMENSION,
       metric: 'cosine',
     })
   }
 }
 
-/** Index a context doc into Qdrant for vector retrieval. */
+/** Index a context doc into Qdrant for vector retrieval (legacy `context_docs` collection). */
 export async function indexContextDoc(doc: {
   id: string
   tenantId: string
@@ -27,13 +27,13 @@ export async function indexContextDoc(doc: {
   content: string
   category: string
 }): Promise<void> {
-  await ensureCollection()
+  await ensureLegacyCollection()
 
   const text = `${doc.title}\n\n${doc.content}`
   const vector = await embedText(text)
 
   await qdrantVector.upsert({
-    indexName: COLLECTION,
+    indexName: LEGACY_COLLECTION,
     vectors: [vector],
     metadata: [
       {
@@ -54,7 +54,7 @@ export async function indexContextDoc(doc: {
 export async function removeContextDoc(tenantId: string, docId: string): Promise<void> {
   try {
     await qdrantVector.deleteVector({
-      indexName: COLLECTION,
+      indexName: LEGACY_COLLECTION,
       id: `${tenantId}-${docId}`,
     })
   } catch {
@@ -72,45 +72,30 @@ export interface ContextSearchResult {
 
 /**
  * Retrieve context docs relevant to a query.
- * Returns both org-scoped docs for the tenant and user-scoped docs for the user.
+ * Merges legacy `context_docs` vectors with workspace knowledge (`workspace_knowledge`).
  */
 export async function retrieveRelevantContext(
   query: string,
   tenantId: string,
   userId?: string
 ): Promise<ContextSearchResult[]> {
+  const { retrieveWorkspaceKnowledge } = await import('./workspaceKnowledgeService')
   try {
-    await ensureCollection()
+    const merged = await retrieveWorkspaceKnowledge(query, tenantId, userId)
+    return merged
+      .filter((r) => r.score >= RELEVANCE_THRESHOLD)
+      .slice(0, TOP_K)
+      .map((r) => ({
+        docId: r.docId,
+        title: r.title,
+        content: r.content,
+        category:
+          r.source === 'workspace' ? `workspace:${r.category || 'doc'}` : r.category,
+        score: r.score,
+      }))
   } catch {
     return []
   }
-
-  const queryVector = await embedText(query)
-
-  const results = await qdrantVector.query({
-    indexName: COLLECTION,
-    queryVector,
-    topK: TOP_K * 5,
-    includeVector: false,
-  })
-
-  const visible = results.filter((r) => {
-    if (r.metadata?.tenantId !== tenantId) return false
-    const scope = r.metadata?.scope as string | undefined
-    if (scope === 'user') return r.metadata?.userId === userId
-    return true
-  })
-
-  return visible
-    .filter((r) => r.score >= RELEVANCE_THRESHOLD)
-    .slice(0, TOP_K)
-    .map((r) => ({
-      docId: r.metadata?.docId as string,
-      title: r.metadata?.title as string,
-      content: r.metadata?.content as string,
-      category: r.metadata?.category as string,
-      score: r.score,
-    }))
 }
 
 /** Format retrieved context docs as a prompt block. */
