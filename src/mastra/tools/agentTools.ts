@@ -70,6 +70,16 @@ function filterToolsByPlatformConfig(
 }
 
 /**
+ * Optional overrides for `retrieveRelevantContext` inside sub-agent tools.
+ * When the orchestrator receives a Convex tenant id string, pass the Clerk org key
+ * here so Qdrant filtering matches workspace + legacy indexing (same as web chat).
+ */
+export interface AgentContextRetrieval {
+  qdrantTenantKey: string
+  scopedUserId?: string
+}
+
+/**
  * Creates all sub-agent tools scoped to a user.
  * Each tool wraps a specialized agent's generate() call so the orchestrator
  * can delegate work — and call multiple agents in parallel — via its tool interface.
@@ -83,7 +93,8 @@ export function createAgentTools(
   agentInstructions?: Record<string, string>,
   connectedProviders: string[] = [],
   workspace?: Workspace,
-  platformResolved?: ResolvedPlatformConfig
+  platformResolved?: ResolvedPlatformConfig,
+  contextRetrieval?: AgentContextRetrieval
 ) {
   async function getInputForAgent(
     task: string,
@@ -91,8 +102,8 @@ export function createAgentTools(
   ): Promise<string> {
     const relevantContext = await retrieveRelevantContext(
       task,
-      tenantId,
-      userId
+      contextRetrieval?.qdrantTenantKey ?? tenantId,
+      contextRetrieval?.scopedUserId ?? userId
     ).catch(() => [])
     const contextBlock = buildContextBlock(relevantContext)
     if (!contextBlock) return taskWithInstructions

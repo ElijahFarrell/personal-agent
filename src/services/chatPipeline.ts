@@ -34,6 +34,7 @@ import {
 } from '@/platform/niche'
 import { buildProspectsContext } from '@/services/prospectsContextService'
 import { buildInboxDigestForChat } from '@/services/inboxDigestService'
+import type { AgentContextRetrieval } from '@/mastra/tools/agentTools'
 import { api } from '@convex/_generated/api'
 import type { Id } from '@convex/_generated/dataModel'
 import { AGENT_BY_ID, type AgentId } from '@/constants/agents'
@@ -302,6 +303,10 @@ export async function prepareChatAgentStream(
   }
 
   if (stream === null) {
+    const contextRetrieval: AgentContextRetrieval = {
+      qdrantTenantKey: tenantId,
+      scopedUserId: dbUserId,
+    }
     const agent = await createOrchestratorAgent(
       userId,
       convexTenantId ?? tenantId,
@@ -309,7 +314,8 @@ export async function prepareChatAgentStream(
       connectedProviders,
       model,
       skillScope,
-      platformResolved
+      platformResolved,
+      contextRetrieval
     )
     stream = await agent.stream(
       agentMessages as Parameters<typeof agent.stream>[0],

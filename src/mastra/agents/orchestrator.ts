@@ -4,7 +4,9 @@ import type { Workspace } from '@mastra/core/workspace'
 import { AgentModels } from '@/constants/models'
 import { createMem0MemorizeTool } from '../tools/mem0Memorize'
 import { createMem0RecallTool } from '../tools/mem0Recall'
-import { createAgentTools } from '../tools/agentTools'
+import { createAgentTools, type AgentContextRetrieval } from '../tools/agentTools'
+
+export type { AgentContextRetrieval }
 import { buildOrchestratorPrompt } from '../prompts'
 import { createVoice } from '../voice'
 import { createWorkspaceForTenant } from '../createWorkspaceForTenant'
@@ -38,7 +40,8 @@ export async function createOrchestratorAgent(
   connectedProviders: string[] = [],
   modelId?: string,
   skillScope?: OrchestratorSkillScope,
-  platformResolved?: ResolvedPlatformConfig
+  platformResolved?: ResolvedPlatformConfig,
+  contextRetrieval?: AgentContextRetrieval
 ) {
   const workspace = skillScope
     ? await createWorkspaceForTenant(
@@ -54,7 +57,8 @@ export async function createOrchestratorAgent(
     agentInstructions,
     connectedProviders,
     workspace,
-    platformResolved
+    platformResolved,
+    contextRetrieval
   )
 
   const baseInstructions = buildOrchestratorPrompt(

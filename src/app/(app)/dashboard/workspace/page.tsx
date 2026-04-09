@@ -11,8 +11,6 @@ import {
   Loader2,
   RefreshCw,
   Upload,
-  Video,
-  Globe,
 } from 'lucide-react'
 import { api } from '@convex/_generated/api'
 import type { Id } from '@convex/_generated/dataModel'
@@ -364,10 +362,6 @@ export default function WorkspacePage() {
                   onChange={(e) => setLinkUrl(e.target.value)}
                   placeholder="https://…"
                 />
-                <p className="text-muted-foreground flex items-center gap-1 text-xs">
-                  <Video className="inline h-3 w-3" /> YouTube uses Apify ·{' '}
-                  <Globe className="inline h-3 w-3" /> Pages use Tavily extract
-                </p>
               </div>
             )}
 
