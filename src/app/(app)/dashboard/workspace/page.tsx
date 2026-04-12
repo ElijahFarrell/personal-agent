@@ -1,24 +1,28 @@
 'use client'
 
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useMemo } from 'react'
 import { useUser } from '@clerk/nextjs'
 import { useMutation, useQuery } from 'convex/react'
 import {
   FileText,
   FolderOpen,
-  Plus,
   Trash2,
   Loader2,
   RefreshCw,
   Upload,
+  Globe,
+  Youtube,
+  StickyNote,
+  FileUp,
+  ArrowRight,
 } from 'lucide-react'
+import { toast } from 'sonner'
 import { api } from '@convex/_generated/api'
 import type { Id } from '@convex/_generated/dataModel'
 import { API_ROUTES } from '@/constants/api'
 import { WORKSPACE_DOC_STATUS, WORKSPACE_DOC_TYPE } from '@convex/constants'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import {
   Select,
@@ -27,35 +31,51 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { cn } from '@/lib/utils'
+import { ProcessingStatus } from '@/components/workspace/ProcessingStatus'
 
 type ScopeTab = 'org' | 'user'
+type InputMode = 'note' | 'url' | 'file'
 
-function detectTypeFromUrl(url: string): 'youtube' | 'webpage' {
+function detectInputMode(value: string): InputMode {
+  const trimmed = value.trim()
+  if (/^https?:\/\//i.test(trimmed)) return 'url'
+  return 'note'
+}
+
+function detectUrlType(url: string): 'youtube' | 'webpage' {
   if (/youtube\.com|youtu\.be/i.test(url)) return 'youtube'
   return 'webpage'
+}
+
+const MODE_META: Record<InputMode, { label: string; icon: typeof Globe }> = {
+  url: { label: 'Link', icon: Globe },
+  note: { label: 'Note', icon: StickyNote },
+  file: { label: 'PDF', icon: FileUp },
+}
+
+function fireProcessRequest(docId: Id<'workspaceDocuments'>) {
+  void fetch(API_ROUTES.workspaceProcess, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ docId }),
+  }).catch((err) => console.error('[workspace] process fire-and-forget error', err))
 }
 
 export default function WorkspacePage() {
   const { user } = useUser()
   const [activeTab, setActiveTab] = useState<ScopeTab>('org')
-  const [showAdd, setShowAdd] = useState(false)
-  const [addMode, setAddMode] = useState<'note' | 'url' | 'file'>('note')
+  const [inputValue, setInputValue] = useState('')
+  const [modeOverride, setModeOverride] = useState<InputMode | null>(null)
+  const [showTitle, setShowTitle] = useState(false)
   const [title, setTitle] = useState('')
-  const [noteBody, setNoteBody] = useState('')
-  const [linkUrl, setLinkUrl] = useState('')
   const [saving, setSaving] = useState(false)
-  const [processingId, setProcessingId] = useState<Id<'workspaceDocuments'> | null>(null)
+  const [uploadingFile, setUploadingFile] = useState<string | null>(null)
   const [migrating, setMigrating] = useState(false)
+  const [isDragOver, setIsDragOver] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
 
   const dbUser = useQuery(
     api.users.getUserByClerkUserId,
@@ -82,84 +102,84 @@ export default function WorkspacePage() {
 
   const docs = activeTab === 'org' ? orgDocs : userDocs
 
+  const allDocs = useMemo(() => {
+    const combined: typeof orgDocs = []
+    if (orgDocs) combined.push(...orgDocs)
+    if (userDocs) combined.push(...userDocs)
+    return combined
+  }, [orgDocs, userDocs])
+
+  const detectedMode = detectInputMode(inputValue)
+  const activeMode = modeOverride ?? detectedMode
+
+  const isYoutubeUrl =
+    activeMode === 'url' && detectUrlType(inputValue.trim()) === 'youtube'
+
   const resetForm = useCallback(() => {
+    setInputValue('')
     setTitle('')
-    setNoteBody('')
-    setLinkUrl('')
-    setAddMode('note')
+    setShowTitle(false)
+    setModeOverride(null)
   }, [])
 
-  const handleSaveNote = async () => {
-    if (!dbUser || !title.trim()) return
-    setSaving(true)
-    try {
-      const docId = await createDoc({
-        tenantId: dbUser.tenantId,
-        userId: dbUser._id,
-        scope: activeTab,
-        title: title.trim(),
-        type: WORKSPACE_DOC_TYPE.NOTE,
-        extractedText: noteBody.trim(),
-        status: WORKSPACE_DOC_STATUS.READY,
-      })
-      await fetch(API_ROUTES.workspaceIndexDoc, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ docId }),
-      })
-      setShowAdd(false)
-      resetForm()
-    } catch (e) {
-      console.error(e)
-    } finally {
-      setSaving(false)
-    }
-  }
+  const handleSubmit = async () => {
+    if (!dbUser || saving) return
 
-  const handleSaveUrl = async () => {
-    if (!dbUser || !linkUrl.trim()) return
+    const value = inputValue.trim()
+    if (!value && activeMode !== 'file') return
+
     setSaving(true)
     try {
-      const url = linkUrl.trim()
-      const t = title.trim() || url
-      const type =
-        detectTypeFromUrl(url) === 'youtube'
-          ? WORKSPACE_DOC_TYPE.YOUTUBE
-          : WORKSPACE_DOC_TYPE.WEBPAGE
-      const docId = await createDoc({
-        tenantId: dbUser.tenantId,
-        userId: dbUser._id,
-        scope: activeTab,
-        title: t,
-        type,
-        sourceUrl: url,
-        status: WORKSPACE_DOC_STATUS.PENDING,
-      })
-      setProcessingId(docId)
-      const res = await fetch(API_ROUTES.workspaceProcess, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ docId }),
-      })
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}))
-        console.warn('Process failed', err)
+      if (activeMode === 'url') {
+        const urlType =
+          detectUrlType(value) === 'youtube'
+            ? WORKSPACE_DOC_TYPE.YOUTUBE
+            : WORKSPACE_DOC_TYPE.WEBPAGE
+        const docTitle = title.trim() || value
+        const docId = await createDoc({
+          tenantId: dbUser.tenantId,
+          userId: dbUser._id,
+          scope: activeTab,
+          title: docTitle,
+          type: urlType,
+          sourceUrl: value,
+          status: WORKSPACE_DOC_STATUS.PENDING,
+        })
+        fireProcessRequest(docId)
+        toast.success(`Processing "${docTitle}"`, {
+          description: `${urlType === 'youtube' ? 'YouTube transcript' : 'Web page'} extraction started`,
+        })
+      } else if (activeMode === 'note') {
+        const docTitle = title.trim() || value.slice(0, 60)
+        const docId = await createDoc({
+          tenantId: dbUser.tenantId,
+          userId: dbUser._id,
+          scope: activeTab,
+          title: docTitle,
+          type: WORKSPACE_DOC_TYPE.NOTE,
+          extractedText: value,
+          status: WORKSPACE_DOC_STATUS.READY,
+        })
+        void fetch(API_ROUTES.workspaceIndexDoc, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ docId }),
+        }).catch((err) => console.error('[workspace] index error', err))
+        toast.success(`Note "${docTitle}" saved`)
       }
-      setShowAdd(false)
       resetForm()
     } catch (e) {
       console.error(e)
+      toast.error('Failed to save')
     } finally {
       setSaving(false)
-      setProcessingId(null)
     }
   }
 
-  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    e.target.value = ''
-    if (!file || !dbUser) return
+  const processFile = async (file: File) => {
+    if (!dbUser) return
     setSaving(true)
+    setUploadingFile(file.name)
     try {
       const postUrl = await genUploadUrl({
         tenantId: dbUser.tenantId,
@@ -167,34 +187,60 @@ export default function WorkspacePage() {
       })
       const put = await fetch(postUrl, { method: 'POST', body: file })
       const json = (await put.json()) as { storageId: string }
+      const docTitle = title.trim() || file.name
       const docId = await createDoc({
         tenantId: dbUser.tenantId,
         userId: dbUser._id,
         scope: activeTab,
-        title: title.trim() || file.name,
+        title: docTitle,
         type: WORKSPACE_DOC_TYPE.PDF,
         storageId: json.storageId as Id<'_storage'>,
         mimeType: file.type || 'application/pdf',
         fileSize: file.size,
         status: WORKSPACE_DOC_STATUS.PENDING,
       })
-      setProcessingId(docId)
-      const res = await fetch(API_ROUTES.workspaceProcess, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ docId }),
+      fireProcessRequest(docId)
+      toast.success(`Uploaded "${docTitle}"`, {
+        description: 'PDF processing started',
       })
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}))
-        console.warn('Process failed', err)
-      }
-      setShowAdd(false)
       resetForm()
     } catch (err) {
       console.error(err)
+      toast.error('Upload failed')
     } finally {
       setSaving(false)
-      setProcessingId(null)
+      setUploadingFile(null)
+    }
+  }
+
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (file) void processFile(file)
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragOver(false)
+    const file = e.dataTransfer.files[0]
+    if (file?.type === 'application/pdf' || file?.name.endsWith('.pdf')) {
+      void processFile(file)
+    } else if (file) {
+      toast.error('Only PDF files are supported')
+    }
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragOver(true)
+  }
+
+  const handleDragLeave = () => setIsDragOver(false)
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey && activeMode === 'url') {
+      e.preventDefault()
+      void handleSubmit()
     }
   }
 
@@ -214,14 +260,16 @@ export default function WorkspacePage() {
       const res = await fetch(API_ROUTES.workspaceMigrateFromContext, { method: 'POST' })
       const data = await res.json().catch(() => ({}))
       if (res.ok) {
-        alert(`Imported ${data.imported ?? 0}, indexed ${data.indexed ?? 0}`)
+        toast.success(`Imported ${data.imported ?? 0}, indexed ${data.indexed ?? 0}`)
       } else {
-        alert(data.error ?? 'Migration failed')
+        toast.error(data.error ?? 'Migration failed')
       }
     } finally {
       setMigrating(false)
     }
   }
+
+  const ModeIcon = MODE_META[activeMode].icon
 
   return (
     <div className="flex h-full flex-col overflow-auto p-6">
@@ -230,24 +278,171 @@ export default function WorkspacePage() {
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">Workspace</h1>
             <p className="text-muted-foreground mt-1 text-sm">
-              Upload PDFs, paste YouTube or web links, and notes — indexed for AI chat and agents.
+              Paste a URL, drop a PDF, or write a note — everything is indexed for AI.
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" onClick={handleMigrate} disabled={migrating}>
-              {migrating ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <RefreshCw className="mr-2 h-4 w-4" />
-              )}
-              Migrate from Context
-            </Button>
-            <Button size="sm" onClick={() => setShowAdd(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add
-            </Button>
-          </div>
+          <Button variant="outline" size="sm" onClick={handleMigrate} disabled={migrating}>
+            {migrating ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="mr-2 h-4 w-4" />
+            )}
+            Migrate from Context
+          </Button>
         </header>
+
+        {/* Inline input area */}
+        <div
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          className={cn(
+            'border-border bg-background rounded-xl border p-4 transition-colors',
+            isDragOver && 'border-primary/50 bg-primary/5',
+            uploadingFile && 'pointer-events-none opacity-70'
+          )}
+        >
+          {uploadingFile ? (
+            <div className="flex items-center gap-3 py-2">
+              <Loader2 className="h-5 w-5 animate-spin text-amber-500" />
+              <span className="text-sm font-medium">Uploading {uploadingFile}...</span>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-start gap-2">
+                <div className="flex shrink-0 pt-2">
+                  <Select
+                    value={activeMode}
+                    onValueChange={(v) => setModeOverride(v as InputMode)}
+                  >
+                    <SelectTrigger className="h-8 w-auto gap-1.5 border-none bg-transparent px-2 shadow-none">
+                      <ModeIcon className="h-4 w-4" />
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="note">
+                        <span className="flex items-center gap-2">
+                          <StickyNote className="h-3.5 w-3.5" /> Note
+                        </span>
+                      </SelectItem>
+                      <SelectItem value="url">
+                        <span className="flex items-center gap-2">
+                          <Globe className="h-3.5 w-3.5" /> Link
+                        </span>
+                      </SelectItem>
+                      <SelectItem value="file">
+                        <span className="flex items-center gap-2">
+                          <FileUp className="h-3.5 w-3.5" /> PDF
+                        </span>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  {activeMode === 'file' ? (
+                    <div className="flex flex-col items-center gap-2 py-4">
+                      <input
+                        ref={fileRef}
+                        type="file"
+                        accept=".pdf,application/pdf"
+                        className="hidden"
+                        onChange={handleFileInput}
+                      />
+                      <Upload className="text-muted-foreground h-8 w-8" />
+                      <p className="text-muted-foreground text-sm">
+                        Drop a PDF here or{' '}
+                        <button
+                          type="button"
+                          className="text-primary underline-offset-2 hover:underline"
+                          onClick={() => fileRef.current?.click()}
+                        >
+                          browse files
+                        </button>
+                      </p>
+                    </div>
+                  ) : (
+                    <Textarea
+                      ref={inputRef}
+                      value={inputValue}
+                      onChange={(e) => {
+                        setInputValue(e.target.value)
+                        if (modeOverride && detectInputMode(e.target.value) !== modeOverride) {
+                          setModeOverride(null)
+                        }
+                      }}
+                      onKeyDown={handleKeyDown}
+                      rows={activeMode === 'note' && inputValue.length > 100 ? 4 : 1}
+                      placeholder={
+                        activeMode === 'url'
+                          ? 'Paste a YouTube or web link...'
+                          : 'Paste a URL, or type a note...'
+                      }
+                      className="resize-none border-none bg-transparent shadow-none focus-visible:ring-0"
+                    />
+                  )}
+                </div>
+
+                {activeMode !== 'file' && (
+                  <Button
+                    size="sm"
+                    className="mt-1.5 shrink-0"
+                    onClick={handleSubmit}
+                    disabled={saving || !inputValue.trim()}
+                  >
+                    {saving ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <ArrowRight className="h-4 w-4" />
+                    )}
+                  </Button>
+                )}
+              </div>
+
+              {/* Auto-detected type badge */}
+              <div className="mt-2 flex items-center gap-2">
+                {inputValue.trim() && activeMode === 'url' && (
+                  <span
+                    className={cn(
+                      'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium',
+                      isYoutubeUrl
+                        ? 'bg-red-500/10 text-red-600'
+                        : 'bg-blue-500/10 text-blue-600'
+                    )}
+                  >
+                    {isYoutubeUrl ? (
+                      <Youtube className="h-3 w-3" />
+                    ) : (
+                      <Globe className="h-3 w-3" />
+                    )}
+                    {isYoutubeUrl ? 'YouTube' : 'Web link'}
+                  </span>
+                )}
+
+                {!showTitle && activeMode !== 'file' && (
+                  <button
+                    type="button"
+                    onClick={() => setShowTitle(true)}
+                    className="text-muted-foreground inline-flex items-center gap-0.5 text-xs hover:underline"
+                  >
+                    + Add title
+                  </button>
+                )}
+              </div>
+
+              {showTitle && (
+                <div className="mt-2">
+                  <Input
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="Custom title (optional)"
+                    className="h-8 text-sm"
+                  />
+                </div>
+              )}
+            </>
+          )}
+        </div>
 
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as ScopeTab)}>
           <TabsList>
@@ -257,11 +452,11 @@ export default function WorkspacePage() {
           <TabsContent value={activeTab} className="mt-4">
             {!docs ? (
               <div className="text-muted-foreground flex items-center gap-2 text-sm">
-                <Loader2 className="h-4 w-4 animate-spin" /> Loading…
+                <Loader2 className="h-4 w-4 animate-spin" /> Loading...
               </div>
             ) : docs.length === 0 ? (
               <div className="border-muted-foreground/20 text-muted-foreground rounded-xl border border-dashed p-10 text-center text-sm">
-                No workspace documents yet. Add a note, link, or PDF.
+                No workspace documents yet. Paste a link or drop a PDF above.
               </div>
             ) : (
               <ul className="space-y-2">
@@ -321,95 +516,7 @@ export default function WorkspacePage() {
         )}
       </div>
 
-      <Dialog open={showAdd} onOpenChange={setShowAdd}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Add to workspace</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label>Title (optional for files)</Label>
-              <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title" />
-            </div>
-            <Select value={addMode} onValueChange={(v) => setAddMode(v as typeof addMode)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="note">Text note</SelectItem>
-                <SelectItem value="url">YouTube or web link</SelectItem>
-                <SelectItem value="file">PDF upload</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {addMode === 'note' && (
-              <div className="space-y-2">
-                <Label>Content</Label>
-                <Textarea
-                  value={noteBody}
-                  onChange={(e) => setNoteBody(e.target.value)}
-                  rows={6}
-                  placeholder="Notes to index for AI…"
-                />
-              </div>
-            )}
-
-            {addMode === 'url' && (
-              <div className="space-y-2">
-                <Label>URL</Label>
-                <Input
-                  value={linkUrl}
-                  onChange={(e) => setLinkUrl(e.target.value)}
-                  placeholder="https://…"
-                />
-              </div>
-            )}
-
-            {addMode === 'file' && (
-              <div className="space-y-2">
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept=".pdf,application/pdf"
-                  className="hidden"
-                  onChange={handleFile}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => fileRef.current?.click()}
-                  disabled={saving}
-                >
-                  <Upload className="mr-2 h-4 w-4" />
-                  Choose PDF
-                </Button>
-              </div>
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAdd(false)}>
-              Cancel
-            </Button>
-            {addMode === 'note' && (
-              <Button onClick={handleSaveNote} disabled={saving || !title.trim()}>
-                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save & index'}
-              </Button>
-            )}
-            {addMode === 'url' && (
-              <Button onClick={handleSaveUrl} disabled={saving || !linkUrl.trim()}>
-                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Import & process'}
-              </Button>
-            )}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {processingId && (
-        <span className="sr-only" aria-live="polite">
-          Processing document…
-        </span>
-      )}
+      <ProcessingStatus docs={allDocs} />
     </div>
   )
 }

@@ -1,5 +1,6 @@
 import { ClerkProvider } from '@clerk/nextjs'
 import { ConvexClientProvider } from '@/components/ConvexClientProvider'
+import { Toaster } from 'sonner'
 
 export default function AppGroupLayout({
   children,
@@ -8,7 +9,10 @@ export default function AppGroupLayout({
 }) {
   return (
     <ClerkProvider>
-      <ConvexClientProvider>{children}</ConvexClientProvider>
+      <ConvexClientProvider>
+        {children}
+        <Toaster position="bottom-right" richColors closeButton />
+      </ConvexClientProvider>
     </ClerkProvider>
   )
 }
