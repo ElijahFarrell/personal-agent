@@ -19,7 +19,11 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-      <html lang="en" className={`dark ${GeistSans.variable} ${GeistMono.variable}`}>
+      <html
+        lang="en"
+        className={`dark ${GeistSans.variable} ${GeistMono.variable}`}
+        data-scroll-behavior="smooth"
+      >
         <body className="font-sans text-gray-100 antialiased">
           <ConvexClientProvider>{children}</ConvexClientProvider>
           <Analytics />

@@ -8,6 +8,7 @@ import {
   indexWorkspaceDocument,
   removeWorkspaceDocumentFromIndex,
 } from '@/services/workspaceKnowledgeService'
+import type { WorkspaceChunkSeed } from '@/services/workspaceKnowledgeService'
 import type { ResourceScope } from '@/types'
 import { WORKSPACE_DOC_STATUS } from '@convex/constants'
 import { qdrantTenantKeyFromConvexTenantId } from '@/lib/workspaceTenantKey'
@@ -32,6 +33,9 @@ async function processDocument(
   }
 ) {
   try {
+    // #region agent log
+    console.log('[DBG:a3b5eb] processDocument START', JSON.stringify({docId,type:doc.type,hasExtractedText:!!doc.extractedText,hasStorageId:!!doc.storageId}))
+    // #endregion
     await convex.mutation(api.workspaceDocuments.updateWorkspaceDocument, {
       tenantId: tid,
       docId,
@@ -42,6 +46,10 @@ async function processDocument(
     let title = doc.title
     let extractedText = doc.extractedText?.trim() ?? ''
     let transcript: string | undefined
+    let segments: WorkspaceChunkSeed[] | undefined = doc.extractedText?.trim()
+      ? [{ content: doc.extractedText.trim(), reference: doc.sourceUrl ?? doc.title }]
+      : undefined
+    let extractionMetadata: Record<string, unknown> | undefined
 
     if (!extractedText) {
       const fileUrl = doc.storageId
@@ -61,22 +69,32 @@ async function processDocument(
       extractedText = result.extractedText
       transcript = result.transcript
       if (result.title) title = result.title
+      segments = result.segments
+      extractionMetadata = result.metadata
     }
 
+    // #region agent log
+    console.log('[DBG:a3b5eb] extraction done', JSON.stringify({extractedTextLen:extractedText.length,segmentCount:segments?.length??0,hasTranscript:!!transcript}))
+    // #endregion
+
+    // Persist extracted content but stay in PROCESSING until Qdrant upsert succeeds.
     await convex.mutation(api.workspaceDocuments.updateWorkspaceDocument, {
       tenantId: tid,
       docId,
       title,
       extractedText,
       transcript,
-      status: WORKSPACE_DOC_STATUS.READY,
       processingError: null,
+      ...(extractionMetadata ? { metadata: extractionMetadata } : {}),
     })
 
     if (doc.chunkCount && doc.chunkCount > 0) {
       await removeWorkspaceDocumentFromIndex(tenantKey, docId, doc.chunkCount)
     }
 
+    // #region agent log
+    console.log('[DBG:a3b5eb] about to call indexWorkspaceDocument')
+    // #endregion
     const chunks = await indexWorkspaceDocument({
       id: docId,
       tenantKey,
@@ -85,15 +103,22 @@ async function processDocument(
       title,
       body: extractedText,
       category: doc.category ?? doc.type,
+      sourceUrl: doc.sourceUrl,
+      segments,
     })
 
+    // Only mark READY after Qdrant upsert succeeds.
     await convex.mutation(api.workspaceDocuments.updateWorkspaceDocument, {
       tenantId: tid,
       docId,
+      status: WORKSPACE_DOC_STATUS.READY,
       chunkCount: chunks,
     })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Processing failed'
+    // #region agent log
+    console.log('[DBG:a3b5eb] processDocument CATCH', JSON.stringify({message, errName:(err as Error)?.constructor?.name, stack:(err as Error)?.stack?.slice(0,500)}))
+    // #endregion
     console.error(`[workspace/process] docId=${docId}`, err)
     try {
       await convex.mutation(api.workspaceDocuments.updateWorkspaceDocument, {

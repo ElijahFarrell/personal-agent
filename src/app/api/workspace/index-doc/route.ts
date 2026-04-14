@@ -65,6 +65,7 @@ export async function POST(req: NextRequest) {
       title: doc.title,
       body: text,
       category: doc.category ?? doc.type,
+      sourceUrl: doc.sourceUrl,
     })
 
     await convex.mutation(api.workspaceDocuments.updateWorkspaceDocument, {

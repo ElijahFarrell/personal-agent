@@ -1,4 +1,5 @@
 import { qdrantVector, embedText } from '@/mastra/workspace'
+import { ensureQdrantCollection, qdrantPointId } from '@/lib/qdrantCollections'
 
 const COLLECTION = 'marketing_knowledge'
 const DIMENSION = 1536
@@ -6,14 +7,7 @@ const RELEVANCE_THRESHOLD = 0.4
 const TOP_K = 5
 
 async function ensureCollection(): Promise<void> {
-  const indexes = await qdrantVector.listIndexes()
-  if (!indexes.includes(COLLECTION)) {
-    await qdrantVector.createIndex({
-      indexName: COLLECTION,
-      dimension: DIMENSION,
-      metric: 'cosine',
-    })
-  }
+  await ensureQdrantCollection(COLLECTION, DIMENSION)
 }
 
 export interface MarketingChunk {
@@ -42,7 +36,7 @@ export async function indexMarketingChunk(chunk: MarketingChunk): Promise<void> 
         sourceFile: chunk.sourceFile,
       },
     ],
-    ids: [chunk.id],
+    ids: [qdrantPointId(chunk.id)],
   })
 }
 
