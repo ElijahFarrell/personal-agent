@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useSyncExternalStore } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useOrganization, useUser, UserButton } from '@clerk/nextjs'
@@ -57,6 +57,7 @@ import {
 import { cn } from '@/lib/utils'
 
 const NAV_GROUP_STORAGE_KEY = 'dashboard-nav-groups'
+const NAV_GROUP_STORAGE_EVENT = 'dashboard-nav-groups-change'
 
 interface NavItem {
   type: 'item'
@@ -134,22 +135,46 @@ const NAV_CONFIG: (NavItem | NavGroup)[] = [
   },
 ]
 
+const EMPTY_GROUP_STATE: Record<string, boolean> = {}
+let cachedGroupState: Record<string, boolean> = EMPTY_GROUP_STATE
+let cachedGroupStateRaw: string | null = null
+
 function loadGroupState(): Record<string, boolean> {
-  if (typeof window === 'undefined') return {}
+  if (typeof window === 'undefined') return EMPTY_GROUP_STATE
   try {
-    const stored = localStorage.getItem(NAV_GROUP_STORAGE_KEY)
-    return stored ? (JSON.parse(stored) as Record<string, boolean>) : {}
+    const raw = localStorage.getItem(NAV_GROUP_STORAGE_KEY)
+    if (raw === cachedGroupStateRaw) return cachedGroupState
+    cachedGroupStateRaw = raw
+    cachedGroupState = raw ? (JSON.parse(raw) as Record<string, boolean>) : EMPTY_GROUP_STATE
+    return cachedGroupState
   } catch {
-    return {}
+    return EMPTY_GROUP_STATE
   }
+}
+
+function getServerSnapshot(): Record<string, boolean> {
+  return EMPTY_GROUP_STATE
 }
 
 function saveGroupState(state: Record<string, boolean>) {
   if (typeof window === 'undefined') return
   try {
     localStorage.setItem(NAV_GROUP_STORAGE_KEY, JSON.stringify(state))
+    window.dispatchEvent(new Event(NAV_GROUP_STORAGE_EVENT))
   } catch {
     // ignore
+  }
+}
+
+function subscribeToGroupState(onStoreChange: () => void) {
+  if (typeof window === 'undefined') return () => {}
+
+  const handleChange = () => onStoreChange()
+  window.addEventListener('storage', handleChange)
+  window.addEventListener(NAV_GROUP_STORAGE_EVENT, handleChange)
+  return () => {
+    window.removeEventListener('storage', handleChange)
+    window.removeEventListener(NAV_GROUP_STORAGE_EVENT, handleChange)
   }
 }
 
@@ -183,12 +208,16 @@ export function AppSidebar() {
   const { config } = useOrgConfig()
 
   const brandLabel = organization?.name?.trim() || 'AI OS'
-  const [groupOpen, setGroupOpen] = useState<Record<string, boolean>>(() => {
-    const defaults = getDefaultGroupState(pathname)
-    const stored = loadGroupState()
-    return { ...defaults, ...stored }
-  })
+  const storedGroupOpen = useSyncExternalStore<Record<string, boolean>>(
+    subscribeToGroupState,
+    loadGroupState,
+    getServerSnapshot
+  )
   const showAdmin = isSuperAdmin(user?.id ?? null)
+  const groupOpen = useMemo(
+    () => ({ ...getDefaultGroupState(pathname), ...storedGroupOpen }),
+    [pathname, storedGroupOpen]
+  )
 
   const { standaloneItems, groupedItems } = useMemo(() => {
     const items: NavItem[] = []
@@ -220,12 +249,9 @@ export function AppSidebar() {
   }, [config.features.prospectTable, config.features.workflowBuilder, config.features.scheduledTasks])
 
   const toggleGroup = useCallback((key: string) => {
-    setGroupOpen((prev) => {
-      const next = { ...prev, [key]: !prev[key] }
-      saveGroupState(next)
-      return next
-    })
-  }, [])
+    const next = { ...storedGroupOpen, [key]: !groupOpen[key] }
+    saveGroupState(next)
+  }, [groupOpen, storedGroupOpen])
 
   return (
     <Sidebar side="left" collapsible="icon" className="border-r border-sidebar-border">

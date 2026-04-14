@@ -1,5 +1,6 @@
 import { qdrantVector, embedText } from '@/mastra/workspace'
 import type { ResourceScope } from '@/types'
+import { ensureQdrantCollection, qdrantPointId } from '@/lib/qdrantCollections'
 
 const LEGACY_COLLECTION = 'context_docs'
 const DIMENSION = 1536
@@ -7,14 +8,7 @@ const RELEVANCE_THRESHOLD = 0.4
 const TOP_K = 5
 
 async function ensureLegacyCollection(): Promise<void> {
-  const indexes = await qdrantVector.listIndexes()
-  if (!indexes.includes(LEGACY_COLLECTION)) {
-    await qdrantVector.createIndex({
-      indexName: LEGACY_COLLECTION,
-      dimension: DIMENSION,
-      metric: 'cosine',
-    })
-  }
+  await ensureQdrantCollection(LEGACY_COLLECTION, DIMENSION)
 }
 
 /** Index a context doc into Qdrant for vector retrieval (legacy `context_docs` collection). */
@@ -46,7 +40,7 @@ export async function indexContextDoc(doc: {
         category: doc.category,
       },
     ],
-    ids: [`${doc.tenantId}-${doc.id}`],
+    ids: [qdrantPointId(`${doc.tenantId}-${doc.id}`)],
   })
 }
 
@@ -55,7 +49,7 @@ export async function removeContextDoc(tenantId: string, docId: string): Promise
   try {
     await qdrantVector.deleteVector({
       indexName: LEGACY_COLLECTION,
-      id: `${tenantId}-${docId}`,
+      id: qdrantPointId(`${tenantId}-${docId}`),
     })
   } catch {
     // Point may not exist — safe to ignore
@@ -67,6 +61,9 @@ export interface ContextSearchResult {
   title: string
   content: string
   category: string
+  reference?: string
+  pageNumber?: number
+  sourceUrl?: string
   score: number
 }
 
@@ -91,6 +88,9 @@ export async function retrieveRelevantContext(
         content: r.content,
         category:
           r.source === 'workspace' ? `workspace:${r.category || 'doc'}` : r.category,
+        reference: r.reference,
+        pageNumber: r.pageNumber,
+        sourceUrl: r.sourceUrl,
         score: r.score,
       }))
   } catch {
@@ -105,7 +105,7 @@ export function buildContextBlock(results: ContextSearchResult[]): string {
   const blocks = results
     .map(
       (r) =>
-        `<context title="${r.title}" category="${r.category}">\n${r.content}\n</context>`
+        `<context title="${r.title}" category="${r.category}">\nReference: ${r.reference ?? r.title}${r.sourceUrl ? `\nURL: ${r.sourceUrl}` : ''}${r.pageNumber ? `\nPage: ${r.pageNumber}` : ''}\n\n${r.content}\n</context>`
     )
     .join('\n\n')
 
