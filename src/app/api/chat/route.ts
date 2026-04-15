@@ -25,34 +25,72 @@ export const maxDuration = 300
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
 
 /**
- * Extract the latest user message text from the request body.
- * Supports AI SDK v6 UIMessage[] format (parts-based) and plain `message` string for
- * backward compatibility (Telegram webhook, etc.).
+ * Extract the latest user message text and image attachment URLs.
+ * Supports AI SDK v6 UIMessage[] (text + file parts), optional `attachmentUrls` on the body
+ * (background jobs), and plain `message` for backward compatibility.
  */
-function extractUserMessage(body: Record<string, unknown>): string | null {
-  if (typeof body.message === 'string' && body.message.trim()) {
-    return body.message.trim()
-  }
+function extractChatRequest(body: Record<string, unknown>): {
+  text: string | null
+  attachmentUrls: string[]
+} {
+  const fromBody = body.attachmentUrls
+  const extraUrls = Array.isArray(fromBody)
+    ? fromBody.filter((u): u is string => typeof u === 'string' && u.length > 0)
+    : []
+
+  let text: string | null = null
+  const attachmentUrls: string[] = [...extraUrls]
+
+  const messageFromBody =
+    typeof body.message === 'string' && body.message.trim() ? body.message.trim() : null
 
   const messages = body.messages as Array<{
     role: string
-    parts?: Array<{ type: string; text?: string }>
+    parts?: Array<{
+      type: string
+      text?: string
+      url?: string
+      mediaType?: string
+      mimeType?: string
+    }>
     content?: string
   }> | undefined
 
-  if (!messages?.length) return null
+  if (messages?.length) {
+    const lastUser = [...messages].reverse().find((m) => m.role === CHAT_ROLES.USER)
+    if (lastUser?.parts) {
+      if (!messageFromBody) {
+        const texts = lastUser.parts
+          .filter((p) => p.type === 'text' && p.text?.trim())
+          .map((p) => p.text!.trim())
+        if (texts.length) text = texts.join('\n')
+      }
 
-  const lastUser = [...messages].reverse().find((m) => m.role === CHAT_ROLES.USER)
-  if (!lastUser) return null
-
-  if (lastUser.parts) {
-    const texts = lastUser.parts
-      .filter((p) => p.type === 'text' && p.text?.trim())
-      .map((p) => p.text!.trim())
-    return texts.join(' ') || null
+      for (const p of lastUser.parts) {
+        if (p.type === 'file' && typeof p.url === 'string') {
+          const mime = (p.mediaType ?? p.mimeType ?? '').toLowerCase()
+          if (mime.startsWith('image/')) {
+            attachmentUrls.push(p.url)
+          }
+        }
+      }
+    }
+    if (!text && !messageFromBody && typeof lastUser?.content === 'string' && lastUser.content.trim()) {
+      text = lastUser.content.trim()
+    }
   }
 
-  return typeof lastUser.content === 'string' ? lastUser.content.trim() || null : null
+  if (messageFromBody) {
+    text = messageFromBody
+  }
+
+  const mergedUrls = [...new Set(attachmentUrls)]
+
+  if (!text?.trim() && mergedUrls.length > 0) {
+    text = 'Please analyze the attached image(s).'
+  }
+
+  return { text: text?.trim() ?? null, attachmentUrls: mergedUrls }
 }
 
 export async function POST(req: NextRequest) {
@@ -76,17 +114,18 @@ export async function POST(req: NextRequest) {
       model?: string
       messages?: unknown[]
       background?: boolean
+      attachmentUrls?: string[]
     }
 
     console.log('[Chat API] Body keys:', Object.keys(body), '| messages count:', uiMessages?.length ?? 0)
 
-    const message = extractUserMessage(body)
+    const { text: message, attachmentUrls } = extractChatRequest(body)
     if (!message) {
       console.warn('[Chat API] Could not extract message. Body sample:', JSON.stringify(body).slice(0, 500))
       return NextResponse.json({ error: 'message is required' }, { status: 400 })
     }
 
-    console.log('[Chat API] Extracted message:', message.slice(0, 100))
+    console.log('[Chat API] Extracted message:', message.slice(0, 100), '| images:', attachmentUrls.length)
 
     const tenantCtx = await getTenantContext()
     const { userId, tenantId, config } = tenantCtx
@@ -147,6 +186,7 @@ export async function POST(req: NextRequest) {
 
     const pipelineArgs = {
       message,
+      attachmentUrls: attachmentUrls.length > 0 ? attachmentUrls : undefined,
       threadId,
       userId,
       tenantId,
