@@ -1,7 +1,7 @@
 import { ConvexHttpClient } from 'convex/browser'
 import { toAISdkStream } from '@mastra/ai-sdk'
 import { readUIMessageStream, getToolName, isTextUIPart, isToolUIPart } from 'ai'
-import type { UIMessage } from 'ai'
+import type { ModelMessage, UIMessage, UserModelMessage } from 'ai'
 import {
   createOrchestratorAgent,
   createEmailAgent,
@@ -38,7 +38,7 @@ import type { AgentContextRetrieval } from '@/mastra/tools/agentTools'
 import { api } from '@convex/_generated/api'
 import type { Id } from '@convex/_generated/dataModel'
 import { AGENT_BY_ID, type AgentId } from '@/constants/agents'
-import { CHAT_CREDIT_ACTION, CHAT_LIMITS, CHAT_ROLES, type AgentMessage } from '@/constants/chat'
+import { CHAT_CREDIT_ACTION, CHAT_LIMITS, CHAT_ROLES } from '@/constants/chat'
 import { DEFAULT_CONFIG } from '@/constants/featureGating'
 import { getComposioConnectionStatus } from '@/lib/composio'
 import { getUnipileConnectionStatus } from '@/services/unipileService'
@@ -50,8 +50,27 @@ import type { Agent } from '@mastra/core/agent'
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
 
+/**
+ * Last user turn for Mastra: plain string or text + image parts for vision models.
+ */
+function buildUserCoreMessage(text: string, attachmentUrls?: string[]): UserModelMessage {
+  const urls = attachmentUrls?.filter((u) => typeof u === 'string' && u.length > 0) ?? []
+  if (urls.length === 0) {
+    return { role: CHAT_ROLES.USER, content: text }
+  }
+  return {
+    role: CHAT_ROLES.USER,
+    content: [
+      { type: 'text', text },
+      ...urls.map((url) => ({ type: 'image' as const, image: url })),
+    ],
+  }
+}
+
 export interface ChatPipelineArgs {
   message: string
+  /** Data URLs or HTTPS URLs for images attached in chat (vision). */
+  attachmentUrls?: string[]
   threadId?: string
   userId: string
   tenantId: string
@@ -74,8 +93,17 @@ export interface PreparedDbUser {
 export async function prepareChatAgentStream(
   args: ChatPipelineArgs
 ): Promise<{ mastraStream: unknown; dbUser: PreparedDbUser | null }> {
-  const { message, threadId, userId, tenantId, agentInstructions, targetAgent, deepResearch, model } =
-    args
+  const {
+    message,
+    attachmentUrls,
+    threadId,
+    userId,
+    tenantId,
+    agentInstructions,
+    targetAgent,
+    deepResearch,
+    model,
+  } = args
 
   const dbUser = await convex
     .query(api.users.getUserByClerkUserId, { clerkUserId: userId })
@@ -158,7 +186,7 @@ export async function prepareChatAgentStream(
 
   const contextBlock = buildContextBlock(relevantContext)
 
-  const agentMessages: AgentMessage[] = []
+  const agentMessages: ModelMessage[] = []
 
   const systemParts = [contextBlock, prospectsContext, inboxDigest].filter(Boolean)
   if (systemParts.length > 0) {
@@ -167,10 +195,13 @@ export async function prepareChatAgentStream(
 
   for (const doc of historyDocs) {
     if (doc.content === message && doc.role === CHAT_ROLES.USER) continue
-    agentMessages.push({ role: doc.role as AgentMessage['role'], content: doc.content })
+    agentMessages.push({
+      role: doc.role as 'user' | 'assistant' | 'system',
+      content: doc.content,
+    })
   }
 
-  agentMessages.push({ role: CHAT_ROLES.USER, content: message })
+  agentMessages.push(buildUserCoreMessage(message, attachmentUrls))
 
   if (dbUser) {
     convex
@@ -241,7 +272,10 @@ export async function prepareChatAgentStream(
         const agentMessagesWithTask = [...agentMessages]
         const lastIdx = agentMessagesWithTask.length - 1
         if (lastIdx >= 0 && agentMessagesWithTask[lastIdx]?.role === CHAT_ROLES.USER) {
-          agentMessagesWithTask[lastIdx] = { role: CHAT_ROLES.USER, content: taskWithInstructions }
+          agentMessagesWithTask[lastIdx] = buildUserCoreMessage(
+            taskWithInstructions,
+            attachmentUrls
+          )
         }
         const useAdsIntelOpts = adsIntelAgentIds.includes(
           agentId as (typeof adsIntelAgentIds)[number]
@@ -277,7 +311,10 @@ export async function prepareChatAgentStream(
       const agentMessagesWithTask = [...agentMessages]
       const lastIdx = agentMessagesWithTask.length - 1
       if (lastIdx >= 0 && agentMessagesWithTask[lastIdx]?.role === CHAT_ROLES.USER) {
-        agentMessagesWithTask[lastIdx] = { role: CHAT_ROLES.USER, content: taskWithInstructions }
+        agentMessagesWithTask[lastIdx] = buildUserCoreMessage(
+          taskWithInstructions,
+          attachmentUrls
+        )
       }
       stream = await agent.stream(
         agentMessagesWithTask as Parameters<typeof agent.stream>[0],

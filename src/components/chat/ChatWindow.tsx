@@ -12,7 +12,7 @@ import { useUser } from '@clerk/nextjs'
 import { useQuery, useMutation } from 'convex/react'
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
-import type { UIMessage } from 'ai'
+import type { FileUIPart, UIMessage } from 'ai'
 import { api } from '@convex/_generated/api'
 import type { Id } from '@convex/_generated/dataModel'
 import {
@@ -30,6 +30,7 @@ import {
   PromptInputFooter,
   PromptInputSubmit,
   PromptInputTools,
+  usePromptInputAttachments,
 } from '@/components/ai-elements/prompt-input'
 import { SkillPicker } from './SkillPicker'
 import { ModelSelector } from './ModelSelector'
@@ -62,6 +63,7 @@ import {
   Inbox,
   Users,
   Loader2,
+  Paperclip,
   SlidersHorizontal,
   type LucideIcon,
 } from 'lucide-react'
@@ -85,6 +87,7 @@ import {
   MessageActivityTrace,
   extractChartSpecsFromParts,
 } from './MessageActivityTrace'
+import { enrichUserMessageWithAttachments } from '@/utils/chat-attachments'
 
 function isDataChatUiPart(part: { type: string }): boolean {
   return part.type === 'data-chat-phase' || part.type === 'data-chat-milestone'
@@ -143,6 +146,57 @@ function VoiceInputButton() {
       onTranscriptionChange={handleTranscription}
       onAudioRecorded={handleAudioRecorded}
     />
+  )
+}
+
+/** Renders attachment chips above the composer; must be inside PromptInput. */
+function ChatAttachmentPreview() {
+  const attachments = usePromptInputAttachments()
+  if (attachments.files.length === 0) return null
+  return (
+    <div className="flex flex-wrap gap-1.5 border-b border-white/5 px-3 pb-1.5 pt-2">
+      {attachments.files.map((f) => (
+        <Badge
+          key={f.id}
+          variant="secondary"
+          className="max-w-[min(100%,14rem)] gap-1 pr-1 text-xs font-normal"
+        >
+          <span className="truncate">{f.filename ?? 'file'}</span>
+          <button
+            type="button"
+            className="rounded-sm p-0.5 hover:bg-muted"
+            onClick={() => attachments.remove(f.id)}
+            aria-label={`Remove ${f.filename ?? 'file'}`}
+          >
+            <X className="size-3 shrink-0" />
+          </button>
+        </Badge>
+      ))}
+    </div>
+  )
+}
+
+/** Paperclip opens the file picker; must be inside PromptInput. */
+function ChatAttachButton() {
+  const attachments = usePromptInputAttachments()
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="size-8 shrink-0 text-muted-foreground"
+          aria-label="Attach files"
+          onClick={() => attachments.openFileDialog()}
+        >
+          <Paperclip className="size-4" />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent side="top" className="max-w-xs text-xs">
+        Attach images or text files. PDF/Office: add to workspace instead.
+      </TooltipContent>
+    </Tooltip>
   )
 }
 
@@ -480,8 +534,17 @@ export function ChatWindow({
   }, [convexMessages, chatMessages, isLoading, isStreaming])
 
   const handleSend = useCallback(
-    async (text: string) => {
+    async (rawText: string, attachmentFiles: FileUIPart[]) => {
       if (!dbUser || streamBusy) return
+      const trimmed = rawText.trim()
+      if (!trimmed && attachmentFiles.length === 0) return
+
+      const enriched = await enrichUserMessageWithAttachments(rawText, attachmentFiles)
+      if (!enriched.ok) {
+        setChatError(enriched.error)
+        return
+      }
+      const { enrichedText, imageFiles } = enriched
 
       setCreditError(false)
       setChatError(null)
@@ -489,8 +552,9 @@ export function ChatWindow({
       let activeThreadId = activeThreadRef.current
       const isNewThread = !activeThreadId
 
+      const titleBase = trimmed || 'Attachment'
       if (isNewThread) {
-        const title = text.length > 50 ? text.slice(0, 50) + '…' : text
+        const title = titleBase.length > 50 ? titleBase.slice(0, 50) + '…' : titleBase
         activeThreadId = await createThread({
           userId: dbUser._id,
           tenantId: dbUser.tenantId,
@@ -501,7 +565,7 @@ export function ChatWindow({
         fetch(API_ROUTES.threadSummarize, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: text }),
+          body: JSON.stringify({ message: titleBase }),
         })
           .then((r) => r.json())
           .then(({ title: summary }) => {
@@ -517,7 +581,7 @@ export function ChatWindow({
         tenantId: dbUser.tenantId,
         role: CHAT_ROLES.USER,
         source: CHAT_SOURCES.WEB,
-        content: text,
+        content: enrichedText,
         threadId: activeThreadId!,
       })
 
@@ -528,9 +592,11 @@ export function ChatWindow({
 
       const persistedCount = convexMessages?.length ?? 0
       if (persistedCount === 0 && !isNewThread) {
-        const title = text.length > 50 ? text.slice(0, 50) + '…' : text
+        const title = titleBase.length > 50 ? titleBase.slice(0, 50) + '…' : titleBase
         await updateThreadTitle({ threadId: activeThreadId!, title })
       }
+
+      const imageAttachmentUrls = imageFiles.map((f) => f.url).filter(Boolean)
 
       if (runInBackground) {
         try {
@@ -539,7 +605,9 @@ export function ChatWindow({
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
             body: JSON.stringify({
-              message: text,
+              message: enrichedText,
+              attachmentUrls:
+                imageAttachmentUrls.length > 0 ? imageAttachmentUrls : undefined,
               threadId: activeThreadId!,
               background: true,
               agentInstructions: agentInstructionsRef.current,
@@ -575,7 +643,10 @@ export function ChatWindow({
         return
       }
 
-      sendMessage({ text })
+      sendMessage({
+        text: enrichedText,
+        ...(imageFiles.length > 0 ? { files: imageFiles } : {}),
+      })
       setTargetAgent(null)
 
       if (isNewThread) {
@@ -677,7 +748,7 @@ export function ChatWindow({
         labels.length === 1
           ? labels[0]
           : labels.map((l, i) => `${i + 1}. ${l}`).join('\n')
-      handleSend(formatted)
+      handleSend(formatted, [])
     },
     [handleSend]
   )
@@ -740,7 +811,7 @@ export function ChatWindow({
                     <button
                       key={text}
                       type="button"
-                      onClick={() => handleSend(text)}
+                      onClick={() => handleSend(text, [])}
                       disabled={!dbUser || creditError || streamBusy}
                       className="flex items-start gap-3 rounded-lg border border-border bg-card px-3 py-2.5 text-left text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:bg-accent hover:text-foreground"
                     >
@@ -860,17 +931,22 @@ export function ChatWindow({
             )}
           >
             <PromptInput
-              onSubmit={async ({ text }) => {
-                if (text.trim()) await handleSend(text.trim())
+              accept="image/*,text/*,.csv,.json,.md,.ts,.tsx,.js,.jsx,.mjs,.cjs,.py,.yaml,.yml,.html,.htm,.css,.xml,.sh,.sql"
+              multiple
+              maxFiles={8}
+              onSubmit={async ({ text, files }) => {
+                await handleSend(text, files)
               }}
               className="[&_[data-slot=input-group]]:!bg-transparent [&_[data-slot=input-group]]:rounded-2xl [&_[data-slot=input-group]]:border-white/10"
             >
+              <ChatAttachmentPreview />
               <PromptInputTextarea placeholder="Send a message…" />
               {!lockTargetAgent && (
                 <AgentMentionPopover anchorRef={inputAreaRef} onSelect={setTargetAgent} />
               )}
               <PromptInputFooter>
                 <PromptInputTools className="min-w-0 flex-1 flex-wrap gap-2">
+                  <ChatAttachButton />
                   {targetAgent && (
                     <Badge variant="secondary" className="shrink-0 gap-1 text-xs">
                       @{AGENT_BY_ID.get(targetAgent)?.displayName ?? targetAgent}
