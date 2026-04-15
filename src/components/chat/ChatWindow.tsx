@@ -194,7 +194,7 @@ function ChatAttachButton() {
         </Button>
       </TooltipTrigger>
       <TooltipContent side="top" className="max-w-xs text-xs">
-        Attach images or text files. PDF/Office: add to workspace instead.
+        Attach images, PDF, DOCX, or text/code files. Excel: paste or use workspace.
       </TooltipContent>
     </Tooltip>
   )
@@ -931,7 +931,7 @@ export function ChatWindow({
             )}
           >
             <PromptInput
-              accept="image/*,text/*,.csv,.json,.md,.ts,.tsx,.js,.jsx,.mjs,.cjs,.py,.yaml,.yml,.html,.htm,.css,.xml,.sh,.sql"
+              accept="image/*,text/*,.pdf,.doc,.docx,.csv,.json,.md,.ts,.tsx,.js,.jsx,.mjs,.cjs,.py,.yaml,.yml,.html,.htm,.css,.xml,.sh,.sql"
               multiple
               maxFiles={8}
               onSubmit={async ({ text, files }) => {

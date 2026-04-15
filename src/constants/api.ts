@@ -3,6 +3,8 @@
  */
 export const API_ROUTES = {
   chat: '/api/chat',
+  /** PDF / DOCX → plain text for one-time chat attachments */
+  chatExtractDocument: '/api/chat/extract-document',
   voiceTranscribe: '/api/voice/transcribe',
   voiceRetellWebCall: '/api/voice/retell/web-call',
   threadSummarize: '/api/thread/summarize',
