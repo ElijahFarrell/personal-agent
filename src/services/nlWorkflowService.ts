@@ -6,6 +6,7 @@ import { Models } from '@/constants/models'
 const agentIdEnum = z.enum([
   'email',
   'research',
+  'deepResearch',
   'calendar',
   'linkedin',
   'content',
@@ -18,6 +19,11 @@ const agentIdEnum = z.enum([
   'realEstate',
   'finance',
   'marketing',
+  'metaAds',
+  'adsScraper',
+  'adAnalyzer',
+  'campaignBuilder',
+  'sdr',
 ])
 
 const nlPlanSchema = z.object({
@@ -99,11 +105,31 @@ export async function generateWorkflowPlanFromNl(userRequest: string): Promise<N
     model: Models.GPT_4O_MINI(),
     schema: nlPlanSchema,
     prompt:
-      `You are a workflow architect. Convert the user's automation request into a linear sequence of specialist agent steps.\n` +
-      `Agents: email (inbox/drafts), research (web), calendar, linkedin, content (copy), instagram, browser, messaging (slack/teams), docs, crm, project, realEstate, finance, marketing.\n` +
-      `Use the minimum number of steps. Each step must have a clear prompt the sub-agent can execute.\n` +
+      `You are a workflow architect. Convert the user's automation request into a linear sequence of specialist agent steps.\n\n` +
+      `Available agents (pick the minimum steps needed):\n` +
+      `- email: Gmail/Outlook inbox, drafts, send\n` +
+      `- research: fast web search (Tavily/Exa), citations — use for quick fact-finding\n` +
+      `- deepResearch: deep Exa search with filters, Reddit/news/chart tools — use for thorough market or competitive research\n` +
+      `- calendar: Google Calendar\n` +
+      `- linkedin: profiles, outreach drafts\n` +
+      `- content: posts, newsletters, copy\n` +
+      `- instagram: DMs\n` +
+      `- browser: navigate sites, extract content\n` +
+      `- messaging: Slack, Teams, Discord, WhatsApp\n` +
+      `- docs: Google Docs, Sheets, Notion, Airtable\n` +
+      `- crm: HubSpot, Salesforce, Pipedrive, Zoho\n` +
+      `- project: Asana, Monday\n` +
+      `- realEstate: Follow Up Boss, Calendly\n` +
+      `- finance: Stripe, QuickBooks\n` +
+      `- marketing: Mailchimp, Lemlist\n` +
+      `- metaAds: Meta/Facebook/Instagram ads\n` +
+      `- adsScraper: competitive ad libraries (Meta, LinkedIn, TikTok, Google)\n` +
+      `- adAnalyzer: analyze scraped ad research\n` +
+      `- campaignBuilder: campaign brief from analysis\n` +
+      `- sdr: Exa company search, Apollo, Outlook — lead gen and sequences\n\n` +
+      `Each step must include a clear prompt the specialist can execute (may reference prior step output conceptually).\n` +
       `If the user asks for a recurring time (daily, weekly, etc.), fill schedule with a sensible cron and timezone America/New_York unless they specify otherwise.\n` +
-      `If schedule is appropriate, prefer runMode "workflow" to run this graph; use "agent_prompt" only for simple recurring chat-style tasks.\n\n` +
+      `If a schedule is appropriate, prefer runMode "workflow" to run this graph; use "agent_prompt" only for simple recurring tasks that fit a single orchestrator instruction.\n\n` +
       `User request:\n${userRequest}`,
   })
   return object

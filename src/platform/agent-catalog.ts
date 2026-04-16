@@ -23,6 +23,7 @@ import { createAdsScraperAgent } from '@/mastra/agents/adsScraperAgent'
 import { createAdAnalyzerAgent } from '@/mastra/agents/adAnalyzerAgent'
 import { createCampaignBuilderAgent } from '@/mastra/agents/campaignBuilderAgent'
 import { createSDRAgent } from '@/mastra/agents/sdrAgent'
+import { createDeepResearchAgent } from '@/mastra/agents/deepResearchAgent'
 
 /** Mastral tool object key returned by createAgentTools (camelCase). */
 export type AgentToolsDelegateKey =
@@ -108,6 +109,7 @@ export const WORKFLOW_AGENT_FACTORIES: Record<string, (userId: string, tenantId?
     campaignBuilder: async (userId) =>
       (await createCampaignBuilderAgent(userId, [])).agent,
     sdr: async (userId, tenantId) => createSDRAgent(userId, tenantId ?? ''),
+    deepResearch: async (userId) => createDeepResearchAgent(userId),
   }
 
 export function agentIdForOrchestratorToolId(toolId: string): AgentId | undefined {

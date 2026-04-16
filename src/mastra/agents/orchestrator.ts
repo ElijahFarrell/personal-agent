@@ -4,6 +4,8 @@ import type { Workspace } from '@mastra/core/workspace'
 import { AgentModels } from '@/constants/models'
 import { createMem0MemorizeTool } from '../tools/mem0Memorize'
 import { createMem0RecallTool } from '../tools/mem0Recall'
+import { webSearchTool } from '../tools/webSearchTool'
+import { deepSearchTool } from '../tools/deepSearchTool'
 import { createAgentTools, type AgentContextRetrieval } from '../tools/agentTools'
 
 export type { AgentContextRetrieval }
@@ -83,6 +85,8 @@ export async function createOrchestratorAgent(
     workspace: workspace as Workspace | undefined,
     tools: {
       ...agentTools,
+      webSearch: webSearchTool,
+      deepSearch: deepSearchTool,
       mem0Recall: createMem0RecallTool(userId),
       mem0Memorize: createMem0MemorizeTool(userId),
     },

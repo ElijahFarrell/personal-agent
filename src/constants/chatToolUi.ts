@@ -15,6 +15,12 @@ export const CHAT_TOOL_UI: Record<
     hint: 'Web research may take 30s–3 minutes.',
     slow: true,
   },
+  'web-search': { title: 'Web search' },
+  'deep-search': {
+    title: 'Deep search (Exa)',
+    hint: 'Deep search can take 15–60s.',
+    slow: true,
+  },
   'email-agent': { title: 'Email' },
   'calendar-agent': { title: 'Calendar' },
   'linkedin-agent': { title: 'LinkedIn' },
@@ -46,6 +52,17 @@ export const CHAT_TOOL_UI: Record<
   'add-exa-results-to-prospects': { title: 'Add Exa results to prospects' },
   'fetch-exa-webset-by-id': { title: 'Fetch Exa webset' },
   'add-exa-webset-to-prospects': { title: 'Add webset to prospects' },
+  'build-workflow': { title: 'Build workflow' },
+  'run-workflow': {
+    title: 'Run workflow',
+    hint: 'Workflow runs may take a minute or more.',
+    slow: true,
+  },
+  'list-prospects': { title: 'List prospects' },
+  'get-prospect': { title: 'Load prospect' },
+  'search-prospects': { title: 'Search prospects' },
+  'create-prospect': { title: 'Create prospect' },
+  'update-prospect': { title: 'Update prospect' },
 }
 
 /** Milestone line when a tool starts (stream chunk tool-input-start). */

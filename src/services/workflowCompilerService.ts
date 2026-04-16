@@ -1,6 +1,6 @@
 import { createWorkflow, createStep } from '@mastra/core/workflows'
 import { z } from 'zod'
-import { AGENT_BY_TOOL_ID, type AgentId } from '@/constants/agents'
+import { AGENT_BY_TOOL_ID } from '@/constants/agents'
 import { COMPOSIO_WORKFLOW_DEFAULT_TOOLS } from '@/constants/composioWorkflowTools'
 import { WORKFLOW_AGENT_FACTORIES } from '@/platform/agent-catalog'
 import { createAgentTools } from '@/mastra/tools/agentTools'
@@ -36,7 +36,8 @@ export interface WorkflowGuardrailsConfig {
 }
 
 export interface WorkflowNodeConfig {
-  agentId?: AgentId
+  /** Specialist id (registry agents plus workflow-only ids e.g. deepResearch). */
+  agentId?: string
   prompt?: string
   toolName?: string
   toolParams?: Record<string, unknown>

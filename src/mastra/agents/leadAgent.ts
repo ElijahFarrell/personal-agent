@@ -8,6 +8,7 @@ import { Composio } from '@composio/core'
 import { MastraProvider } from '@composio/mastra'
 import { config } from '@/lib/config'
 import { getSDRTools, createSDRAgent } from './sdrAgent'
+import { webSearchTool } from '../tools/webSearchTool'
 import { AgentModels } from '@/constants/models'
 import { getComposioConnectionStatus } from '@/lib/composio'
 import { LEAD_PROMPT } from '../prompts/lead'
@@ -21,7 +22,7 @@ export async function createLeadAgent(
   tenantId: string,
   workspace?: Workspace
 ): Promise<Agent> {
-  const baseTools = getSDRTools(userId, tenantId)
+  const baseTools = { ...getSDRTools(userId, tenantId), webSearch: webSearchTool }
 
   if (!config.composio.apiKey) {
     return new Agent({
