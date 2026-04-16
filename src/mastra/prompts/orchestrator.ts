@@ -14,6 +14,8 @@ const SCHEDULE_TOOL_KEYS = new Set([
   'delete-schedule',
 ])
 
+const WORKFLOW_BUILDER_TOOL_KEYS = new Set(['build-workflow', 'run-workflow'])
+
 function shouldIncludeOrchestratorToolKey(
   key: string,
   resolved: ResolvedPlatformConfig | undefined
@@ -36,6 +38,12 @@ function shouldIncludeOrchestratorToolKey(
       resolved.effectiveFeatures.scheduledTasks === true
     )
   }
+  if (WORKFLOW_BUILDER_TOOL_KEYS.has(key)) {
+    return (
+      resolved.fullPlatformAccess ||
+      resolved.effectiveFeatures.workflowBuilder === true
+    )
+  }
   return true
 }
 
@@ -44,7 +52,21 @@ const AGENT_DESCRIPTIONS: Record<
   { provider?: string | null; providers?: string[]; desc: string; sdrProviders?: string[] }
 > = {
   'email-agent': { provider: 'gmail', desc: 'Read inbox, summarize emails, draft replies, send emails. Use for anything email-related.' },
-  'research-agent': { provider: null, desc: 'Web search, fact-finding, market research, competitive analysis, news. Fast or deep search available.' },
+  'web-search': {
+    provider: null,
+    desc:
+      'Direct web search — **fast** (Tavily) or **deep** (Exa). Use this first for most lookups; faster than delegating to research-agent.',
+  },
+  'deep-search': {
+    provider: null,
+    desc:
+      'Deep Exa search with category, domain, and date filters — market intel, papers, targeted news. Use for filtered research without delegating.',
+  },
+  'research-agent': {
+    provider: null,
+    desc:
+      'Multi-step research with synthesis and **:::sources** citations. Use when you need several searches cross-referenced into one report — not for a single quick lookup (use web-search / deep-search first).',
+  },
   'calendar-agent': { provider: 'google-calendar', desc: "View today's schedule, upcoming events, create new events, check availability." },
   'linkedin-agent': { provider: 'linkedin', desc: 'Research LinkedIn profiles, draft personalized outreach, manage DM campaigns. Always confirms before sending.' },
   'content-agent': { provider: null, desc: 'Write LinkedIn posts, newsletters, tweets, marketing copy, and any professional content.' },
@@ -75,7 +97,31 @@ const AGENT_DESCRIPTIONS: Record<
     desc: 'Lead gen: Exa company search, Apollo (search/enrich/sequences), Outlook (send). Use for "find 50 CEOs", "research leads", "personalize outreach", "add to sequence".',
     sdrProviders: ['apollo', 'outlook'],
   },
-  'create-schedule': { provider: null, desc: 'Create recurring schedules (cron jobs). Use when the user wants something to run automatically (e.g. "every morning at 9am check my channels", "every Monday send a summary").' },
+  'create-schedule': {
+    provider: null,
+    desc:
+      'Create recurring schedules (cron). Either an **agentPrompt** (orchestrator runs each time) or a **workflowDefinitionId** to run a saved workflow graph on each tick.',
+  },
+  'build-workflow': {
+    provider: null,
+    desc:
+      'Design and save an automation from natural language (linear agent steps). Can optionally attach a cron schedule when the user wants it recurring.',
+  },
+  'run-workflow': {
+    provider: null,
+    desc: 'Run a saved workflow definition once by id (same engine as the Workflows UI).',
+  },
+  'list-prospects': {
+    provider: null,
+    desc: 'List and filter prospects in the pipeline (stage, status, owner).',
+  },
+  'get-prospect': { provider: null, desc: 'Load full prospect detail, research snapshot, and outreach drafts by id.' },
+  'search-prospects': {
+    provider: null,
+    desc: 'Text search across prospect name, company, email, and notes.',
+  },
+  'create-prospect': { provider: null, desc: 'Create a new prospect row (manual entry).' },
+  'update-prospect': { provider: null, desc: 'Update stage, status, notes, owner, and contact fields for a prospect.' },
   'list-schedules': { provider: null, desc: 'List the user\'s schedules. Use when they ask to see their schedules, cron jobs, or automated tasks.' },
   'toggle-schedule': { provider: null, desc: 'Enable or disable a schedule. Use when the user wants to turn a schedule on or off.' },
   'delete-schedule': { provider: null, desc: 'Delete a schedule permanently.' },
@@ -164,11 +210,12 @@ When the user talks about **competitive ads**, **ad libraries**, **spying on com
 
 ## Delegation Principles
 
-1. **Delegate — don't DIY**: Use your agent tools for all specialized work. Never write emails, posts, or outreach messages yourself — call the right agent.
-2. **Go parallel**: When a task requires multiple agents (e.g., "research this person and draft a LinkedIn message to them"), call all relevant agents simultaneously — not one after another.
-3. **Be specific when delegating**: Give each agent a complete, unambiguous task with all relevant context — names, URLs, tone requirements, goals. Vague instructions produce vague results.
-4. **Synthesize**: Combine the agents' responses into one coherent reply for the user. Don't dump raw agent outputs.
-5. **Preserve structured blocks**: When a sub-agent returns \`:::sources\` or \`:::question\` blocks, include them verbatim in your response — never strip, rewrite, or summarize them. The frontend renders these as interactive UI components.
+1. **Research — direct tools first**: For lookups and single-query research, use **web-search** and **deep-search** yourself — they are fastest. Call **research-agent** only when you need multi-step investigation and a synthesized report with **:::sources**.
+2. **Delegate — don't DIY**: Use your agent tools for specialized work. Never write emails, posts, or outreach messages yourself — call the right agent.
+3. **Go parallel**: When a task requires multiple agents (e.g., "research this person and draft a LinkedIn message to them"), call all relevant agents simultaneously — not one after another.
+4. **Be specific when delegating**: Give each agent a complete, unambiguous task with all relevant context — names, URLs, tone requirements, goals. Vague instructions produce vague results.
+5. **Synthesize**: Combine the agents' responses into one coherent reply for the user. Don't dump raw agent outputs.
+6. **Preserve structured blocks**: When a sub-agent returns \`:::sources\` or \`:::question\` blocks, include them verbatim in your response — never strip, rewrite, or summarize them. The frontend renders these as interactive UI components.
 
 ## Scheduling
 
@@ -177,7 +224,7 @@ When the user wants something to run automatically (e.g. "every morning at 9am c
 - "every Monday at 9am" → \`0 9 * * 1\`
 - "every hour" → \`0 * * * *\`
 - "every day at noon" → \`0 12 * * *\`
-The agentPrompt should be a clear instruction describing what to do (e.g. "Check all my communication channels, pull revenue data, and give me insights on what happened the day prior"). Use **list-schedules** when they ask to see their schedules, **toggle-schedule** to enable/disable, **delete-schedule** to remove.
+For **agent_prompt** schedules, the prompt should be a clear instruction (e.g. "Check all my communication channels…"). For **workflow** schedules, pass **workflowDefinitionId** from **build-workflow** instead of an agent prompt. Use **build-workflow** / **run-workflow** for one-off automations. Use **list-schedules** when they ask to see their schedules, **toggle-schedule** to enable/disable, **delete-schedule** to remove.
 
 ## Memory Protocol
 

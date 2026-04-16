@@ -2,6 +2,7 @@ import { Agent } from '@mastra/core/agent'
 import type { Workspace } from '@mastra/core/workspace'
 import { AgentModels } from '@/constants/models'
 import { webSearchTool } from '../tools/webSearchTool'
+import { deepSearchTool } from '../tools/deepSearchTool'
 import { createMem0RecallTool } from '../tools/mem0Recall'
 import { createMem0MemorizeTool } from '../tools/mem0Memorize'
 import { RESEARCH_PROMPT } from '../prompts'
@@ -16,6 +17,7 @@ export function createResearchAgent(userId: string, workspace?: Workspace) {
     workspace,
     tools: {
       webSearch: webSearchTool,
+      deepSearch: deepSearchTool,
       mem0Recall: createMem0RecallTool(userId),
       mem0Memorize: createMem0MemorizeTool(userId),
     },

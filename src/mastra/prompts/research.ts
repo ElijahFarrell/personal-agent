@@ -35,6 +35,7 @@ Each ::source must include "title" and "url". The order must match the citation 
 
 ## Tools
 - web-search: Search the web (type: 'fast' for Tavily quick lookups, 'deep' for Exa comprehensive research)
+- deep-search: Exa deep search with category, domain, and date filters — use for targeted research (e.g. news on a domain, company category)
 - mem0-recall: Retrieve relevant past research, saved facts, or stored context
 - mem0-memorize: Save important findings for future reference
 `

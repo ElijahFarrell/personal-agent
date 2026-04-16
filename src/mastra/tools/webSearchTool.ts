@@ -8,15 +8,17 @@ import { search } from '@/services/searchService'
 export const webSearchTool = createTool({
   id: 'web-search',
   description:
-    'Search the web for current information, news, research, or facts. ' +
-    'Use for research before drafting content or outreach, finding recent news, or validating claims.',
+    'Fast web search (Tavily) or Exa deep search. **Prefer this tool** for most lookups — it is faster than delegating to the research-agent. ' +
+    'Use **fast** (default) for quick facts, news, and validation. Use **deep** (Exa) for richer page content, company research, and prospect background before outreach.',
   inputSchema: z.object({
     query: z.string().describe('Search query'),
     type: z
       .enum(['fast', 'deep'])
       .optional()
       .default('fast')
-      .describe("'fast' for quick lookups, 'deep' for research with richer content"),
+      .describe(
+        "'fast' = Tavily (quick). 'deep' = Exa with extracted text — use for substantive research on a company or person."
+      ),
   }),
   execute: async ({ query, type }) => {
     try {

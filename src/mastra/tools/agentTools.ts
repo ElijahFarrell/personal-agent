@@ -32,8 +32,34 @@ import { createLeadAgent } from '../agents/leadAgent'
 import type { ResolvedPlatformConfig } from '@/platform/niche/types'
 import { AGENT_CATALOG } from '@/platform/agent-catalog'
 import { createWorkspaceTools } from './workspaceTools'
+import { createProspectTools } from './prospectTools'
+import {
+  buildWorkflowDefinitionFromPlan,
+  generateWorkflowPlanFromNl,
+} from '@/services/nlWorkflowService'
+import { compileWorkflow, type WorkflowDefinition } from '@/services/workflowCompilerService'
+import { resolvePlatformForClerkUser } from '@/platform/niche'
+import { ensureLegalAcceptance } from '@/services/compliance/legalGate'
+import { config } from '@/lib/config'
+import { SCHEDULE_ACTION_TYPE, WORKFLOW_RUN_STATUS } from '@convex/constants'
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
+
+function workflowBuilderEnabled(
+  resolved: ResolvedPlatformConfig | undefined
+): boolean {
+  if (!resolved) return true
+  if (resolved.fullPlatformAccess) return true
+  return resolved.effectiveFeatures.workflowBuilder === true
+}
+
+function scheduledTasksEnabled(
+  resolved: ResolvedPlatformConfig | undefined
+): boolean {
+  if (!resolved) return true
+  if (resolved.fullPlatformAccess) return true
+  return resolved.effectiveFeatures.scheduledTasks === true
+}
 
 const taskSchema = z.object({
   task: z.string().describe('Complete description of the task to perform, including all relevant context (names, URLs, tone, goals)'),
@@ -136,9 +162,9 @@ export function createAgentTools(
     researchAgent: createTool({
       id: 'research-agent',
       description:
-        'Delegate research tasks to the Research Agent. Use for: web searches, fact-finding, ' +
-        'market research, competitive analysis, news lookups, and topic deep-dives. ' +
-        'Returns structured findings with cited sources.',
+        'Delegate complex, multi-step research to the Research Agent. Use when the task requires ' +
+        'multiple searches, cross-referencing sources, and a structured report with citations. ' +
+        'For quick lookups or single-query research, use your direct **webSearch** or **deepSearch** tools instead — they are much faster.',
       inputSchema: taskSchema,
       execute: async (input) => {
         try {
@@ -556,16 +582,34 @@ export function createAgentTools(
     createSchedule: createTool({
       id: 'create-schedule',
       description:
-        'Create a recurring schedule (cron job) for the user. Use when the user wants something to run automatically at a specific time, e.g. "every morning at 9am check my channels", "every Monday send a summary", "hourly pull revenue data". ' +
-        'Cron format: minute hour day-of-month month day-of-week (e.g. "0 9 * * *" = 9am daily, "0 9 * * 1" = 9am Mondays). Timezone defaults to America/New_York.',
-      inputSchema: z.object({
-        name: z.string().describe('Short name for the schedule'),
-        description: z.string().optional().describe('What this schedule does'),
-        cronExpression: z.string().describe('Cron expression, e.g. "0 9 * * *" for 9am daily'),
-        timezone: z.string().optional().describe('IANA timezone, e.g. America/New_York'),
-        agentPrompt: z.string().describe('The prompt/instruction to run (e.g. "Check all my communication channels, pull revenue data, and give me insights on what happened the day prior")'),
-        autoApprove: z.boolean().optional().describe('If true, auto-approve actions without asking. Default false.'),
-      }),
+        'Create a recurring schedule (cron job). Two modes: (1) **Agent prompt** — pass agentPrompt and the orchestrator runs that instruction on each tick. ' +
+        '(2) **Saved workflow** — pass workflowDefinitionId (from build-workflow) to run a compiled workflow graph on each tick. ' +
+        'Cron format: minute hour day-of-month month day-of-week (e.g. "0 9 * * *" = 9am daily). Timezone defaults to America/New_York.',
+      inputSchema: z
+        .object({
+          name: z.string().describe('Short name for the schedule'),
+          description: z.string().optional().describe('What this schedule does'),
+          cronExpression: z.string().describe('Cron expression, e.g. "0 9 * * *" for 9am daily'),
+          timezone: z.string().optional().describe('IANA timezone, e.g. America/New_York'),
+          workflowDefinitionId: z
+            .string()
+            .optional()
+            .describe('Convex workflow definition id — when set, runs that workflow instead of an agent prompt'),
+          agentPrompt: z
+            .string()
+            .optional()
+            .describe('Instruction for the orchestrator each run (required if workflowDefinitionId is omitted)'),
+          workflowInputData: z
+            .record(z.unknown())
+            .optional()
+            .describe('Input payload for workflow runs when using workflowDefinitionId'),
+          autoApprove: z.boolean().optional().describe('If true, auto-approve actions without asking. Default false.'),
+        })
+        .refine(
+          (data) =>
+            Boolean(data.workflowDefinitionId?.trim()) || Boolean(data.agentPrompt?.trim()),
+          { message: 'Provide either workflowDefinitionId or agentPrompt.' }
+        ),
       execute: async (input) => {
         try {
           const dbUser = await convex.query(api.users.getUserByClerkUserId, {
@@ -578,23 +622,52 @@ export function createAgentTools(
             input.timezone ?? 'America/New_York'
           )
 
-          const scheduleId = await convex.mutation(api.schedules.create, {
+          const wfId = input.workflowDefinitionId?.trim()
+          let action:
+            | {
+                type: typeof SCHEDULE_ACTION_TYPE.WORKFLOW
+                workflowId: Id<'workflowDefinitions'>
+                inputData?: Record<string, unknown>
+              }
+            | {
+                type: typeof SCHEDULE_ACTION_TYPE.AGENT_PROMPT
+                agentPrompt: string
+              }
+
+          if (wfId) {
+            const def = await convex.query(api.workflowDefinitions.getById, {
+              workflowId: wfId as Id<'workflowDefinitions'>,
+            })
+            if (!def || def.tenantId !== dbUser.tenantId) {
+              return 'Workflow definition not found or access denied.'
+            }
+            action = {
+              type: SCHEDULE_ACTION_TYPE.WORKFLOW,
+              workflowId: wfId as Id<'workflowDefinitions'>,
+              inputData: input.workflowInputData ?? {},
+            }
+          } else {
+            action = {
+              type: SCHEDULE_ACTION_TYPE.AGENT_PROMPT,
+              agentPrompt: input.agentPrompt!,
+            }
+          }
+
+          await convex.mutation(api.schedules.create, {
             tenantId: dbUser.tenantId,
             userId: dbUser._id,
             name: input.name,
             description: input.description,
             cronExpression: input.cronExpression,
             timezone: input.timezone ?? 'America/New_York',
-            action: {
-              type: 'agent_prompt',
-              agentPrompt: input.agentPrompt,
-            },
+            action,
             isEnabled: true,
             autoApprove: input.autoApprove ?? false,
             nextRunAt,
           })
 
-          return `Schedule "${input.name}" created. It will run ${input.cronExpression} (${input.timezone ?? 'America/New_York'}). Next run: ${new Date(nextRunAt).toLocaleString()}.`
+          const mode = wfId ? 'saved workflow' : 'orchestrator prompt'
+          return `Schedule "${input.name}" created (${mode}). It will run ${input.cronExpression} (${input.timezone ?? 'America/New_York'}). Next run: ${new Date(nextRunAt).toLocaleString()}.`
         } catch (error) {
           const message = error instanceof Error ? error.message : 'Unknown error'
           return `Failed to create schedule: ${message}`
@@ -685,11 +758,245 @@ export function createAgentTools(
     }),
   }
 
+  const workflowChatTools = {
+    buildWorkflow: createTool({
+      id: 'build-workflow',
+      description:
+        'Design and save an automation workflow from a natural language description. ' +
+        'Optionally creates a recurring schedule when the plan includes timing. Returns workflow id and plan summary.',
+      inputSchema: z.object({
+        prompt: z.string().describe('What the workflow should do, in plain English'),
+        createScheduleFromPlan: z
+          .boolean()
+          .optional()
+          .describe('If true and the plan includes a schedule, persist a cron schedule (requires scheduled tasks feature)'),
+      }),
+      execute: async (input) => {
+        try {
+          if (!config.gateway.apiKey) {
+            return 'AI gateway is not configured; cannot build workflows.'
+          }
+          if (!workflowBuilderEnabled(platformResolved)) {
+            return 'Workflow builder is not enabled for your organization.'
+          }
+
+          const dbUser = await convex.query(api.users.getUserByClerkUserId, {
+            clerkUserId: userId,
+          })
+          if (!dbUser) return 'User not found.'
+
+          const plan = await generateWorkflowPlanFromNl(input.prompt)
+          const definition = buildWorkflowDefinitionFromPlan(plan)
+
+          const workflowId = await convex.mutation(api.workflowDefinitions.create, {
+            tenantId: dbUser.tenantId,
+            userId: dbUser._id,
+            name: plan.name,
+            description: plan.description,
+            definition,
+            isPublished: true,
+          })
+
+          let scheduleNote = ''
+          if (
+            input.createScheduleFromPlan &&
+            plan.schedule &&
+            scheduledTasksEnabled(platformResolved)
+          ) {
+            const nextRunAt = getNextRunAt(
+              plan.schedule.cronExpression,
+              plan.schedule.timezone
+            )
+            const action =
+              plan.schedule.runMode === 'workflow'
+                ? {
+                    type: SCHEDULE_ACTION_TYPE.WORKFLOW,
+                    workflowId,
+                    inputData: {},
+                  }
+                : {
+                    type: SCHEDULE_ACTION_TYPE.AGENT_PROMPT,
+                    agentPrompt:
+                      plan.schedule.agentPrompt ??
+                      `Run the user's recurring task: ${plan.description}`,
+                    inputData: {},
+                  }
+
+            const scheduleId = await convex.mutation(api.schedules.create, {
+              tenantId: dbUser.tenantId,
+              userId: dbUser._id,
+              name: `${plan.name} (schedule)`,
+              description: plan.description,
+              cronExpression: plan.schedule.cronExpression,
+              timezone: plan.schedule.timezone,
+              action,
+              isEnabled: true,
+              autoApprove: false,
+              nextRunAt,
+            })
+            scheduleNote = ` Schedule created: ${scheduleId}.`
+          } else if (input.createScheduleFromPlan && plan.schedule && !scheduledTasksEnabled(platformResolved)) {
+            scheduleNote =
+              ' (Schedule was not created: scheduled tasks are not enabled for your organization.)'
+          }
+
+          return (
+            `Saved workflow **${plan.name}** [workflow id: ${workflowId}].${scheduleNote}\n\n` +
+            `Steps: ${plan.steps.map((s) => `${s.label} (${s.agentId})`).join(' → ')}\n` +
+            (plan.description ? `\n${plan.description}` : '')
+          )
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Unknown error'
+          return `Failed to build workflow: ${message}`
+        }
+      },
+    }),
+
+    runWorkflow: createTool({
+      id: 'run-workflow',
+      description:
+        'Run a saved workflow definition once (same engine as the Workflows UI). Pass the workflow definition id from build-workflow.',
+      inputSchema: z.object({
+        workflowDefinitionId: z.string(),
+        inputData: z.record(z.unknown()).optional(),
+        autoApprove: z.boolean().optional(),
+      }),
+      execute: async (input) => {
+        try {
+          if (!workflowBuilderEnabled(platformResolved)) {
+            return 'Workflow builder is not enabled for your organization.'
+          }
+
+          const dbUser = await convex.query(api.users.getUserByClerkUserId, {
+            clerkUserId: userId,
+          })
+          if (!dbUser) return 'User not found.'
+
+          const workflowDefinitionId = input.workflowDefinitionId as Id<'workflowDefinitions'>
+          const workflowDef = await convex.query(api.workflowDefinitions.getById, {
+            workflowId: workflowDefinitionId,
+          })
+          if (!workflowDef || workflowDef.tenantId !== dbUser.tenantId) {
+            return 'Workflow not found or access denied.'
+          }
+
+          await ensureLegalAcceptance({
+            tenantId: dbUser.tenantId,
+            userId: dbUser._id,
+          })
+
+          const inputData = input.inputData ?? {}
+          const autoApprove = input.autoApprove ?? false
+
+          const runId = await convex.mutation(api.workflowRuns.create, {
+            workflowDefinitionId,
+            tenantId: dbUser.tenantId,
+            userId: dbUser._id,
+            inputData,
+            autoApprove,
+          })
+
+          const platformResolvedInner = await resolvePlatformForClerkUser(
+            convex,
+            String(dbUser.clerkUserId),
+            dbUser.tenantId
+          )
+          const workflow = await compileWorkflow(
+            workflowDef.definition as WorkflowDefinition,
+            {
+              userId: String(dbUser.clerkUserId),
+              tenantId: String(dbUser.tenantId),
+              workflowId: `chat-tool-${workflowDefinitionId}`,
+              platformResolved: platformResolvedInner,
+              creditsCheck: async (tid, minRequired) => {
+                const balance = await convex.query(api.credits.getCreditBalance, {
+                  tenantId: tid as typeof dbUser.tenantId,
+                })
+                return balance >= minRequired
+              },
+            }
+          )
+
+          await convex.mutation(api.workflowRuns.updateStatus, {
+            runId,
+            status: WORKFLOW_RUN_STATUS.RUNNING,
+          })
+
+          const w = workflow as {
+            createRun: (opts?: { runId?: string }) => Promise<{
+              runId?: string
+              start: (opts: { inputData?: unknown }) => Promise<{
+                status: string
+                result?: unknown
+                suspended?: string[]
+              }>
+              resume: (opts: {
+                resumeData: { approved: boolean }
+              }) => Promise<{ status: string; result?: unknown }>
+            }>
+          }
+          const run = await w.createRun({ runId: String(runId) })
+          const result = await run.start({
+            inputData: { value: inputData },
+          })
+
+          const status =
+            result.status === 'success'
+              ? WORKFLOW_RUN_STATUS.SUCCESS
+              : result.status === 'suspended'
+                ? WORKFLOW_RUN_STATUS.SUSPENDED
+                : WORKFLOW_RUN_STATUS.FAILED
+
+          await convex.mutation(api.workflowRuns.updateStatus, {
+            runId,
+            status,
+            mastraRunId: run.runId ?? String(runId),
+            result: result.result,
+            suspendedAt: result.suspended?.[0],
+            completedAt: Date.now(),
+          })
+
+          if (result.status === 'suspended' && autoApprove) {
+            const resumed = await run.resume({
+              resumeData: { approved: true },
+            })
+            const resumedStatus =
+              resumed.status === 'success'
+                ? WORKFLOW_RUN_STATUS.SUCCESS
+                : resumed.status === 'suspended'
+                  ? WORKFLOW_RUN_STATUS.SUSPENDED
+                  : WORKFLOW_RUN_STATUS.FAILED
+            await convex.mutation(api.workflowRuns.updateStatus, {
+              runId,
+              status: resumedStatus,
+              result: resumed.result,
+              completedAt: Date.now(),
+            })
+            return `Workflow run ${runId} resumed after suspend. Status: ${resumed.status}. Result: ${JSON.stringify(resumed.result ?? {})}`
+          }
+
+          return `Workflow run ${runId} finished with status **${result.status}**.\n\n${JSON.stringify(result.result ?? {}, null, 2)}`
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Unknown error'
+          return `Failed to run workflow: ${message}`
+        }
+      },
+    }),
+  }
+
   const filtered = platformResolved
     ? filterToolsByPlatformConfig(built, platformResolved)
     : built
+
+  const prospectToolBag = createProspectTools(userId)
+  const workflowToolBag = workflowBuilderEnabled(platformResolved)
+    ? workflowChatTools
+    : {}
+
   return {
     ...filtered,
+    ...prospectToolBag,
+    ...workflowToolBag,
     ...createWorkspaceTools(userId, tenantId),
   }
 }
