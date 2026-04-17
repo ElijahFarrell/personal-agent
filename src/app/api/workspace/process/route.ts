@@ -15,6 +15,53 @@ import { qdrantTenantKeyFromConvexTenantId } from '@/lib/workspaceTenantKey'
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
 
+const GENERIC_PROCESSING_ERROR =
+  'We could not process this document right now. Please try again in a moment.'
+
+/**
+ * Map raw extraction errors to a short, user-friendly message we are willing to show in the UI.
+ * The full error is still logged server-side for debugging.
+ */
+function toUserFacingProcessingError(err: unknown): string {
+  const raw = err instanceof Error ? err.message : String(err ?? '')
+  const lower = raw.toLowerCase()
+
+  if (
+    lower.includes('cannot find module') ||
+    lower.includes('module_not_found') ||
+    lower.includes('require stack')
+  ) {
+    return GENERIC_PROCESSING_ERROR
+  }
+  if (lower.includes('apify api is not configured')) {
+    return 'YouTube transcription is not configured. Please contact support.'
+  }
+  if (
+    lower.includes('no transcript') ||
+    lower.includes('transcript text was empty') ||
+    lower.includes('no transcript data returned')
+  ) {
+    return 'No transcript is available for this video.'
+  }
+  if (lower.includes('tavily_api_key')) {
+    return 'Web extraction is not configured. Please contact support.'
+  }
+  if (lower.includes('failed to download pdf') || lower.includes('failed to download file')) {
+    return 'Could not download the file. Please re-upload and try again.'
+  }
+  if (lower.includes('no text extracted from pdf')) {
+    return 'We could not extract any text from this PDF.'
+  }
+  if (lower.includes('unsupported document type')) {
+    return 'This document type is not supported yet.'
+  }
+
+  if (!raw.trim() || raw.length > 200 || /\n|\bat\s.+:\d+:\d+/.test(raw)) {
+    return GENERIC_PROCESSING_ERROR
+  }
+  return raw
+}
+
 async function processDocument(
   docId: Id<'workspaceDocuments'>,
   tid: Id<'tenants'>,
@@ -115,9 +162,10 @@ async function processDocument(
       chunkCount: chunks,
     })
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Processing failed'
+    const rawMessage = err instanceof Error ? err.message : 'Processing failed'
+    const userMessage = toUserFacingProcessingError(err)
     // #region agent log
-    console.log('[DBG:a3b5eb] processDocument CATCH', JSON.stringify({message, errName:(err as Error)?.constructor?.name, stack:(err as Error)?.stack?.slice(0,500)}))
+    console.log('[DBG:a3b5eb] processDocument CATCH', JSON.stringify({rawMessage, userMessage, errName:(err as Error)?.constructor?.name, stack:(err as Error)?.stack?.slice(0,500)}))
     // #endregion
     console.error(`[workspace/process] docId=${docId}`, err)
     try {
@@ -125,7 +173,7 @@ async function processDocument(
         tenantId: tid,
         docId,
         status: WORKSPACE_DOC_STATUS.ERROR,
-        processingError: message,
+        processingError: userMessage,
       })
     } catch (updateErr) {
       console.error('[workspace/process] failed to write error status', updateErr)
