@@ -7,7 +7,7 @@ import { BLOG_POSTS } from './posts'
 export const metadata: Metadata = {
   title: 'Blog',
   description:
-    'Guides and updates from Shiloh AI — real estate AI, GEO, and automation.',
+    'Guides and updates from Shiloh AI — AI consulting, production systems, GEO, and automation.',
   openGraph: {
     title: 'Blog · Shiloh AI',
     url: `${getMarketingSiteUrl()}/blog`,
@@ -20,7 +20,7 @@ export default function BlogIndexPage() {
       <header className="text-center">
         <p className="text-sm font-medium text-brand-300">
           We publish block-structured, question-led articles so buyers and LLMs
-          can cite Shiloh AI on speed-to-lead and automation topics.
+          can cite Shiloh AI on AI consulting, automation, and ops topics.
         </p>
         <h1 className="font-display mt-6 text-4xl font-bold tracking-tight text-white md:text-5xl">
           Content hub

@@ -3,6 +3,8 @@
  * Employer branding: Microsoft + Fortune 10 umbrella for prior big-tech work.
  */
 
+import { bookCallUrl } from '@/lib/marketing/site'
+
 export type TestimonialItem = {
   /** Stable key for React / carousel */
   id: string
@@ -103,7 +105,8 @@ export const credibilityBadges: readonly CredibilityBadge[] = [
   },
   {
     title: '10+ AI projects delivered',
-    description: 'Across real estate, healthcare, nonprofits, finance, education, and more.',
+    description:
+      'Across real estate, healthcare, nonprofits, finance, education, and more.',
   },
   {
     title: '$10K+ in AI consulting revenue',
@@ -135,5 +138,256 @@ export const founderAbout = {
     'Generated $13K+ in revenue for a single client in one engagement',
   ],
   closing:
-    'After seeing the same pattern — businesses drowning in tools that do not talk to each other, losing leads, wasting hours on work AI should handle — he built Shiloh AI to fix it. Not another SaaS dashboard. An AI Operating System that actually does the work.',
+    'After seeing the same pattern — businesses drowning in tools that do not talk to each other, losing leads, wasting hours on work AI should handle — he built Shiloh AI to fix it. Not another slide deck. An AI consulting practice that ships production systems: tailored deployments of our platform, or custom integrations into the stack you already run.',
+} as const
+
+/** Home hero — static text; CTAs from heroCtas() */
+export const heroCopy = {
+  badge: 'AI consulting',
+  title: 'AI consulting that actually ships',
+  subtitle:
+    'From audit to roadmap to production — we deploy AI that fits your ops, your data, and your risk profile. Start from our platform or plug agents into the tools you already use.',
+} as const
+
+export function heroCtas(): {
+  primaryCta: { label: string; href: string }
+  secondaryCta: { label: string; href: string }
+} {
+  return {
+    primaryCta: { label: 'Book a strategy call', href: bookCallUrl() },
+    secondaryCta: { label: 'Get a free AI audit', href: '/audit' },
+  }
+}
+
+export type ValuePropId =
+  | 'platform'
+  | 'custom'
+  | 'integrations'
+  | 'guardrails'
+  | 'engineering'
+  | 'roi'
+
+export const valuePropsSection = {
+  heading: 'What you get with Shiloh AI',
+  subheading:
+    'Consulting outcomes backed by a real production platform — not generic prompts or one-off Zaps.',
+  items: [
+    {
+      id: 'platform' as const,
+      title: 'Platform head-start',
+      body:
+        'Start from our production platform — unified inbox, agents, workflows, and CRM sync — not a blank repo.',
+    },
+    {
+      id: 'custom' as const,
+      title: 'Custom builds when you need them',
+      body:
+        'Python, LLMs, RAG, voice — engineered for your edge cases, not Zapier-only glue.',
+    },
+    {
+      id: 'integrations' as const,
+      title: 'Integrates with your stack',
+      body:
+        'HubSpot, Salesforce, Follow Up Boss, Gmail, Slack, Twilio, Retell, and more — we meet you where your data lives.',
+    },
+    {
+      id: 'guardrails' as const,
+      title: 'Agents with guardrails',
+      body:
+        'Approvals, logging, and audit trails — built for how SMBs and ops teams actually run.',
+    },
+    {
+      id: 'engineering' as const,
+      title: 'Production engineering',
+      body:
+        'Ex-Microsoft shipping standards — the same bar we use for client systems.',
+    },
+    {
+      id: 'roi' as const,
+      title: 'Measurable ROI',
+      body:
+        'Hours saved, revenue added, cost cut — we scope what success looks like before we build.',
+    },
+  ] as const,
+}
+
+export const engagementsCatalog = {
+  badge: 'Engagements',
+  heading: 'Ways to work together',
+  subheading:
+    'Every engagement picks the pieces you need — we do not force-fit the whole platform.',
+  items: [
+    {
+      name: 'AI Audit & Roadmap',
+      blurb:
+        'Fixed-scope discovery: where AI moves your P&L, what to build first, and whether to lead with our platform or integrations into your stack.',
+    },
+    {
+      name: 'Tailored platform deployment',
+      blurb:
+        'We deploy the Shiloh platform — branded and configured for your workflows, data model, and channels.',
+    },
+    {
+      name: 'Custom integrations',
+      blurb:
+        'AI agents and automations that slot into your existing CRM, inbox, and calendar — no migration required.',
+    },
+    {
+      name: 'Ongoing AI partner',
+      blurb:
+        'Fractional retainer: ship iterations, monitor quality, and expand use cases as your business changes.',
+    },
+  ] as const,
+}
+
+export const deliveryModelsSection = {
+  heading: 'Two ways we deliver',
+  subheading:
+    'Same consulting rigor — choose the model that fits your stack and timeline.',
+  footer:
+    'Not sure which fits? The free AI audit tells you.',
+  models: [
+    {
+      id: 'platform' as const,
+      title: 'Start from our platform',
+      body:
+        'We deploy the Shiloh platform — unified inbox, agents, workflows, voice, and CRM sync — and tailor it to your brand, data, and process. Best when you want one intelligence layer or are ready to consolidate tools.',
+    },
+    {
+      id: 'integrate' as const,
+      title: 'Integrate into your existing stack',
+      body:
+        'We build custom AI agents and automations inside HubSpot, Salesforce, Follow Up Boss, Gmail, Slack, Twilio, and more. Best when your stack works and you need the AI layer without a rip-and-replace.',
+    },
+  ] as const,
+}
+
+export const platformCapabilitiesSection = {
+  badge: 'Shiloh platform',
+  heading: 'What ships out of the box',
+  subheading:
+    'When you deploy with us, you inherit production-grade building blocks — tailored to what you actually need.',
+  items: [
+    {
+      title: 'Unified multichannel inbox',
+      body: 'Email, SMS, DMs, and voice in one queue with AI triage.',
+    },
+    {
+      title: 'Agent runtime',
+      body: 'Policy-bound actions with human approval where you want it.',
+    },
+    {
+      title: 'Workflow engine',
+      body: 'Automations, scheduled jobs, and handoffs between agents and people.',
+    },
+    {
+      title: 'AI voice',
+      body: 'Inbound and outbound patterns — qualify, answer FAQs, book appointments.',
+    },
+    {
+      title: 'CRM sync & data model',
+      body: 'Keep fields, tasks, and pipeline hygiene aligned with conversations.',
+    },
+    {
+      title: 'Secure integrations',
+      body: 'OAuth connections and audit-friendly logging for production use.',
+    },
+  ] as const,
+}
+
+export const integrationTargets: readonly string[] = [
+  'HubSpot',
+  'Salesforce',
+  'Follow Up Boss',
+  'Gmail',
+  'Slack',
+  'Twilio',
+  'Retell',
+  'Google Calendar',
+  'Microsoft 365',
+]
+
+export const industriesList: readonly {
+  slug: string
+  label: string
+  description: string
+  proof?: string
+}[] = [
+  {
+    slug: 'real-estate',
+    label: 'Real estate',
+    description:
+      'Lead qualification, reactivation, and multichannel follow-up for brokerages and investors.',
+    proof: 'Wholesale client: CRM savings + AI lead manager ROI',
+  },
+  {
+    slug: 'healthcare',
+    label: 'Healthcare',
+    description:
+      'Voice and messaging workflows that reduce admin burden and keep patients on track.',
+    proof: 'Surgery center: automated pre/post-op outreach',
+  },
+  {
+    slug: 'nonprofits',
+    label: 'Nonprofits',
+    description:
+      'Grant writing and donor-facing AI that scales capacity without adding headcount.',
+    proof: 'Nonprofit: 10+ hours saved per grant submission',
+  },
+  {
+    slug: 'finance',
+    label: 'Finance',
+    description:
+      'RAG and advisory assistants that turn policies and content into reliable answers.',
+    proof: 'Coaching & finance chatbots from static content',
+  },
+  {
+    slug: 'education',
+    label: 'Education',
+    description:
+      'Interactive learning experiences and support bots grounded in your curriculum.',
+    proof: 'Education RAG deployments',
+  },
+  {
+    slug: 'professional-services',
+    label: 'Professional services',
+    description:
+      'Ops automation and client-facing agents for firms that live in email and CRM.',
+    proof: 'Cross-industry automation and integrations',
+  },
+] as const
+
+export const processStepsSection = {
+  heading: 'How engagements run',
+  subheading: 'Clear phases — no black box.',
+  steps: [
+    {
+      step: 1,
+      title: 'Audit',
+      body: 'Map workflows, data, risk, and ROI — platform vs. integrations.',
+    },
+    {
+      step: 2,
+      title: 'Design',
+      body: 'Architecture, guardrails, integrations, and success metrics.',
+    },
+    {
+      step: 3,
+      title: 'Build',
+      body: 'Ship to staging, test with real users, harden for production.',
+    },
+    {
+      step: 4,
+      title: 'Operate',
+      body: 'Monitor quality, iterate, and expand use cases with your team.',
+    },
+  ] as const,
+}
+
+export const ctaCopy = {
+  heading: 'Let’s figure out where AI actually pays off for your business',
+  subheading:
+    'Get a free AI audit — personalized opportunities, time savings, and a clear action plan.',
+  primaryLabel: 'Get your free AI audit',
+  secondaryLabel: 'Book a strategy call',
 } as const

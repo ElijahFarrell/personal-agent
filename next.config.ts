@@ -18,6 +18,15 @@ function marketingHostHasPattern(): string {
 }
 
 const nextConfig: NextConfig = {
+  async redirects() {
+    return [
+      {
+        source: '/features',
+        destination: '/services',
+        permanent: true,
+      },
+    ]
+  },
   serverExternalPackages: [
     '@mastra/core',
     '@mastra/ai-sdk',

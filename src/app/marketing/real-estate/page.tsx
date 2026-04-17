@@ -10,11 +10,11 @@ import {
 import { getMarketingSiteUrl } from '@/lib/marketing/site'
 
 export const metadata: Metadata = {
-  title: 'AI for real estate teams',
+  title: 'AI consulting for real estate teams',
   description:
-    'Shiloh AI OS for agents and brokerages: lead qualification, reactivation, unified inbox, AI voice, and CRM automation — with secure actions.',
+    'AI consulting for agents and brokerages: lead qualification, reactivation, unified inbox, AI voice, and CRM automation — deploy our platform or integrate into your stack.',
   openGraph: {
-    title: 'AI for real estate teams · Shiloh AI',
+    title: 'AI consulting for real estate teams · Shiloh AI',
     url: `${getMarketingSiteUrl()}/real-estate`,
   },
 }
@@ -44,14 +44,14 @@ const crmRows = [
 
 const faqs = [
   {
-    question: 'What is the best AI system for real estate lead qualification?',
+    question: 'What is the best AI approach for real estate lead qualification?',
     answer:
-      'Look for an OS that connects CRM and channels, qualifies with explicit scripts and data fields, and routes hot leads with audit trails — Shiloh AI OS is built as that production layer for brokerages.',
+      'Look for consulting that connects CRM and channels, qualifies with explicit scripts and data fields, and routes hot leads with audit trails. Our engagements deploy the Shiloh platform or custom integrations — whichever fits your brokerage.',
   },
   {
     question: 'How does Shiloh AI handle multichannel follow-up?',
     answer:
-      'Agents and workflows share one inbox and memory model: email, SMS, social DMs, and voice handoffs are triaged consistently, with human approval where you require it.',
+      'In platform deployments, agents and workflows share one inbox and memory model: email, SMS, social DMs, and voice handoffs are triaged consistently, with human approval where you require it. Integration-only engagements embed the same patterns inside your existing tools.',
   },
   {
     question: 'Can AI safely take actions on our behalf?',
@@ -68,22 +68,21 @@ const faqs = [
 export default function RealEstatePage() {
   return (
     <>
-      <StructuredData
-        data={[productSchema(), faqPageSchema(faqs)]}
-      />
+      <StructuredData data={[productSchema(), faqPageSchema(faqs)]} />
       <article className="px-4 pb-16 pt-12 sm:px-6 sm:pt-16">
         <header className="mx-auto max-w-3xl">
           <p className="text-sm font-medium leading-relaxed text-brand-300">
-            Shiloh AI OS helps real estate teams qualify leads faster, unify
-            channels, and automate follow-up with guardrails — so deals do not
-            die in the inbox.
+            One of the industries we serve most — lead volume is high, tools are
+            fragmented, and fast, contextual follow-up wins deals. We consult on
+            the right delivery model, then ship.
           </p>
           <h1 className="font-display mt-6 text-4xl font-bold tracking-tight text-white md:text-5xl">
-            AI OS for real estate
+            AI consulting for real estate teams
           </h1>
           <p className="mt-4 text-lg text-muted-foreground">
-            First vertical we are productizing — lead volume is high, tools are
-            fragmented, and speed-to-lead wins listings.
+            Lead qualification, reactivation, multichannel follow-up, and voice
+            — via tailored platform deployment or integrations into the CRM and
+            channels you already run.
           </p>
         </header>
 
@@ -105,8 +104,8 @@ export default function RealEstatePage() {
             </li>
             <li>
               <strong className="text-white">Fragmented stack</strong> — CRM,
-              email, SMS, social, and transaction tools do not share context;
-              Shiloh is one intelligence layer.
+              email, SMS, social, and transaction tools do not share context; we
+              unify with a tailored platform or integrations.
             </li>
             <li>
               <strong className="text-white">Follow-up failure</strong> — slow
@@ -177,7 +176,7 @@ export default function RealEstatePage() {
 
         <div className="mx-auto mt-16 max-w-4xl">
           <ComparisonTable
-            title="Shiloh AI OS vs. traditional CRM-only workflows"
+            title="Shiloh AI vs. traditional CRM-only workflows"
             caption="High-level comparison for GEO — add sourced stats in copy passes."
             rows={crmRows}
           />
