@@ -31,6 +31,9 @@ function validateStage(stage: number, d: AuditFormData): string | null {
       if (d.role === 'other' && !d.roleOther.trim())
         return 'Please specify your role.'
       if (!d.teamSize) return 'Select your team size.'
+      if (!d.industry) return 'Select your industry.'
+      if (d.industry === 'other' && !d.industryOther.trim())
+        return 'Please describe your industry.'
       return null
     case 2:
       if (!d.topTasks.trim()) return 'Tell us about your top daily tasks.'
@@ -124,6 +127,8 @@ export function AuditWizard() {
           email: data.email,
           role: data.role,
           roleOther: data.roleOther || undefined,
+          industry: data.industry,
+          industryOther: data.industryOther || undefined,
           teamSize: data.teamSize,
           topTasks: data.topTasks,
           weeklyManualHours: data.weeklyManualHours,

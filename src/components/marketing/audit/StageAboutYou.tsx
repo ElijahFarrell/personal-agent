@@ -3,7 +3,11 @@
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import type { AuditFormData } from '@/types/audit-form'
-import { ROLE_OPTIONS, TEAM_SIZE_OPTIONS } from '@/lib/audit/options'
+import {
+  INDUSTRY_OPTIONS,
+  ROLE_OPTIONS,
+  TEAM_SIZE_OPTIONS,
+} from '@/lib/audit/options'
 import { AuditRadioCards } from './AuditRadioCards'
 
 export function StageAboutYou({
@@ -75,6 +79,27 @@ export function StageAboutYou({
           onValueChange={(teamSize) => onChange({ teamSize })}
           options={TEAM_SIZE_OPTIONS}
         />
+      </div>
+      <div className="space-y-3">
+        <Label>What industry are you in?</Label>
+        <p className="text-xs text-muted-foreground">
+          We use this to ground your report in research about your specific
+          industry — typical workflows, tools, and AI use cases.
+        </p>
+        <AuditRadioCards
+          name="industry"
+          value={data.industry}
+          onValueChange={(industry) => onChange({ industry })}
+          options={INDUSTRY_OPTIONS}
+        />
+        {data.industry === 'other' ? (
+          <Input
+            placeholder="Describe your industry (e.g. veterinary clinics, dental practice, B2B logistics)"
+            value={data.industryOther}
+            onChange={(e) => onChange({ industryOther: e.target.value })}
+            className="border-white/10 bg-white/5"
+          />
+        ) : null}
       </div>
     </div>
   )

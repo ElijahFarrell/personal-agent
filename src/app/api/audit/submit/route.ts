@@ -7,6 +7,7 @@ import {
   auditSubmitBodyToIntakePayload,
   formatAuditIntakeUserMessage,
 } from '@/lib/audit/intake-payload'
+import { getOrCreateIndustryBrief } from '@/lib/audit/industry-research'
 import { parseHoursPerWeekFromMarkdown } from '@/lib/audit/parse-metrics'
 import { sendAuditReportEmail } from '@/lib/marketing/email'
 import { getMarketingSiteUrl } from '@/lib/marketing/site'
@@ -19,6 +20,8 @@ const submitSchema = z.object({
   email: z.string().trim().email().max(320),
   role: z.string().min(1).max(100),
   roleOther: z.string().max(500).optional(),
+  industry: z.string().min(1).max(100),
+  industryOther: z.string().max(200).optional(),
   teamSize: z.string().min(1).max(50),
   topTasks: z.string().trim().min(1).max(8000),
   weeklyManualHours: z.string().min(1).max(50),
@@ -66,6 +69,12 @@ export async function POST(request: Request) {
       { status: 400 }
     )
   }
+  if (data.industry === 'other' && !data.industryOther?.trim()) {
+    return NextResponse.json(
+      { error: 'Please describe your industry' },
+      { status: 400 }
+    )
+  }
   if (
     data.biggestChallenge === 'other' &&
     !data.biggestChallengeOther?.trim()
@@ -89,6 +98,8 @@ export async function POST(request: Request) {
     email: data.email,
     role: data.role,
     roleOther: data.roleOther,
+    industry: data.industry,
+    industryOther: data.industryOther,
     teamSize: data.teamSize,
     topTasks: data.topTasks,
     weeklyManualHours: data.weeklyManualHours,
@@ -116,12 +127,30 @@ export async function POST(request: Request) {
   const base = getMarketingSiteUrl()
   const reportUrl = `${base}/api/audit/report/${id}`
 
+  // Industry-aware grounding: read-through cache (7 days). Failures here are
+  // non-fatal — we'd rather ship a generic report than block the submission.
+  const industryBrief = await getOrCreateIndustryBrief({
+    convex,
+    industry: data.industry,
+    industryOther: data.industryOther,
+  }).catch((e) => {
+    console.warn('[audit/submit] industry research failed', e)
+    return null
+  })
+
   let reportMarkdown = ''
   try {
     const agent = createAuditAgent()
     const payload = auditSubmitBodyToIntakePayload(data)
     const out = await agent.generate(
-      formatAuditIntakeUserMessage(payload)
+      formatAuditIntakeUserMessage(payload, new Date(), {
+        industryBrief: industryBrief
+          ? {
+              industryLabel: industryBrief.industryLabel,
+              brief: industryBrief.brief,
+            }
+          : undefined,
+      })
     )
     reportMarkdown = (out.text ?? '').trim()
     if (!reportMarkdown) {

@@ -24,6 +24,7 @@ import type * as inbox from "../inbox.js";
 import type * as inboxAiUsage from "../inboxAiUsage.js";
 import type * as inboxOutboundEvents from "../inboxOutboundEvents.js";
 import type * as inboxSyncUsage from "../inboxSyncUsage.js";
+import type * as industryBriefs from "../industryBriefs.js";
 import type * as integrations from "../integrations.js";
 import type * as marketingChatLeads from "../marketingChatLeads.js";
 import type * as marketingMetrics from "../marketingMetrics.js";
@@ -73,6 +74,7 @@ declare const fullApi: ApiFromModules<{
   inboxAiUsage: typeof inboxAiUsage;
   inboxOutboundEvents: typeof inboxOutboundEvents;
   inboxSyncUsage: typeof inboxSyncUsage;
+  industryBriefs: typeof industryBriefs;
   integrations: typeof integrations;
   marketingChatLeads: typeof marketingChatLeads;
   marketingMetrics: typeof marketingMetrics;

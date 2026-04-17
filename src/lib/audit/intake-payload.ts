@@ -9,6 +9,8 @@ export type AuditIntakePayload = {
   email: string
   role: string
   roleOther?: string
+  industry: string
+  industryOther?: string
   teamSize: string
   topDailyTasks: string
   weeklyRepetitiveHours: string
@@ -30,6 +32,7 @@ export function toAuditIntakePayload(data: AuditFormData): AuditIntakePayload {
     name: data.name.trim(),
     email: data.email.trim().toLowerCase(),
     role: data.role,
+    industry: data.industry,
     teamSize: data.teamSize,
     topDailyTasks: data.topTasks.trim(),
     weeklyRepetitiveHours: data.weeklyManualHours,
@@ -44,6 +47,8 @@ export function toAuditIntakePayload(data: AuditFormData): AuditIntakePayload {
   }
   const ro = data.roleOther?.trim()
   if (ro) payload.roleOther = ro
+  const io = data.industryOther?.trim()
+  if (io) payload.industryOther = io
   const to = data.toolsOther?.trim()
   if (to) payload.toolsOther = to
   const bco = data.biggestChallengeOther?.trim()
@@ -84,12 +89,35 @@ export function formatAuditReportTimestampLines(at: Date = new Date()): {
   }
 }
 
+/**
+ * Optional industry research brief (Tavily-backed, 7-day cache) injected as
+ * grounding context for the audit agent. Pass `undefined` to skip the section.
+ */
+export type AuditUserMessageContext = {
+  industryBrief?: {
+    industryLabel: string
+    brief: string
+  }
+}
+
 /** User message body for \`generateText\` / Mastra agent runs. */
 export function formatAuditIntakeUserMessage(
   payload: AuditIntakePayload,
-  generatedAt: Date = new Date()
+  generatedAt: Date = new Date(),
+  context: AuditUserMessageContext = {}
 ): string {
   const { iso, reportDateLine } = formatAuditReportTimestampLines(generatedAt)
+  const briefBlock = context.industryBrief
+    ? `
+
+**Industry Research Brief (additional grounding — internal use, do NOT quote verbatim or expose URLs to the reader):**
+
+\`\`\`md
+${context.industryBrief.brief}
+\`\`\`
+`
+    : ''
+
   return `Generate the personalized AI Audit Report from this intake JSON.
 
 **Report timestamp (authoritative — use this for the report header; do NOT use any other date or time, including from training data, examples, or memory):**
@@ -98,7 +126,7 @@ export function formatAuditIntakeUserMessage(
 
 \`\`\`json
 ${JSON.stringify(payload, null, 2)}
-\`\`\``
+\`\`\`${briefBlock}`
 }
 
 /** Maps POST /api/audit/submit body fields to agent intake JSON. */
@@ -107,6 +135,8 @@ export function auditSubmitBodyToIntakePayload(data: {
   email: string
   role: string
   roleOther?: string
+  industry: string
+  industryOther?: string
   teamSize: string
   topTasks: string
   weeklyManualHours: string
@@ -126,6 +156,7 @@ export function auditSubmitBodyToIntakePayload(data: {
     name: data.name.trim(),
     email: data.email.trim().toLowerCase(),
     role: data.role,
+    industry: data.industry,
     teamSize: data.teamSize,
     topDailyTasks: data.topTasks.trim(),
     weeklyRepetitiveHours: data.weeklyManualHours,
@@ -140,6 +171,8 @@ export function auditSubmitBodyToIntakePayload(data: {
   }
   const ro = data.roleOther?.trim()
   if (ro) payload.roleOther = ro
+  const io = data.industryOther?.trim()
+  if (io) payload.industryOther = io
   const to = data.toolsOther?.trim()
   if (to) payload.toolsOther = to
   const bco = data.biggestChallengeOther?.trim()

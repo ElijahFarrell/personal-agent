@@ -5,7 +5,7 @@ import { getMarketingSiteUrl } from '@/lib/marketing/site'
 export const metadata: Metadata = {
   title: 'Free AI Audit',
   description:
-    'Answer a few questions and get a personalized AI Audit Report for your real estate business — automation opportunities, time savings, and an action plan.',
+    'Answer a few questions and get a personalized AI Audit Report for your business — automation opportunities, time savings, and an action plan.',
   openGraph: {
     title: 'Free AI Audit · Shiloh AI',
     description:

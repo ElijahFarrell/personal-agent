@@ -4,6 +4,8 @@ export type AuditFormData = {
   email: string
   role: string
   roleOther: string
+  industry: string
+  industryOther: string
   teamSize: string
   topTasks: string
   weeklyManualHours: string
@@ -25,6 +27,8 @@ export const emptyAuditForm = (): AuditFormData => ({
   email: '',
   role: '',
   roleOther: '',
+  industry: '',
+  industryOther: '',
   teamSize: '',
   topTasks: '',
   weeklyManualHours: '',
