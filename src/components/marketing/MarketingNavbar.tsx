@@ -17,9 +17,9 @@ import { bookCallUrl, getAppPlatformUrl } from '@/lib/marketing/site'
 import { MarketingLogo } from './MarketingLogo'
 
 const nav = [
-  { href: '/features', label: 'Features' },
-  { href: '/real-estate', label: 'Real estate' },
-  { href: '/pricing', label: 'Pricing' },
+  { href: '/services', label: 'Services' },
+  { href: '/industries', label: 'Industries' },
+  { href: '/pricing', label: 'Engagements' },
   { href: '/about', label: 'About' },
   { href: '/blog', label: 'Blog' },
 ] as const
@@ -74,7 +74,7 @@ export function MarketingNavbar() {
             asChild
           >
             <a href={book} target="_blank" rel="noopener noreferrer">
-              Book a demo
+              Book a strategy call
             </a>
           </Button>
           <Button
@@ -127,7 +127,7 @@ export function MarketingNavbar() {
                   onClick={() => setOpen(false)}
                   className="rounded-lg px-3 py-3 text-sm font-medium text-muted-foreground hover:bg-white/5 hover:text-white"
                 >
-                  Book a demo
+                  Book a strategy call
                 </a>
                 <a
                   href={`${getAppPlatformUrl()}/sign-in`}

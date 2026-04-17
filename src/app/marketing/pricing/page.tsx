@@ -5,30 +5,30 @@ import { PricingCards } from '@/components/marketing/PricingCards'
 import { getMarketingSiteUrl } from '@/lib/marketing/site'
 
 export const metadata: Metadata = {
-  title: 'Pricing',
+  title: 'Engagements',
   description:
-    'Shiloh AI OS pricing for real estate teams — compare vs. hiring a VA or stitching SaaS tools.',
+    'Engagement packages for AI consulting — audit, platform deployment, custom integrations, and ongoing partnership. Compare vs. generic agencies.',
   openGraph: {
-    title: 'Pricing · Shiloh AI',
+    title: 'Engagements · Shiloh AI',
     url: `${getMarketingSiteUrl()}/pricing`,
   },
 }
 
-const vsVaRows = [
+const vsAgencyRows = [
   {
-    capability: '24/7 lead response',
-    shiloh: 'Consistent, policy-bound automation',
-    traditional: 'Depends on shift coverage',
+    capability: 'Production code & ownership',
+    shiloh: 'Custom Python, integrations, and clear handoff',
+    traditional: 'Often templates, offshore, or no-code-only',
   },
   {
-    capability: 'CRM hygiene',
-    shiloh: 'Structured fields + tasks from conversations',
-    traditional: 'Manual data entry',
+    capability: 'Delivery models',
+    shiloh: 'Platform deployment or integrate into your stack',
+    traditional: 'One-size SaaS or one-off project with no ops',
   },
   {
-    capability: 'Scale',
-    shiloh: 'Add agents & workflows without headcount steps',
-    traditional: 'Linear hiring cost',
+    capability: 'Accountability',
+    shiloh: 'Scoped metrics — time, cost, revenue — before build',
+    traditional: 'Vanity dashboards or vague “AI strategy”',
   },
 ] as const
 
@@ -37,24 +37,25 @@ export default function PricingPage() {
     <article className="px-4 pb-16 pt-12 sm:px-6 sm:pt-16">
       <header className="mx-auto max-w-3xl text-center">
         <p className="text-sm font-medium text-brand-300">
-          Pricing is tailored to team size, integrations, and compliance needs —
-          we align to pipeline impact, not seat-count alone.
+          Pricing is scoped to outcomes — audit, deployment, integration
+          complexity, and ongoing partnership. We align to business impact, not
+          seat-count alone.
         </p>
         <h1 className="font-display mt-6 text-4xl font-bold tracking-tight text-white md:text-5xl">
-          Simple tiers, serious outcomes
+          Engagement packages
         </h1>
         <p className="mt-4 text-lg text-muted-foreground">
-          Replace placeholder numbers with your packaged offers when ready.
+          Pick a lane — we refine scope on a strategy call.
         </p>
       </header>
-      <div className="mx-auto mt-14 max-w-6xl">
+      <div className="mx-auto mt-14 max-w-7xl">
         <PricingCards />
       </div>
       <div className="mx-auto mt-20 max-w-4xl">
         <ComparisonTable
-          title="Shiloh AI OS vs. hiring another coordinator"
-          caption="Illustrative comparison — refine with your ICP data."
-          rows={vsVaRows}
+          title="Shiloh AI consulting vs. a generic dev or marketing agency"
+          caption="Illustrative comparison — refine with your ICP and proof points."
+          rows={vsAgencyRows}
         />
       </div>
       <CTASection />

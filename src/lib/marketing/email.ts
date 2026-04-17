@@ -120,8 +120,11 @@ export async function sendAuditReportEmail(opts: {
   if (!key) {
     return { ok: false, error: 'RESEND_API_KEY not configured' }
   }
+  // Audit emails: optional RESEND_AUDIT_FROM_EMAIL, else shared RESEND_FROM_EMAIL
   const from =
-    process.env.RESEND_FROM_EMAIL ?? 'Shiloh AI <onboarding@resend.dev>'
+    process.env.RESEND_AUDIT_FROM_EMAIL ??
+    process.env.RESEND_FROM_EMAIL ??
+    'Shiloh AI <onboarding@resend.dev>'
   const resend = new Resend(key)
   const bookUrl = bookCallUrl()
   const html = buildAuditEmailHtml({

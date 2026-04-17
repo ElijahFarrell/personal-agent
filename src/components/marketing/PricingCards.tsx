@@ -8,51 +8,63 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { appSignUpUrl } from '@/lib/marketing/site'
+import { bookCallUrl } from '@/lib/marketing/site'
 
 const tiers = [
   {
-    name: 'Starter',
+    name: 'AI Audit',
     price: 'Custom',
-    description: 'Pilot with one team — core agents and inbox.',
+    description: 'Fixed-scope discovery and a prioritized roadmap.',
     features: [
-      'Lead qualification agent',
-      'Unified inbox (connected integrations)',
-      'Basic workflows',
-      'Email support',
+      'Workflow and ROI mapping',
+      'Platform vs. integration recommendation',
+      'Prioritized build plan',
+      'Written deliverables',
     ],
     highlighted: false,
   },
   {
-    name: 'Growth',
+    name: 'Platform deployment',
     price: 'Custom',
-    description: 'Brokerage-wide rollout — automation + governance.',
+    description: 'Tailored rollout of the Shiloh platform for your team.',
     features: [
-      'Everything in Starter',
-      'Reactivation + outreach agents',
-      'CRM workflow automation',
-      'Voice automation patterns',
-      'Priority support',
+      'Branding and configuration',
+      'Core agents and workflows',
+      'CRM and channel integrations',
+      'Go-live support',
     ],
     highlighted: true,
   },
   {
-    name: 'Enterprise',
+    name: 'Custom integration',
     price: 'Custom',
-    description: 'SSO, audit, and bespoke integrations.',
+    description: 'AI agents and automations inside your existing stack.',
     features: [
-      'Everything in Growth',
-      'Custom agents & integrations',
-      'Security review support',
-      'Dedicated success',
+      'HubSpot, Salesforce, FUB, Gmail, Slack, Twilio, and more',
+      'Guardrails and approvals',
+      'Production hardening',
+      'Handoff documentation',
+    ],
+    highlighted: false,
+  },
+  {
+    name: 'Ongoing partner',
+    price: 'Custom',
+    description: 'Fractional AI — ship iterations and expand use cases.',
+    features: [
+      'Monthly roadmap and prioritization',
+      'Quality monitoring',
+      'New workflows and agents',
+      'Direct access to your consultant',
     ],
     highlighted: false,
   },
 ] as const
 
 export function PricingCards() {
+  const book = bookCallUrl()
   return (
-    <div className="grid gap-6 lg:grid-cols-3">
+    <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
       {tiers.map((tier) => (
         <Card
           key={tier.name}
@@ -92,7 +104,9 @@ export function PricingCards() {
               variant={tier.highlighted ? 'default' : 'outline'}
               asChild
             >
-              <a href={appSignUpUrl()}>Talk to us</a>
+              <a href={book} target="_blank" rel="noopener noreferrer">
+                Talk to us
+              </a>
             </Button>
           </CardFooter>
         </Card>

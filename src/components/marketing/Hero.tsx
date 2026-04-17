@@ -11,11 +11,11 @@ type HeroProps = {
 }
 
 export function Hero({
-  badge = 'AI for real estate teams',
+  badge = 'AI consulting',
   title,
   subtitle,
-  primaryCta = { label: 'Get your free AI audit', href: '/audit' },
-  secondaryCta = { label: 'Book a demo', href: bookCallUrl() },
+  primaryCta = { label: 'Book a strategy call', href: bookCallUrl() },
+  secondaryCta = { label: 'Get a free AI audit', href: '/audit' },
 }: HeroProps) {
   return (
     <section className="relative px-4 pb-20 pt-10 sm:px-6 sm:pb-28 sm:pt-16">

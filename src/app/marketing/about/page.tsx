@@ -10,7 +10,7 @@ import { getMarketingSiteUrl } from '@/lib/marketing/site'
 export const metadata: Metadata = {
   title: 'About',
   description:
-    'Meet Elijah, founder of Shiloh AI — former Microsoft SDE, Fortune 10 engineer, 10+ production AI projects across real estate, healthcare, nonprofits, and more.',
+    'Meet Elijah, founder of Shiloh AI — former Microsoft SDE, Fortune 10 engineer, 10+ production AI projects across industries.',
   openGraph: {
     title: 'About · Shiloh AI',
     url: `${getMarketingSiteUrl()}/about`,
@@ -24,8 +24,8 @@ export default function AboutPage() {
       <article className="mx-auto max-w-3xl px-4 pb-20 pt-12 sm:px-6 sm:pt-16">
         <header>
           <p className="text-sm font-medium text-brand-300">
-            Production AI systems — not a no-code wrapper shop, not a generic
-            marketing agency.
+            AI consulting that ships — ex-Microsoft engineering standards, real
+            production systems.
           </p>
           <h1 className="font-display mt-6 text-4xl font-bold tracking-tight text-white md:text-5xl">
             About Shiloh AI
@@ -63,8 +63,9 @@ export default function AboutPage() {
               ownership — not one-off prompts.
             </li>
             <li>
-              Vertical focus beats generic chatbots for compliance and
-              integrations.
+              The right delivery model beats a generic chatbot — sometimes that
+              is a tailored platform; sometimes it is integrations into the
+              stack you already trust.
             </li>
             <li>
               Clear entity copy and structured data help buyers find you in the

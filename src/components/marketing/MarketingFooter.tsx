@@ -3,11 +3,9 @@ import { MarketingLogo } from './MarketingLogo'
 import { bookCallUrl, getAppPlatformUrl } from '@/lib/marketing/site'
 
 const footerNav = [
-  { href: '/features', label: 'Features' },
-  { href: '/real-estate', label: 'Real estate' },
-  { href: '/pricing', label: 'Pricing' },
-  { href: '/about', label: 'About' },
-  { href: '/blog', label: 'Blog' },
+  { href: '/services', label: 'Services' },
+  { href: '/industries', label: 'Industries' },
+  { href: '/pricing', label: 'Engagements' },
 ] as const
 
 export function MarketingFooter() {
@@ -20,17 +18,18 @@ export function MarketingFooter() {
           <div className="max-w-sm space-y-4">
             <MarketingLogo />
             <p className="text-sm leading-relaxed text-muted-foreground">
-              Shiloh AI builds production AI systems for real estate teams —
-              faster speed-to-lead, unified channels, and secure automation.
+              Shiloh AI is an AI consulting practice — production systems,
+              tailored platform deployments, and custom integrations for teams
+              that need outcomes, not slide decks.
             </p>
           </div>
           <div className="grid grid-cols-2 gap-10 sm:grid-cols-3">
             <div>
               <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Product
+                Services
               </p>
               <ul className="space-y-2 text-sm">
-                {footerNav.slice(0, 3).map(({ href, label }) => (
+                {footerNav.map(({ href, label }) => (
                   <li key={href}>
                     <Link
                       href={href}
@@ -63,6 +62,14 @@ export function MarketingFooter() {
                     Blog
                   </Link>
                 </li>
+                <li>
+                  <Link
+                    href="/real-estate"
+                    className="text-muted-foreground transition-colors hover:text-white"
+                  >
+                    Real estate
+                  </Link>
+                </li>
               </ul>
             </div>
             <div>
@@ -93,7 +100,7 @@ export function MarketingFooter() {
                     rel="noopener noreferrer"
                     className="text-muted-foreground transition-colors hover:text-white"
                   >
-                    Book a demo
+                    Book a strategy call
                   </a>
                 </li>
                 <li>
@@ -112,7 +119,8 @@ export function MarketingFooter() {
           <p>© {new Date().getFullYear()} Shiloh AI. All rights reserved.</p>
           <div className="flex flex-wrap items-center gap-3">
             <p className="text-muted-foreground/80">
-              Shiloh AI OS — AI automation for real estate teams.
+              AI consulting and production platform — built for SMBs and ops
+              teams.
             </p>
             <Link href="/terms" className="hover:text-white">
               Terms

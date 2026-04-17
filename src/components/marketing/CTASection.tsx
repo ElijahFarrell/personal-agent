@@ -1,9 +1,11 @@
 import Link from 'next/link'
 import { ArrowUpRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { ctaCopy } from '@/lib/marketing/copy'
 import { bookCallUrl } from '@/lib/marketing/site'
 
 export function CTASection() {
+  const book = bookCallUrl()
   return (
     <section
       className="relative px-4 py-20 sm:px-6"
@@ -20,11 +22,10 @@ export function CTASection() {
               id="cta-heading"
               className="font-display text-3xl font-bold tracking-tight text-white md:text-4xl"
             >
-              Find out where AI can save you 10+ hours a week
+              {ctaCopy.heading}
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
-              Get your free AI Audit — personalized opportunities, time savings,
-              and a clear action plan for your real estate business.
+              {ctaCopy.subheading}
             </p>
             <div className="mt-8 flex flex-col items-center gap-4">
               <Button
@@ -33,19 +34,19 @@ export function CTASection() {
                 asChild
               >
                 <a href="/audit" className="gap-2">
-                  Get your free AI audit
+                  {ctaCopy.primaryLabel}
                   <ArrowUpRight className="h-4 w-4" />
                 </a>
               </Button>
               <p className="text-sm text-muted-foreground">
                 or{' '}
                 <Link
-                  href={bookCallUrl()}
+                  href={book}
                   className="font-medium text-brand-300 underline-offset-4 hover:text-brand-200 hover:underline"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  book a call
+                  {ctaCopy.secondaryLabel}
                 </Link>
               </p>
             </div>

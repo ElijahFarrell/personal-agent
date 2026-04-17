@@ -49,8 +49,23 @@ export function organizationSchema(): JsonLd {
     name: 'Shiloh AI',
     url,
     description:
-      'Production AI agency and AI OS platform for real estate teams — lead qualification, multichannel outreach, and secure automation.',
+      'AI consulting for SMBs, founders, and ops leaders — production AI systems, tailored platform deployments, and custom integrations into existing tools.',
     sameAs: [] as string[],
+  }
+}
+
+/** Consulting / professional services framing for the marketing home page */
+export function professionalServiceSchema(): JsonLd {
+  const url = getMarketingSiteUrl()
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ProfessionalService',
+    name: 'Shiloh AI',
+    url,
+    description:
+      'AI consulting engagements: audits, tailored platform deployment, custom integrations, and ongoing fractional AI partnership for growing businesses.',
+    areaServed: 'US',
+    serviceType: 'Artificial intelligence consulting and implementation',
   }
 }
 
@@ -59,7 +74,7 @@ export function productSchema(): JsonLd {
   return {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
-    name: 'Shiloh AI OS',
+    name: 'Shiloh AI platform',
     applicationCategory: 'BusinessApplication',
     operatingSystem: 'Web',
     offers: {
@@ -70,7 +85,7 @@ export function productSchema(): JsonLd {
     },
     url: `${url}/real-estate`,
     description:
-      'AI operating system for real estate: lead qualification, reactivation, unified inbox, workflows, and voice agents.',
+      'Production AI platform for real estate engagements: lead qualification, reactivation, unified inbox, workflows, and voice agents — deployed or integrated via consulting.',
   }
 }
 
