@@ -936,6 +936,9 @@ export default defineSchema({
     email: v.string(),
     role: v.string(),
     roleOther: v.optional(v.string()),
+    /** Optional for backward compat with rows submitted before this field existed. */
+    industry: v.optional(v.string()),
+    industryOther: v.optional(v.string()),
     teamSize: v.string(),
     topTasks: v.string(),
     weeklyManualHours: v.string(),
@@ -963,6 +966,32 @@ export default defineSchema({
   })
     .index(INDEXES.BY_AUDIT_EMAIL, ['email'])
     .index(INDEXES.BY_AUDIT_STATUS, ['status']),
+
+  /**
+   * Cached industry research briefs (Tavily-backed).
+   * Keyed by `industrySlug` — a normalized slug derived from the user's
+   * selected industry (or free-text "other"). Reused across audit submissions
+   * for ~7 days to avoid re-running web research per submission.
+   */
+  [TABLES.INDUSTRY_BRIEFS]: defineTable({
+    industrySlug: v.string(),
+    /** Original human-readable label preserved for display/debugging. */
+    industryLabel: v.string(),
+    /** Distilled markdown brief — used as additional context for the audit agent. */
+    brief: v.string(),
+    /** Source URLs used to construct the brief. */
+    sources: v.array(
+      v.object({
+        title: v.string(),
+        url: v.string(),
+      })
+    ),
+    /** Free-form context about how the brief was generated (model, query count, etc). */
+    metadata: v.optional(v.any()),
+    createdAt: v.number(),
+    /** Wall-clock expiration; readers should treat rows past this as stale. */
+    expiresAt: v.number(),
+  }).index(INDEXES.BY_INDUSTRY_SLUG, ['industrySlug']),
 
   // ─── Voice / SMS activity (Retell, Callingly, SMS providers) ───────────────
 

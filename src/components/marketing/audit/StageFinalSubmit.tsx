@@ -34,9 +34,7 @@ export function StageFinalSubmit({
       </div>
       <div className="space-y-3">
         <div className="flex flex-wrap items-baseline gap-2">
-          <Label>
-            What&apos;s your approximate annual revenue (or GCI)?
-          </Label>
+          <Label>What&apos;s your approximate annual revenue?</Label>
           <span className="text-xs text-muted-foreground">(optional)</span>
         </div>
         <AuditRadioCards

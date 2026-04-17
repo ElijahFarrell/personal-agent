@@ -42,6 +42,8 @@ export const TABLES = {
   INBOX_AI_USAGE: 'inboxAiUsage',
   /** Public marketing — free AI audit questionnaire submissions. */
   AUDIT_SUBMISSIONS: 'auditSubmissions',
+  /** Cached industry research briefs used to ground audit reports (7-day TTL). */
+  INDUSTRY_BRIEFS: 'industryBriefs',
   CALL_LOGS: 'callLogs',
   SMS_LOGS: 'smsLogs',
   COMPLIANCE_CONTACTS: 'complianceContacts',
@@ -110,6 +112,8 @@ export const INDEXES = {
   BY_TENANT_INBOX_AI_CREATED: 'by_tenantId_inboxAiCreatedAt',
   BY_AUDIT_EMAIL: 'by_audit_email',
   BY_AUDIT_STATUS: 'by_audit_status',
+  /** industryBriefs.industrySlug — primary cache key */
+  BY_INDUSTRY_SLUG: 'by_industry_slug',
   BY_TENANT_PHONE: 'by_tenantId_phone',
   BY_TENANT_CHANNEL_PHONE: 'by_tenantId_channel_phone',
   BY_TENANT_STATE: 'by_tenantId_stateCode',
