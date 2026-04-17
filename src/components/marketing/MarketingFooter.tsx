@@ -56,14 +56,6 @@ export function MarketingFooter() {
                 </li>
                 <li>
                   <Link
-                    href="/blog"
-                    className="text-muted-foreground transition-colors hover:text-white"
-                  >
-                    Blog
-                  </Link>
-                </li>
-                <li>
-                  <Link
                     href="/real-estate"
                     className="text-muted-foreground transition-colors hover:text-white"
                   >
@@ -77,14 +69,6 @@ export function MarketingFooter() {
                 App
               </p>
               <ul className="space-y-2 text-sm">
-                <li>
-                  <a
-                    href={`${app}/sign-in`}
-                    className="text-muted-foreground transition-colors hover:text-white"
-                  >
-                    Sign in
-                  </a>
-                </li>
                 <li>
                   <Link
                     href="/audit"

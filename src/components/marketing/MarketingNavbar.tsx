@@ -13,7 +13,7 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet'
 import { cn } from '@/lib/utils'
-import { bookCallUrl, getAppPlatformUrl } from '@/lib/marketing/site'
+import { bookCallUrl } from '@/lib/marketing/site'
 import { MarketingLogo } from './MarketingLogo'
 
 const nav = [
@@ -21,7 +21,6 @@ const nav = [
   { href: '/industries', label: 'Industries' },
   { href: '/pricing', label: 'Engagements' },
   { href: '/about', label: 'About' },
-  { href: '/blog', label: 'Blog' },
 ] as const
 
 function normalizeMarketingPath(pathname: string | null): string {
@@ -128,12 +127,6 @@ export function MarketingNavbar() {
                   className="rounded-lg px-3 py-3 text-sm font-medium text-muted-foreground hover:bg-white/5 hover:text-white"
                 >
                   Book a strategy call
-                </a>
-                <a
-                  href={`${getAppPlatformUrl()}/sign-in`}
-                  className="rounded-lg px-3 py-3 text-sm font-medium text-muted-foreground hover:bg-white/5 hover:text-white"
-                >
-                  Sign in
                 </a>
               </nav>
             </SheetContent>
