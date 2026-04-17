@@ -39,6 +39,21 @@ const nextConfig: NextConfig = {
     'apify-client',
     'proxy-agent',
   ],
+  /**
+   * `apify-client` lazily requires `proxy-agent` via an obfuscated dynamic require that
+   * Next.js's node-file-tracer cannot detect, so the package gets stripped from the Vercel
+   * function bundle. The static import in `src/services/apifyService.ts` covers most cases,
+   * but we also explicitly include the package and its proxy-agent siblings here to guarantee
+   * every transitive proxy adapter ships with any route that touches the workspace pipeline.
+   */
+  outputFileTracingIncludes: {
+    '/api/workspace/process': [
+      './node_modules/proxy-agent/**/*',
+      './node_modules/.pnpm/proxy-agent@*/**/*',
+      './node_modules/.pnpm/*proxy-agent@*/**/*',
+      './node_modules/.pnpm/pac-proxy-agent@*/**/*',
+    ],
+  },
   async rewrites() {
     return {
       fallback: [

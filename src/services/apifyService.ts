@@ -10,8 +10,15 @@
  *   - Output: flat items with text, postUrl, totalReactions, totalComments, etc.
  */
 import { ApifyClient } from 'apify-client'
+// `apify-client` lazy-loads `proxy-agent` via an obfuscated dynamic require that Next.js's
+// node-file-tracer cannot detect, so the package gets stripped from the Vercel bundle and
+// crashes at runtime ("Cannot find module 'proxy-agent'"). Statically referencing it here
+// forces NFT to include the dependency in the deployed function.
+import { ProxyAgent } from 'proxy-agent'
 import { config } from '@/lib/config'
 import type { ApifyLinkedInProfile, ApifyLinkedInPost } from '@/types'
+
+void ProxyAgent
 
 const PROFILE_ACTOR_ID = 'freshdata/fresh-linkedin-profile-data'
 const POSTS_ACTOR_ID = 'datadoping/linkedin-profile-posts-scraper'
