@@ -56,6 +56,18 @@ export const TABLES = {
   MARKETING_CHAT_LEADS: 'marketingChatLeads',
   WORKSPACE_DOCUMENTS: 'workspaceDocuments',
   WORKSPACE_FOLDERS: 'workspaceFolders',
+  /** Durable per-agent invocation state (orchestrator + delegated sub-agents). */
+  AGENT_RUNS: 'agentRuns',
+  /** Append-only milestone log for agentRuns (UI live-subscribes). */
+  RUN_PROGRESS: 'runProgress',
+  /** Kind-tagged payloads produced by tool calls (e.g. `exa.websetItems`). */
+  ARTIFACTS: 'artifacts',
+  /** Parent->child delegation hop log written by the supervisor hook. */
+  DELEGATIONS: 'delegations',
+  /** Cached Exa webset items pulled by the past-websets cron. */
+  WEBSET_ITEMS: 'websetItems',
+  /** Pending/resolved human-approval requests for destructive tool calls (MCP elicitation). */
+  APPROVALS: 'approvals',
 } as const
 
 // ─── Index Names ─────────────────────────────────────────────────────────────
@@ -123,6 +135,37 @@ export const INDEXES = {
   BY_MARKETING_LEAD_SESSION: 'by_marketingLead_sessionId',
   BY_WORKSPACE_FOLDER_ID: 'by_workspaceFolderId',
   BY_TENANT_WORKSPACE_STATUS: 'by_tenantId_workspaceDocStatus',
+  /** agentRuns: latest runs per tenant. */
+  BY_TENANT_UPDATED: 'by_tenantId_updatedAt',
+  /** agentRuns: filter by thread or parent run. */
+  BY_THREAD_ID: 'by_threadId',
+  BY_PARENT_RUN_ID: 'by_parentRunId',
+  /** runProgress: ordered stream per run. */
+  BY_RUN_CREATED: 'by_runId_createdAt',
+  /** artifacts: lookup per run or tenant + kind. */
+  BY_ARTIFACT_RUN: 'by_runId',
+  BY_ARTIFACT_TENANT_KIND: 'by_tenantId_kind',
+  /** delegations: parent hop ordering. */
+  BY_PARENT_CREATED: 'by_parentRunId_createdAt',
+  /** websetItems: list items by tenant + webset, and dedupe by tenant + itemKey. */
+  BY_TENANT_WEBSET: 'by_tenantId_websetId',
+  BY_TENANT_ITEM_KEY: 'by_tenantId_itemKey',
+  BY_WEBSET_ID: 'by_websetId',
+  /** approvals: lookup by opaque token and by tenant + status. */
+  BY_APPROVAL_TOKEN: 'by_approvalToken',
+  BY_TENANT_STATUS_CREATED: 'by_tenantId_status_createdAt',
+} as const
+
+/**
+ * approvals.status — lifecycle of a destructive-tool elicitation request.
+ * PENDING is the initial state; APPROVED allows the next tool call to execute;
+ * REJECTED and EXPIRED are terminal and block execution.
+ */
+export const APPROVAL_STATUS = {
+  PENDING: 'pending',
+  APPROVED: 'approved',
+  REJECTED: 'rejected',
+  EXPIRED: 'expired',
 } as const
 
 /** inboxAiUsage.kind */
@@ -335,6 +378,20 @@ export const CHAT_JOB_STATUS = {
   RUNNING: 'running',
   COMPLETED: 'completed',
   FAILED: 'failed',
+} as const
+
+/**
+ * agentRuns.status — lifecycle of a single agent invocation (orchestrator OR sub-agent).
+ * SUSPENDED covers workflow-level pauses (approvals, MCP elicitation). CANCELLED is a
+ * user-initiated stop. Values are distinct from CHAT_JOB_STATUS so traces stay readable.
+ */
+export const AGENT_RUN_STATUS = {
+  PENDING: 'pending',
+  RUNNING: 'running',
+  SUSPENDED: 'suspended',
+  COMPLETED: 'completed',
+  FAILED: 'failed',
+  CANCELLED: 'cancelled',
 } as const
 
 export const WORKFLOW_RUN_STATUS = {

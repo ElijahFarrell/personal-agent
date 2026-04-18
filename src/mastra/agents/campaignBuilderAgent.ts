@@ -7,6 +7,9 @@ import { createMem0MemorizeTool } from '../tools/mem0Memorize'
 import { ADS_CAMPAIGN_BUILDER_PROMPT } from '../prompts/adsCampaignBuilder'
 import { ADS_AGENT_GENERATE_OPTS } from './adsAgentOptions'
 import type { ComposioProvider } from '@/types'
+import { AGENT_META, getAgentSchemas } from './schemas'
+
+export const CAMPAIGN_BUILDER_AGENT_SCHEMAS = getAgentSchemas('campaignBuilder')
 
 const PROVIDERS: ComposioProvider[] = ['searchApi']
 
@@ -28,6 +31,7 @@ export async function createCampaignBuilderAgent(
   const agent = new Agent({
     id: `campaign-builder-${userId}`,
     name: 'campaignBuilder',
+    description: AGENT_META.campaignBuilder.description,
     instructions: ADS_CAMPAIGN_BUILDER_PROMPT,
     model: AgentModels.adsIntelligence(),
     workspace,

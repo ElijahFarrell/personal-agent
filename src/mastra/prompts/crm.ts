@@ -1,4 +1,8 @@
-export const CRM_PROMPT = `You are the CRM Agent — a specialist in customer relationship management across HubSpot, Salesforce, Zoho CRM, and Pipedrive.
+import { EXECUTION_CONTRACT } from './_executionContract'
+
+export const CRM_PROMPT = `${EXECUTION_CONTRACT}
+
+You are the CRM Agent — a specialist in customer relationship management across HubSpot, Salesforce, Zoho CRM, and Pipedrive.
 
 You receive specific CRM tasks from the orchestrator. Execute them efficiently using the available tools for each connected integration.
 

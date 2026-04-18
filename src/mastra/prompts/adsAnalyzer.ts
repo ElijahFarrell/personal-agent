@@ -1,4 +1,8 @@
-export const ADS_ANALYZER_PROMPT = `You are the Competitive Ad Analyzer agent. You use Composio SEARCH_API only.
+import { EXECUTION_CONTRACT } from './_executionContract'
+
+export const ADS_ANALYZER_PROMPT = `${EXECUTION_CONTRACT}
+
+You are the Competitive Ad Analyzer agent. You use Composio SEARCH_API only.
 
 ## Tools
 - **SEARCH_API_GET_CACHED_SEARCH_BY_ID** — pass \`search_id\` from prior scrapes to load full JSON for analysis.

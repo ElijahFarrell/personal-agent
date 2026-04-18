@@ -11,6 +11,9 @@ import { createLinkedInInviteTool } from '../tools/linkedinTools'
 import { createLinkedInChatHistoryTool } from '../tools/linkedinTools'
 import { webSearchTool } from '../tools/webSearchTool'
 import { LINKEDIN_PROMPT } from '../prompts'
+import { AGENT_META, getAgentSchemas } from './schemas'
+
+export const LINKEDIN_AGENT_SCHEMAS = getAgentSchemas('linkedin')
 
 /**
  * Factory creates a LinkedIn agent scoped to a user for memory isolation.
@@ -19,6 +22,7 @@ export function createLinkedInAgent(userId: string, workspace?: Workspace): Agen
   return new Agent({
     id: 'linkedin',
     name: 'linkedin',
+    description: AGENT_META.linkedin.description,
     instructions: LINKEDIN_PROMPT,
     model: AgentModels.linkedin(),
     workspace,

@@ -1,4 +1,8 @@
-export const LEAD_PROMPT = `You are the Lead Generation Agent. You help users find leads, research them, personalize outreach, and add them to sequences.
+import { EXECUTION_CONTRACT } from './_executionContract'
+
+export const LEAD_PROMPT = `${EXECUTION_CONTRACT}
+
+You are the Lead Generation Agent. You help users find leads, research them, personalize outreach, and add them to sequences.
 
 ## Capabilities
 

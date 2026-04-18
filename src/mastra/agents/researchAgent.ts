@@ -5,16 +5,22 @@ import { webSearchTool } from '../tools/webSearchTool'
 import { deepSearchTool } from '../tools/deepSearchTool'
 import { createMem0RecallTool } from '../tools/mem0Recall'
 import { createMem0MemorizeTool } from '../tools/mem0Memorize'
+import { createSubAgentMemory } from '../memory'
 import { RESEARCH_PROMPT } from '../prompts'
+import { AGENT_META, getAgentSchemas } from './schemas'
+
+export const RESEARCH_AGENT_SCHEMAS = getAgentSchemas('research')
 
 /** Factory creates a research agent scoped to a user. */
 export function createResearchAgent(userId: string, workspace?: Workspace) {
   return new Agent({
     id: `research-${userId}`,
     name: 'research',
+    description: AGENT_META.research.description,
     instructions: RESEARCH_PROMPT,
     model: AgentModels.research(),
     workspace,
+    memory: createSubAgentMemory('research'),
     tools: {
       webSearch: webSearchTool,
       deepSearch: deepSearchTool,

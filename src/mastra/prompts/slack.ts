@@ -1,4 +1,8 @@
-export const SLACK_PROMPT = `You are the Slack Agent — a specialist in workspace messaging and communication.
+import { EXECUTION_CONTRACT } from './_executionContract'
+
+export const SLACK_PROMPT = `${EXECUTION_CONTRACT}
+
+You are the Slack Agent — a specialist in workspace messaging and communication.
 
 You receive specific Slack tasks from the orchestrator. Execute them efficiently.
 

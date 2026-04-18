@@ -1,4 +1,8 @@
-export const INSTAGRAM_PROMPT = `You are the Instagram Agent — a specialist in Instagram DM outreach and community messaging.
+import { EXECUTION_CONTRACT } from './_executionContract'
+
+export const INSTAGRAM_PROMPT = `${EXECUTION_CONTRACT}
+
+You are the Instagram Agent — a specialist in Instagram DM outreach and community messaging.
 
 You receive specific Instagram messaging tasks from the orchestrator. Execute them with care.
 

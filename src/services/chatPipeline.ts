@@ -225,6 +225,30 @@ export async function prepareChatAgentStream(
       flowTag,
     })
 
+  const env = process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? 'development'
+  const baseTracingTags = (
+    agentTag: string,
+    extra: string[] = []
+  ): string[] => [
+    `tenant:${reportingTenantId}`,
+    `user:${userId}`,
+    agentTag,
+    `env:${env}`,
+    ...extra,
+  ]
+  const buildTracingOptions = (agentTag: string, extra: string[] = []) => ({
+    tracingOptions: {
+      tags: baseTracingTags(agentTag, extra),
+      metadata: {
+        tenantId: reportingTenantId,
+        userId,
+        agent: agentTag,
+        env,
+        ...(threadId ? { threadId } : {}),
+      },
+    },
+  })
+
   if (meta) {
     const agentId = meta.id
     const agentInstructionsForTarget = instructions[agentId] ?? instructions[meta.toolId] ?? undefined
@@ -284,6 +308,7 @@ export async function prepareChatAgentStream(
           {
             toolsets,
             ...(useAdsIntelOpts ? ADS_AGENT_GENERATE_OPTS : {}),
+            ...buildTracingOptions(`agent:${agentId}`),
           } as Record<string, unknown>,
           baseGatewayCtx(`agent:${agentId}`)
         )
@@ -320,7 +345,9 @@ export async function prepareChatAgentStream(
         agentMessagesWithTask as Parameters<typeof agent.stream>[0],
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         mergeAgentStreamOptionsWithGatewayReporting(
-          {} as Record<string, unknown>,
+          {
+            ...buildTracingOptions(`agent:${agentId}`),
+          } as Record<string, unknown>,
           baseGatewayCtx(`agent:${agentId}`)
         ) as any
       )
@@ -333,7 +360,9 @@ export async function prepareChatAgentStream(
       agentMessages as Parameters<typeof agent.stream>[0],
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       mergeAgentStreamOptionsWithGatewayReporting(
-        {} as Record<string, unknown>,
+        {
+          ...buildTracingOptions('flow:deep-research', ['critical']),
+        } as Record<string, unknown>,
         baseGatewayCtx('flow:deep-research')
       ) as any
     )
@@ -358,7 +387,9 @@ export async function prepareChatAgentStream(
       agentMessages as Parameters<typeof agent.stream>[0],
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       mergeAgentStreamOptionsWithGatewayReporting(
-        {} as Record<string, unknown>,
+        {
+          ...buildTracingOptions('agent:orchestrator', ['critical']),
+        } as Record<string, unknown>,
         baseGatewayCtx('agent:orchestrator')
       ) as any
     )

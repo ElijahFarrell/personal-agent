@@ -12,6 +12,9 @@ import {
   type ContentDraftScope,
 } from '../tools/contentDraftTools'
 import { CONTENT_PROMPT } from '../prompts'
+import { AGENT_META, getAgentSchemas } from './schemas'
+
+export const CONTENT_AGENT_SCHEMAS = getAgentSchemas('content')
 
 /**
  * Factory creates a Content agent scoped to a user for memory isolation.
@@ -48,6 +51,7 @@ export async function createContentAgent(
   return new Agent({
     id: 'content',
     name: 'content',
+    description: AGENT_META.content.description,
     instructions: CONTENT_PROMPT,
     model: AgentModels.content(),
     workspace,

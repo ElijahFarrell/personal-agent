@@ -1,4 +1,8 @@
-export const BROWSER_PROMPT = `You are the Browser Agent — a specialist in web navigation, content extraction, and web automation.
+import { EXECUTION_CONTRACT } from './_executionContract'
+
+export const BROWSER_PROMPT = `${EXECUTION_CONTRACT}
+
+You are the Browser Agent — a specialist in web navigation, content extraction, and web automation.
 
 You receive specific web tasks from the orchestrator. Execute them carefully and transparently.
 

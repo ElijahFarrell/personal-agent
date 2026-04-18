@@ -5,6 +5,9 @@ import { createMem0MemorizeTool } from '../tools/mem0Memorize'
 import { getComposioToolsForProviders } from '@/lib/composio'
 import { SLACK_PROMPT } from '../prompts/slack'
 import type { ComposioProvider } from '@/types'
+import { AGENT_META, getAgentSchemas } from './schemas'
+
+export const SLACK_AGENT_SCHEMAS = getAgentSchemas('slack')
 
 const SLACK_PROVIDERS: ComposioProvider[] = ['slack']
 
@@ -31,6 +34,7 @@ export async function createSlackAgent(
   const agent = new Agent({
     id: `slack-${userId}`,
     name: 'slack',
+    description: AGENT_META.slack.description,
     instructions: SLACK_PROMPT,
     model: AgentModels.slack(),
     tools: {
@@ -48,6 +52,7 @@ export function createSlackAgentSync(userId: string): Agent {
   return new Agent({
     id: `slack-${userId}`,
     name: 'slack',
+    description: AGENT_META.slack.description,
     instructions: SLACK_PROMPT,
     model: AgentModels.slack(),
     tools: {

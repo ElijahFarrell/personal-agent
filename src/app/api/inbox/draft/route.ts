@@ -64,11 +64,21 @@ export async function POST(req: NextRequest) {
 
     let text: string
     if (thread.provider === 'whatsapp') {
-      const { agent } = await createMessagingAgent(userId, connected)
+      const { agent } = await createMessagingAgent(
+        userId,
+        connected,
+        undefined,
+        String(dbUser.tenantId)
+      )
       const result = await agent.generate(task)
       text = result.text
     } else {
-      const { agent } = await createEmailAgent(userId, connected)
+      const { agent } = await createEmailAgent(
+        userId,
+        connected,
+        undefined,
+        String(dbUser.tenantId)
+      )
       const result = await agent.generate(task)
       text = result.text
     }

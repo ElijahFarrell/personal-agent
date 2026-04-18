@@ -10,12 +10,16 @@ import { webSearchTool } from '../tools/webSearchTool'
 import { createMem0RecallTool } from '../tools/mem0Recall'
 import { createMem0MemorizeTool } from '../tools/mem0Memorize'
 import { BROWSER_PROMPT } from '../prompts'
+import { AGENT_META, getAgentSchemas } from './schemas'
+
+export const BROWSER_AGENT_SCHEMAS = getAgentSchemas('browser')
 
 /** Factory creates a browser agent scoped to a user. */
 export function createBrowserAgent(userId: string, workspace?: Workspace) {
   return new Agent({
     id: `browser-${userId}`,
     name: 'browser',
+    description: AGENT_META.browser.description,
     instructions: BROWSER_PROMPT,
     model: AgentModels.browser(),
     workspace,

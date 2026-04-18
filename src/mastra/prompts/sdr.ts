@@ -1,4 +1,8 @@
-export const SDR_PROMPT = `You are the Exa Company Search Agent. You help users find companies matching complex queries using Exa Websets.
+import { EXECUTION_CONTRACT } from './_executionContract'
+
+export const SDR_PROMPT = `${EXECUTION_CONTRACT}
+
+You are the Exa Company Search Agent. You help users find companies matching complex queries using Exa Websets.
 
 ## Flow (new search)
 

@@ -6,6 +6,9 @@ import { createMem0MemorizeTool } from '../tools/mem0Memorize'
 import { getComposioToolsForProviders } from '@/lib/composio'
 import { REAL_ESTATE_PROMPT } from '../prompts/realEstate'
 import type { ComposioProvider } from '@/types'
+import { AGENT_META, getAgentSchemas } from './schemas'
+
+export const REAL_ESTATE_AGENT_SCHEMAS = getAgentSchemas('realEstate')
 
 const REAL_ESTATE_PROVIDERS: ComposioProvider[] = [
   'follow-up-boss',
@@ -39,6 +42,7 @@ export async function createRealEstateAgent(
   const agent = new Agent({
     id: `realEstate-${userId}`,
     name: 'realEstate',
+    description: AGENT_META.realEstate.description,
     instructions: REAL_ESTATE_PROMPT,
     model: AgentModels.realEstate(),
     workspace,

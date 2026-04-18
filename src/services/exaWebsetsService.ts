@@ -185,15 +185,37 @@ export async function fetchItemsByWebsetId(
 }
 
 /**
- * Search for companies via Exa Websets. Creates a webset, waits for completion,
- * and returns mapped company results. On timeout, returns partial results if any.
+ * Webset creation result returned immediately after the `POST /websets` call.
+ * Persist `websetId` to `agentRuns.externalIds` before waiting so the run can
+ * be recovered after serverless timeout.
  */
-export async function searchCompaniesViaWebsets(
+export interface CreateWebsetResult {
+  websetId: string
+}
+
+/** Terminal status for a webset-wait operation. */
+export type WebsetWaitStatus = 'idle' | 'timeout' | 'error'
+
+export interface WebsetWaitResult {
+  websetId: string
+  status: WebsetWaitStatus
+  results: ExaCompanyResult[]
+  /** Populated only when status === 'error'. Never throws on timeout. */
+  error?: string
+}
+
+/** Default wait budget: 10 min — Exa FAQ: large searches can run up to ~1 hour. */
+const WEBSET_WAIT_BUDGET_MS = WEBSET_TIMEOUT_MS
+
+/**
+ * Create a company webset and return immediately. Does **not** wait for
+ * completion. Throws only if the Exa API rejects the request synchronously.
+ */
+export async function createCompanyWebset(
   query: string,
   count: number
-): Promise<ExaCompanyResult[]> {
+): Promise<CreateWebsetResult> {
   const exa = getExa()
-
   const webset = await exa.websets.create({
     search: {
       query,
@@ -215,23 +237,80 @@ export async function searchCompaniesViaWebsets(
       },
     ],
   })
+  return { websetId: webset.id }
+}
 
+/**
+ * Wait for a webset to reach an idle state, returning whatever results are
+ * available. Never throws — always resolves to a {@link WebsetWaitResult}.
+ * Callers persist `websetId` before invoking this so timeout recovery is safe.
+ */
+export async function waitForWebsetResults(
+  websetId: string,
+  count: number,
+  timeoutMs: number = WEBSET_WAIT_BUDGET_MS
+): Promise<WebsetWaitResult> {
+  const exa = getExa()
+  let status: WebsetWaitStatus = 'idle'
+  let error: string | undefined
   try {
-    await exa.websets.waitUntilIdle(webset.id, {
-      timeout: WEBSET_TIMEOUT_MS,
+    await exa.websets.waitUntilIdle(websetId, {
+      timeout: timeoutMs,
       pollInterval: 5000,
     })
   } catch (err) {
-    // Timeout or other error — Exa docs: partial results available during long runs
-    const response = await exa.websets.items.list(webset.id, { limit: count })
-    const items = (response.data ?? []) as Record<string, unknown>[]
-    if (items.length > 0) {
-      return itemsToResults(items, count)
-    }
-    throw err
+    const message = err instanceof Error ? err.message : String(err)
+    // waitUntilIdle throws on timeout; Exa docs confirm partial results are
+    // still readable via items.list, so we downgrade to a structured status.
+    status = /timeout/i.test(message) ? 'timeout' : 'error'
+    error = message
   }
 
-  const response = await exa.websets.items.list(webset.id, { limit: count })
-  const items = (response.data ?? []) as Record<string, unknown>[]
-  return itemsToResults(items, count)
+  try {
+    const response = await exa.websets.items.list(websetId, { limit: count })
+    const items = (response.data ?? []) as Record<string, unknown>[]
+    return {
+      websetId,
+      status,
+      results: itemsToResults(items, count),
+      error,
+    }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    return {
+      websetId,
+      status: 'error',
+      results: [],
+      error: error ?? message,
+    }
+  }
+}
+
+/**
+ * Convenience wrapper: create a webset, wait for results, and return both.
+ *
+ * Never throws on wait failure — returns `status: 'timeout' | 'error'` with
+ * partial results so callers can surface a structured `ToolResult`.
+ *
+ * Pass `onWebsetCreated` to receive the `websetId` as soon as the webset is
+ * created (before polling) — used by the SDR tool to persist it to
+ * `agentRuns.externalIds` so the run can be resumed after a timeout.
+ */
+export async function searchCompaniesViaWebsets(
+  query: string,
+  count: number,
+  options?: {
+    onWebsetCreated?: (websetId: string) => void | Promise<void>
+    timeoutMs?: number
+  }
+): Promise<WebsetWaitResult> {
+  const { websetId } = await createCompanyWebset(query, count)
+  if (options?.onWebsetCreated) {
+    try {
+      await options.onWebsetCreated(websetId)
+    } catch (err) {
+      console.warn('[Exa] onWebsetCreated callback failed:', err)
+    }
+  }
+  return await waitForWebsetResults(websetId, count, options?.timeoutMs)
 }

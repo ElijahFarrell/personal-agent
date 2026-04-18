@@ -1,8 +1,15 @@
 /**
- * Outreach campaign workflow — runs a multi-step personalized outreach campaign.
- * Practical implementation using plain async functions (not full Mastra workflow DSL).
- * Returns drafts for batch approval; never auto-sends.
+ * Outreach campaign workflow — runs a multi-step personalized outreach
+ * campaign. Drafts messages per target, pauses for batch approval, and
+ * returns the approved drafts. Actual sending happens downstream (via
+ * Lemlist / LinkedIn tools) and is always gated by a separate approval.
+ *
+ * Exposes:
+ *   - `outreachCampaignWorkflow`   → full Mastra workflow with suspend/resume
+ *   - `executeOutreachCampaign`    → plain async runner used by `/api/outreach`
  */
+import { createWorkflow, createStep } from '@mastra/core/workflows'
+import { z } from 'zod'
 import { generateText } from 'ai'
 import { gateway } from 'ai'
 import MemoryClient from 'mem0ai'
@@ -10,6 +17,9 @@ import { config } from '@/lib/config'
 import { gatewayReportingProviderOptions } from '@/lib/aiGatewayReporting'
 import * as linkedinService from '@/services/linkedinService'
 import { search } from '@/services/searchService'
+import { createApprovalStep } from './approvalStep'
+
+// ─── Public types (kept stable for legacy importers) ────────────────────────
 
 export interface OutreachTarget {
   profileUrl: string
@@ -29,15 +39,42 @@ export interface OutreachCampaignResult {
   drafts: Array<{ profileUrl: string; message: string; name?: string }>
 }
 
-/**
- * Execute an outreach campaign. For each target: research profile, draft message.
- * Returns all drafts for batch approval. Sending happens in a separate step.
- */
-export async function executeOutreachCampaign(
+// ─── Schemas ─────────────────────────────────────────────────────────────────
+
+const targetSchema = z.object({
+  profileUrl: z.string(),
+  context: z.string().optional(),
+})
+
+const workflowInputSchema = z.object({
+  userId: z.string(),
+  targets: z.array(targetSchema).min(1),
+  campaignContext: z.string(),
+})
+
+const draftSchema = z.object({
+  profileUrl: z.string(),
+  message: z.string(),
+  name: z.string().optional(),
+})
+
+const draftsOutputSchema = z.object({
+  drafted: z.number(),
+  failed: z.number(),
+  drafts: z.array(draftSchema),
+})
+
+const workflowOutputSchema = draftsOutputSchema.extend({
+  sent: z.number(),
+})
+
+// ─── Shared drafting logic ──────────────────────────────────────────────────
+
+async function draftMessagesForTargets(
   input: OutreachCampaignInput
-): Promise<OutreachCampaignResult> {
+): Promise<{ drafts: OutreachCampaignResult['drafts']; failed: number }> {
   const { userId, targets, campaignContext } = input
-  const drafts: Array<{ profileUrl: string; message: string; name?: string }> = []
+  const drafts: OutreachCampaignResult['drafts'] = []
   let failed = 0
 
   const mem0Client = config.mem0.apiKey
@@ -73,7 +110,7 @@ export async function executeOutreachCampaign(
             .map((r) => `${r.title}: ${r.content.slice(0, 300)}`)
             .join('\n\n')
         } catch {
-          // Web search optional
+          // Web search is best-effort context.
         }
       }
 
@@ -118,6 +155,62 @@ Draft a single personalized first message (max 300 chars). Output ONLY the messa
     }
   }
 
+  return { drafts, failed }
+}
+
+// ─── Steps ───────────────────────────────────────────────────────────────────
+
+const draftStep = createStep({
+  id: 'outreach-draft',
+  description: 'Research each target and draft a personalized first message',
+  inputSchema: workflowInputSchema,
+  outputSchema: draftsOutputSchema,
+  execute: async ({ inputData }) => {
+    const { drafts, failed } = await draftMessagesForTargets(inputData)
+    return { drafted: drafts.length, failed, drafts }
+  },
+})
+
+const approveDraftsStep = createApprovalStep({
+  id: 'outreach-approve-drafts',
+  description:
+    'Batch approval of outreach drafts. The workflow suspends here until a reviewer confirms.',
+  payloadSchema: draftsOutputSchema,
+})
+
+const finalizeStep = createStep({
+  id: 'outreach-finalize',
+  description:
+    'Mark the approved drafts as ready for downstream sending. Never sends here.',
+  inputSchema: draftsOutputSchema,
+  outputSchema: workflowOutputSchema,
+  execute: async ({ inputData }) => ({ ...inputData, sent: 0 }),
+})
+
+// ─── Workflow ───────────────────────────────────────────────────────────────
+
+export const outreachCampaignWorkflow = createWorkflow({
+  id: 'outreach-campaign',
+  description:
+    'Draft personalized outreach per target, pause for human approval, then hand off approved drafts for sending.',
+  inputSchema: workflowInputSchema,
+  outputSchema: workflowOutputSchema,
+})
+  .then(draftStep)
+  .then(approveDraftsStep)
+  .then(finalizeStep)
+  .commit()
+
+// ─── Plain async runner (used by /api/outreach) ─────────────────────────────
+
+/**
+ * Execute an outreach campaign outside the workflow runtime. Returns all
+ * drafts for batch approval. Sending happens in a separate step.
+ */
+export async function executeOutreachCampaign(
+  input: OutreachCampaignInput
+): Promise<OutreachCampaignResult> {
+  const { drafts, failed } = await draftMessagesForTargets(input)
   return {
     sent: 0,
     drafted: drafts.length,

@@ -6,6 +6,9 @@ import { createMem0MemorizeTool } from '../tools/mem0Memorize'
 import { getComposioToolsForProviders } from '@/lib/composio'
 import { DOCS_PROMPT } from '../prompts/docs'
 import type { ComposioProvider } from '@/types'
+import { AGENT_META, getAgentSchemas } from './schemas'
+
+export const DOCS_AGENT_SCHEMAS = getAgentSchemas('docs')
 
 const DOCS_PROVIDERS: ComposioProvider[] = ['google-docs', 'google-sheet', 'airtable', 'notion']
 
@@ -33,6 +36,7 @@ export async function createDocsAgent(
   const agent = new Agent({
     id: `docs-${userId}`,
     name: 'docs',
+    description: AGENT_META.docs.description,
     instructions: DOCS_PROMPT,
     model: AgentModels.docs(),
     workspace,

@@ -13,6 +13,7 @@ import {
 import { scrapeEnginesParallel } from '@/services/adsIntelligence/searchApiScrapeService'
 import { analyzeAdsFromScrape } from '@/services/adsIntelligence/analyzeService'
 import { buildCampaignBrief } from '@/services/adsIntelligence/buildService'
+import { createApprovalStep } from './approvalStep'
 
 const workflowInputSchema = AdsPipelineInputSchema.extend({
   clerkUserId: z.string(),
@@ -100,15 +101,26 @@ const buildStep = createStep({
   },
 })
 
+const approveAnalysisStep = createApprovalStep({
+  id: 'ads-approve-analysis',
+  description:
+    'Pause before generating the campaign brief so a human can review the competitive analysis and refine angles.',
+  payloadSchema: z.object({
+    markdown: z.string(),
+    scrape: scrapeOutputSchema,
+  }),
+})
+
 export const adsIntelligenceWorkflow = createWorkflow({
   id: 'ads-intelligence',
   description:
-    'End-to-end competitive ads pipeline: parallel ad-library search (Search API), analysis, and campaign brief. Requires Search API connected.',
+    'End-to-end competitive ads pipeline: parallel ad-library search (Search API), analysis, human approval gate, then campaign brief. Requires Search API connected.',
   inputSchema: workflowInputSchema,
   outputSchema: AdsPipelineRunOutputSchema,
 })
   .then(scrapeStep)
   .then(analyzeStep)
+  .then(approveAnalysisStep)
   .then(buildStep)
   .commit()
 

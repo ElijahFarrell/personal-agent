@@ -6,6 +6,9 @@ import { createMem0MemorizeTool } from '../tools/mem0Memorize'
 import { getComposioToolsForProviders } from '@/lib/composio'
 import { META_ADS_PROMPT } from '../prompts/metaAds'
 import type { ComposioProvider } from '@/types'
+import { AGENT_META, getAgentSchemas } from './schemas'
+
+export const META_ADS_AGENT_SCHEMAS = getAgentSchemas('metaAds')
 
 const META_ADS_PROVIDERS: ComposioProvider[] = ['metaAds']
 
@@ -26,6 +29,7 @@ export async function createMetaAdsAgent(
   const agent = new Agent({
     id: `metaAds-${userId}`,
     name: 'metaAds',
+    description: AGENT_META.metaAds.description,
     instructions: META_ADS_PROMPT,
     model: AgentModels.metaAds(),
     workspace,

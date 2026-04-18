@@ -9,6 +9,10 @@
  */
 
 import type * as adsPipelineRuns from "../adsPipelineRuns.js";
+import type * as agentRuns from "../agentRuns.js";
+import type * as agentWorkers from "../agentWorkers.js";
+import type * as approvals from "../approvals.js";
+import type * as artifacts from "../artifacts.js";
 import type * as auditSubmissions from "../auditSubmissions.js";
 import type * as automationTriggers from "../automationTriggers.js";
 import type * as billing from "../billing.js";
@@ -19,7 +23,9 @@ import type * as constants from "../constants.js";
 import type * as contentDrafts from "../contentDrafts.js";
 import type * as contextDocs from "../contextDocs.js";
 import type * as credits from "../credits.js";
+import type * as crons from "../crons.js";
 import type * as dailyTodos from "../dailyTodos.js";
+import type * as delegations from "../delegations.js";
 import type * as inbox from "../inbox.js";
 import type * as inboxAiUsage from "../inboxAiUsage.js";
 import type * as inboxOutboundEvents from "../inboxOutboundEvents.js";
@@ -31,6 +37,7 @@ import type * as marketingMetrics from "../marketingMetrics.js";
 import type * as messages from "../messages.js";
 import type * as migrations from "../migrations.js";
 import type * as prospects from "../prospects.js";
+import type * as runProgress from "../runProgress.js";
 import type * as schedules from "../schedules.js";
 import type * as skillContent from "../skillContent.js";
 import type * as skills from "../skills.js";
@@ -45,6 +52,7 @@ import type * as userAgentSettings from "../userAgentSettings.js";
 import type * as userDashboardPreferences from "../userDashboardPreferences.js";
 import type * as users from "../users.js";
 import type * as videoGeneration from "../videoGeneration.js";
+import type * as websetItems from "../websetItems.js";
 import type * as workflowDefinitions from "../workflowDefinitions.js";
 import type * as workflowRuns from "../workflowRuns.js";
 import type * as workflowSnapshots from "../workflowSnapshots.js";
@@ -59,6 +67,10 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   adsPipelineRuns: typeof adsPipelineRuns;
+  agentRuns: typeof agentRuns;
+  agentWorkers: typeof agentWorkers;
+  approvals: typeof approvals;
+  artifacts: typeof artifacts;
   auditSubmissions: typeof auditSubmissions;
   automationTriggers: typeof automationTriggers;
   billing: typeof billing;
@@ -69,7 +81,9 @@ declare const fullApi: ApiFromModules<{
   contentDrafts: typeof contentDrafts;
   contextDocs: typeof contextDocs;
   credits: typeof credits;
+  crons: typeof crons;
   dailyTodos: typeof dailyTodos;
+  delegations: typeof delegations;
   inbox: typeof inbox;
   inboxAiUsage: typeof inboxAiUsage;
   inboxOutboundEvents: typeof inboxOutboundEvents;
@@ -81,6 +95,7 @@ declare const fullApi: ApiFromModules<{
   messages: typeof messages;
   migrations: typeof migrations;
   prospects: typeof prospects;
+  runProgress: typeof runProgress;
   schedules: typeof schedules;
   skillContent: typeof skillContent;
   skills: typeof skills;
@@ -95,6 +110,7 @@ declare const fullApi: ApiFromModules<{
   userDashboardPreferences: typeof userDashboardPreferences;
   users: typeof users;
   videoGeneration: typeof videoGeneration;
+  websetItems: typeof websetItems;
   workflowDefinitions: typeof workflowDefinitions;
   workflowRuns: typeof workflowRuns;
   workflowSnapshots: typeof workflowSnapshots;
