@@ -24,6 +24,10 @@ import {
 import { Message, MessageContent, MessageResponse } from '@/components/ai-elements/message'
 import { AssistantMessageContent } from './AssistantMessageContent'
 import {
+  MessageQuickActions,
+  type MessageFeedback,
+} from './MessageQuickActions'
+import {
   PromptInput,
   PromptInputProvider,
   PromptInputTextarea,
@@ -78,6 +82,7 @@ import {
 } from '@/components/ui/tooltip'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
 import { chatToolTitle } from '@/constants/chatToolUi'
 import { CHAT_JOB_STATUS } from '@convex/constants'
 import { Label } from '@/components/ui/label'
@@ -230,6 +235,7 @@ export function ChatWindow({
     threadId ? { threadId } : 'skip'
   )
   const saveMessage = useMutation(api.messages.saveMessage)
+  const deletePersistedMessage = useMutation(api.messages.deleteMessage)
   const createThread = useMutation(api.threads.createThread)
   const updateThreadTitle = useMutation(api.threads.updateThreadTitle)
   const touchThread = useMutation(api.threads.touchThread)
@@ -258,6 +264,9 @@ export function ChatWindow({
   const [selectedModel, setSelectedModel] = useState<string>('auto')
   const [runInBackground, setRunInBackground] = useState(false)
   const [bgJobRunning, setBgJobRunning] = useState(false)
+  const [messageFeedback, setMessageFeedback] = useState<
+    Record<string, MessageFeedback>
+  >({})
   const bgJobIdRef = useRef<string | null>(null)
   const activeThreadRef = useRef<Id<'threads'> | null>(threadId)
   const targetAgentRef = useRef<AgentId | null>(null)
@@ -333,6 +342,7 @@ export function ChatWindow({
     error: useChatError,
     setMessages,
     stop,
+    regenerate,
   } = useChat({
     transport,
     id: threadId ?? 'new',
@@ -424,6 +434,7 @@ export function ChatWindow({
     setRunInBackground(false)
     setBgJobRunning(false)
     bgJobIdRef.current = null
+    setMessageFeedback({})
   }, [threadId, setMessages])
 
   useEffect(() => {
@@ -753,6 +764,61 @@ export function ChatWindow({
     [handleSend]
   )
 
+  const copyMessageText = useCallback(async (text: string) => {
+    const t = text.trim()
+    if (!t) return
+    try {
+      await navigator.clipboard.writeText(t)
+      toast.success('Copied to clipboard')
+    } catch {
+      toast.error('Could not copy')
+    }
+  }, [])
+
+  const handleRegenerateAssistant = useCallback(
+    async (msgIndex: number) => {
+      if (streamBusy || !dbUser) return
+      const list = displayMessages
+      const msg = list[msgIndex]
+      if (!msg || msg.role !== CHAT_ROLES.ASSISTANT) return
+      if ('isStreaming' in msg && msg.isStreaming) return
+      const prev = list[msgIndex - 1]
+      if (!prev || prev.role !== CHAT_ROLES.USER || !prev.content.trim()) return
+
+      const stillInChat = chatMessages.some(
+        (m) => m.id === msg.id && m.role === CHAT_ROLES.ASSISTANT
+      )
+      if (stillInChat) {
+        await regenerate({ messageId: msg.id })
+        return
+      }
+
+      try {
+        await deletePersistedMessage({ messageId: msg.id as Id<'messages'> })
+      } catch (e) {
+        setChatError(e instanceof Error ? e.message : 'Could not replace message')
+        return
+      }
+
+      setCreditError(false)
+      setChatError(null)
+      lastChatRequestMetaRef.current = {
+        deepResearch: deepResearchRef.current,
+        targetAgent: targetAgentRef.current,
+      }
+      sendMessage({ text: prev.content })
+    },
+    [
+      streamBusy,
+      dbUser,
+      displayMessages,
+      chatMessages,
+      regenerate,
+      deletePersistedMessage,
+      sendMessage,
+    ]
+  )
+
   const SUGGESTED_PROMPTS: Array<{ text: string; icon: LucideIcon }> = [
     { text: 'Check my email', icon: Mail },
     { text: "What's on my calendar today?", icon: Calendar },
@@ -866,6 +932,35 @@ export function ChatWindow({
                           </>
                         )}
                       </MessageContent>
+                      <MessageQuickActions
+                        copyText={msg.content}
+                        role={msg.role}
+                        feedback={messageFeedback[msg.id] ?? null}
+                        onFeedbackChange={(next) => {
+                          setMessageFeedback((prev) => {
+                            const copy = { ...prev }
+                            if (next === null) delete copy[msg.id]
+                            else copy[msg.id] = next
+                            return copy
+                          })
+                        }}
+                        onCopy={() => void copyMessageText(msg.content)}
+                        {...(msg.role === CHAT_ROLES.ASSISTANT
+                          ? {
+                              onRegenerate: () =>
+                                void handleRegenerateAssistant(index),
+                              canRegenerate:
+                                !streamBusy &&
+                                index > 0 &&
+                                displayMessages[index - 1]?.role ===
+                                  CHAT_ROLES.USER &&
+                                !(
+                                  'isStreaming' in msg && Boolean(msg.isStreaming)
+                                ),
+                            }
+                          : {})}
+                        disabled={!dbUser}
+                      />
                     </Message>
                     {showBusyStripAfterUser && (
                       <div className="w-full max-w-4xl self-stretch">
