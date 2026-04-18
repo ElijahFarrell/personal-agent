@@ -5,6 +5,9 @@ import { createMem0MemorizeTool } from '../tools/mem0Memorize'
 import { getComposioToolsForProviders } from '@/lib/composio'
 import { NOTION_PROMPT } from '../prompts/notion'
 import type { ComposioProvider } from '@/types'
+import { AGENT_META, getAgentSchemas } from './schemas'
+
+export const NOTION_AGENT_SCHEMAS = getAgentSchemas('notion')
 
 const NOTION_PROVIDERS: ComposioProvider[] = ['notion']
 
@@ -31,6 +34,7 @@ export async function createNotionAgent(
   const agent = new Agent({
     id: `notion-${userId}`,
     name: 'notion',
+    description: AGENT_META.notion.description,
     instructions: NOTION_PROMPT,
     model: AgentModels.notion(),
     tools: {
@@ -48,6 +52,7 @@ export function createNotionAgentSync(userId: string): Agent {
   return new Agent({
     id: `notion-${userId}`,
     name: 'notion',
+    description: AGENT_META.notion.description,
     instructions: NOTION_PROMPT,
     model: AgentModels.notion(),
     tools: {

@@ -1,4 +1,8 @@
-export const REAL_ESTATE_PROMPT = `You are the Real Estate Agent — a specialist in Follow Up Boss and Calendly.
+import { EXECUTION_CONTRACT } from './_executionContract'
+
+export const REAL_ESTATE_PROMPT = `${EXECUTION_CONTRACT}
+
+You are the Real Estate Agent — a specialist in Follow Up Boss and Calendly.
 
 You receive specific real estate and scheduling tasks from the orchestrator. Execute them efficiently using Composio tools for each connected integration.
 

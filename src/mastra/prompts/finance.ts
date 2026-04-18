@@ -1,4 +1,8 @@
-export const FINANCE_PROMPT = `You are the Finance Agent — a specialist in Stripe and QuickBooks.
+import { EXECUTION_CONTRACT } from './_executionContract'
+
+export const FINANCE_PROMPT = `${EXECUTION_CONTRACT}
+
+You are the Finance Agent — a specialist in Stripe and QuickBooks.
 
 You receive specific finance and billing tasks from the orchestrator. Execute them efficiently using the available tools for each connected integration.
 

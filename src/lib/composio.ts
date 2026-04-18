@@ -194,12 +194,33 @@ export async function executeComposioTool<T = unknown>(
 }
 
 /**
+ * Options for {@link getComposioToolsForProviders}.
+ *
+ * `elicit`, when provided, wraps every returned tool through the MCP
+ * elicitation gate so destructive ids (Lemlist push, Gmail/Outlook send, bulk
+ * imports, etc.) short-circuit the first call with `NEEDS_APPROVAL` and
+ * persist a Convex approval row. Non-destructive tool ids pass through.
+ */
+export interface ComposioToolsOptions {
+  elicit?: {
+    tenantId: string
+    threadId?: string
+    runId?: string
+    agentId?: string
+  }
+}
+
+/**
  * Returns Composio tools for the given providers (toolkits).
  * Use with Mastra agents. Only includes toolkits the user has connected.
+ *
+ * Pass `options.elicit` to route destructive tool calls through the MCP
+ * elicitation gate — strongly recommended anywhere tenantId is available.
  */
 export async function getComposioToolsForProviders(
   userId: string,
-  providers: ComposioProvider[]
+  providers: ComposioProvider[],
+  options: ComposioToolsOptions = {}
 ): Promise<Record<string, unknown>> {
   if (!config.composio.apiKey || providers.length === 0) {
     return {}
@@ -223,6 +244,21 @@ export async function getComposioToolsForProviders(
     toolkits,
   })
 
-  const tools = await session.tools()
-  return (tools ?? {}) as Record<string, unknown>
+  const tools = (await session.tools()) ?? {}
+  if (!options.elicit) {
+    return tools as Record<string, unknown>
+  }
+
+  // Late-import to avoid pulling Mastra-only modules into Composio setup paths
+  // used by non-agent surfaces (webhooks, admin tooling, etc.).
+  const { wrapToolsForElicitation } = await import(
+    '@/mastra/mcp/elicitation'
+  )
+  // Cast through `unknown` — Composio tools are Mastra-shaped but typed as
+  // opaque records at this boundary.
+  const wrapped = wrapToolsForElicitation(
+    tools as unknown as Parameters<typeof wrapToolsForElicitation>[0],
+    { userId, ...options.elicit }
+  )
+  return wrapped as unknown as Record<string, unknown>
 }

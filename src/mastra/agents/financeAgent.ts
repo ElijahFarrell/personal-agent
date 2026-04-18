@@ -6,6 +6,9 @@ import { createMem0MemorizeTool } from '../tools/mem0Memorize'
 import { getComposioToolsForProviders } from '@/lib/composio'
 import { FINANCE_PROMPT } from '../prompts/finance'
 import type { ComposioProvider } from '@/types'
+import { AGENT_META, getAgentSchemas } from './schemas'
+
+export const FINANCE_AGENT_SCHEMAS = getAgentSchemas('finance')
 
 const FINANCE_PROVIDERS: ComposioProvider[] = ['stripe', 'quickbooks']
 
@@ -33,6 +36,7 @@ export async function createFinanceAgent(
   const agent = new Agent({
     id: `finance-${userId}`,
     name: 'finance',
+    description: AGENT_META.finance.description,
     instructions: FINANCE_PROMPT,
     model: AgentModels.finance(),
     workspace,

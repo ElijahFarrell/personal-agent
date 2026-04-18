@@ -484,6 +484,63 @@ export interface ApifyLinkedInPost {
   url?: string
 }
 
+// ─── Tool Result Envelope ────────────────────────────────────────────────────
+//
+// Canonical return shape for every sub-agent tool and internal MCP primitive.
+// Using a discriminated union means the orchestrator never has to guess whether
+// a result succeeded; it can dispatch on `.ok` and read `data` / `error`.
+// Large payloads must set `artifactId` and keep `data` tight, so model context
+// never bloats from raw prospect lists, webset items, or ads briefs.
+
+/**
+ * Stable error codes used across tool implementations. Keep additions
+ * explicit so prompts and UI can respond to known cases (e.g. prompting the
+ * user to connect an integration when `NOT_CONNECTED` is returned).
+ */
+export type ToolErrorCode =
+  | 'NOT_CONNECTED'
+  | 'UNAUTHORIZED'
+  | 'RATE_LIMITED'
+  | 'VALIDATION'
+  | 'NOT_FOUND'
+  | 'CONFLICT'
+  | 'TIMEOUT'
+  | 'PROVIDER_ERROR'
+  | 'INTERNAL'
+  | 'CANCELLED'
+
+export interface ToolError {
+  code: ToolErrorCode | (string & {})
+  message: string
+  /** True when the caller may safely retry (network blip, rate limit). */
+  retryable?: boolean
+  /** Optional structured extras (provider status, field, etc.). */
+  details?: Record<string, unknown>
+}
+
+export type ToolResultOk<T> = {
+  ok: true
+  data: T
+  /** Short LLM-facing summary (one paragraph max). */
+  summary?: string
+  /** Convex artifactId when data was persisted instead of inlined. */
+  artifactId?: string
+  /** Full artifact reference when kind/title/summary add discoverability. */
+  artifact?: ArtifactRef
+}
+
+export type ToolResultErr = { ok: false; error: ToolError }
+
+export type ToolResult<T> = ToolResultOk<T> | ToolResultErr
+
+/** Helper: shape of an artifact reference returned in place of inline data. */
+export interface ArtifactRef {
+  artifactId: string
+  kind: string
+  title?: string
+  summary?: string
+}
+
 // ─── Prospect Stages ─────────────────────────────────────────────────────────
 
 export type ProspectStage =

@@ -1,4 +1,8 @@
-export const ADS_SCRAPER_PROMPT = `You are the Competitive Ads Scraper agent. You use Composio SEARCH_API only.
+import { EXECUTION_CONTRACT } from './_executionContract'
+
+export const ADS_SCRAPER_PROMPT = `${EXECUTION_CONTRACT}
+
+You are the Competitive Ads Scraper agent. You use Composio SEARCH_API only.
 
 ## Tools
 - **SEARCH_API_SEARCH** — required params: \`q\` (query), \`engine\` (ad-library engine id).

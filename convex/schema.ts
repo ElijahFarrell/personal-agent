@@ -2,6 +2,7 @@ import { defineSchema, defineTable } from 'convex/server'
 import { v } from 'convex/values'
 import {
   ADS_PIPELINE_RUN_STATUS,
+  AGENT_RUN_STATUS,
   BILLING_MODEL,
   CHAT_JOB_STATUS,
   CONTEXT_DOC_CATEGORY,
@@ -45,6 +46,7 @@ import {
   COMPLIANCE_DECISION,
   CONSENT_KIND,
   SUPPRESSION_REASON,
+  APPROVAL_STATUS,
 } from './constants'
 
 export default defineSchema({
@@ -1217,6 +1219,194 @@ export default defineSchema({
     .index(INDEXES.BY_TENANT_USER_DOC_VERSION, ['tenantId', 'userId', 'documentKey', 'version']),
 
   // ─── Marketing Chat Leads ──────────────────────────────────────────────────
+
+  // ─── Multi-Agent Run State (Phase 0) ───────────────────────────────────────
+  //
+  // agentRuns / runProgress / artifacts / delegations form the durable spine of
+  // the orchestrator + sub-agent system. Every orchestrator message spawns one
+  // root agentRun; each delegation spawns a child row linked via parentRunId.
+  // Long-running tools (Exa websets, Apollo enrichments, Ads pipelines) persist
+  // their external ids on the parent run so workers can resume across restarts.
+
+  [TABLES.AGENT_RUNS]: defineTable({
+    tenantId: v.id(TABLES.TENANTS),
+    userId: v.id(TABLES.USERS),
+    /** Thread that triggered this run (matches messages.threadId). */
+    threadId: v.optional(v.string()),
+    /** Parent agentRun for delegated sub-agent runs; null for root runs. */
+    parentRunId: v.optional(v.id(TABLES.AGENT_RUNS)),
+    /** Agent identifier — e.g. `orchestrator`, `agent-email`, `agent-sdr`. */
+    agentId: v.string(),
+    status: v.union(
+      v.literal(AGENT_RUN_STATUS.PENDING),
+      v.literal(AGENT_RUN_STATUS.RUNNING),
+      v.literal(AGENT_RUN_STATUS.SUSPENDED),
+      v.literal(AGENT_RUN_STATUS.COMPLETED),
+      v.literal(AGENT_RUN_STATUS.FAILED),
+      v.literal(AGENT_RUN_STATUS.CANCELLED)
+    ),
+    /** Short human-readable label for UI cards (`"Researching acme.com"`). */
+    title: v.optional(v.string()),
+    /** Free-form task prompt / input passed to the agent. */
+    input: v.optional(v.any()),
+    /** Structured output envelope (ToolResult<T>) or final text. */
+    output: v.optional(v.any()),
+    /** Plan the agent wrote via `write-plan`; surfaced in the run viewer. */
+    plan: v.optional(v.any()),
+    /**
+     * External worker ids (Exa websetId, Apollo jobId, Mastra runId, etc.).
+     * Stored as a record so multiple providers can share one run.
+     */
+    externalIds: v.optional(v.record(v.string(), v.string())),
+    /** Mastra tracing tags copied in for cross-ref with Braintrust spans. */
+    tracingTags: v.optional(v.array(v.string())),
+    error: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    startedAt: v.optional(v.number()),
+    completedAt: v.optional(v.number()),
+  })
+    .index(INDEXES.BY_TENANT_ID, ['tenantId'])
+    .index(INDEXES.BY_USER_ID, ['userId'])
+    .index(INDEXES.BY_THREAD_ID, ['threadId'])
+    .index(INDEXES.BY_PARENT_RUN_ID, ['parentRunId'])
+    .index(INDEXES.BY_TENANT_UPDATED, ['tenantId', 'updatedAt']),
+
+  [TABLES.RUN_PROGRESS]: defineTable({
+    runId: v.id(TABLES.AGENT_RUNS),
+    tenantId: v.id(TABLES.TENANTS),
+    /** Milestone kind: `status`, `tool-call`, `tool-result`, `plan`, `note`. */
+    kind: v.string(),
+    message: v.optional(v.string()),
+    data: v.optional(v.any()),
+    createdAt: v.number(),
+  })
+    .index(INDEXES.BY_RUN_CREATED, ['runId', 'createdAt'])
+    .index(INDEXES.BY_TENANT_ID, ['tenantId']),
+
+  [TABLES.ARTIFACTS]: defineTable({
+    tenantId: v.id(TABLES.TENANTS),
+    userId: v.id(TABLES.USERS),
+    runId: v.optional(v.id(TABLES.AGENT_RUNS)),
+    /**
+     * Kind namespace: e.g. `exa.websetItems`, `apollo.enriched`, `ads.brief`,
+     * `sdr.prospects`. Read by artifacts.get and cross-agent lookups.
+     */
+    kind: v.string(),
+    /** Optional human label for UI and LLM references. */
+    title: v.optional(v.string()),
+    data: v.any(),
+    /** Lightweight summary safe to inline into model context. */
+    summary: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index(INDEXES.BY_TENANT_ID, ['tenantId'])
+    .index(INDEXES.BY_ARTIFACT_RUN, ['runId'])
+    .index(INDEXES.BY_ARTIFACT_TENANT_KIND, ['tenantId', 'kind']),
+
+  /**
+   * Cached Exa webset items. A Convex cron walks every agentRun with a
+   * persisted `externalIds.websetId`, fetches items from Exa, and upserts
+   * them here scoped to the owning tenant. Orchestrator tools (like
+   * `list-recent-websets`) read this table instead of calling Exa on every
+   * request.
+   */
+  [TABLES.WEBSET_ITEMS]: defineTable({
+    tenantId: v.id(TABLES.TENANTS),
+    websetId: v.string(),
+    /** Originating agentRun that created the webset (if known). */
+    sourceRunId: v.optional(v.id(TABLES.AGENT_RUNS)),
+    /** Deterministic dedupe key (lowercased company name). */
+    itemKey: v.string(),
+    companyName: v.string(),
+    email: v.optional(v.string()),
+    linkedinUrl: v.optional(v.string()),
+    domain: v.optional(v.string()),
+    /** Optional human label for the webset (query or campaign name). */
+    websetTitle: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index(INDEXES.BY_TENANT_ID, ['tenantId'])
+    .index(INDEXES.BY_TENANT_WEBSET, ['tenantId', 'websetId'])
+    .index(INDEXES.BY_TENANT_ITEM_KEY, ['tenantId', 'itemKey'])
+    .index(INDEXES.BY_WEBSET_ID, ['websetId']),
+
+  [TABLES.DELEGATIONS]: defineTable({
+    tenantId: v.id(TABLES.TENANTS),
+    parentRunId: v.id(TABLES.AGENT_RUNS),
+    childRunId: v.id(TABLES.AGENT_RUNS),
+    /** Canonical target, e.g. `agent-sdr`. */
+    targetAgentId: v.string(),
+    /** Input passed to the child (task, structured args). */
+    input: v.optional(v.any()),
+    /** Output returned to the parent (ToolResult envelope when structured). */
+    output: v.optional(v.any()),
+    status: v.union(
+      v.literal(AGENT_RUN_STATUS.PENDING),
+      v.literal(AGENT_RUN_STATUS.RUNNING),
+      v.literal(AGENT_RUN_STATUS.SUSPENDED),
+      v.literal(AGENT_RUN_STATUS.COMPLETED),
+      v.literal(AGENT_RUN_STATUS.FAILED),
+      v.literal(AGENT_RUN_STATUS.CANCELLED)
+    ),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index(INDEXES.BY_TENANT_ID, ['tenantId'])
+    .index(INDEXES.BY_PARENT_RUN_ID, ['parentRunId'])
+    .index(INDEXES.BY_PARENT_CREATED, ['parentRunId', 'createdAt']),
+
+  /**
+   * Destructive-action approval requests (MCP elicitation).
+   *
+   * Any destructive tool (Lemlist push, email send, large imports, etc.) run
+   * through the elicitation gate writes a row here on first invocation and
+   * returns `ok:false / error.code = NEEDS_APPROVAL` to the orchestrator.
+   * The user approves or rejects via the UI; on approval, the orchestrator
+   * re-calls the same tool with `approvalToken` and the gate lets it through.
+   */
+  [TABLES.APPROVALS]: defineTable({
+    tenantId: v.id(TABLES.TENANTS),
+    userId: v.id(TABLES.USERS),
+    /** Originating thread (matches messages.threadId) so UI can surface inline. */
+    threadId: v.optional(v.string()),
+    /** Agent run this approval is blocking (orchestrator or delegated child). */
+    runId: v.optional(v.id(TABLES.AGENT_RUNS)),
+    /** Canonical agent identifier that requested the action (e.g. `agent-lead`). */
+    agentId: v.optional(v.string()),
+    /** Tool id as exposed to the LLM (e.g. `LEMLIST_ADD_LEADS_TO_CAMPAIGN`). */
+    toolId: v.string(),
+    /** Short human-readable reason/summary shown in the approval card. */
+    summary: v.string(),
+    /** Tool arguments captured at request time — shown for audit + re-execution. */
+    toolArgs: v.optional(v.any()),
+    status: v.union(
+      v.literal(APPROVAL_STATUS.PENDING),
+      v.literal(APPROVAL_STATUS.APPROVED),
+      v.literal(APPROVAL_STATUS.REJECTED),
+      v.literal(APPROVAL_STATUS.EXPIRED)
+    ),
+    /** Opaque token included in the approved tool re-invocation. */
+    approvalToken: v.string(),
+    decidedBy: v.optional(v.id(TABLES.USERS)),
+    decidedAt: v.optional(v.number()),
+    decidedNote: v.optional(v.string()),
+    /** Wall-clock expiration — pending rows past this are treated as expired. */
+    expiresAt: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index(INDEXES.BY_TENANT_ID, ['tenantId'])
+    .index(INDEXES.BY_USER_ID, ['userId'])
+    .index(INDEXES.BY_THREAD_ID, ['threadId'])
+    .index(INDEXES.BY_APPROVAL_TOKEN, ['approvalToken'])
+    .index(INDEXES.BY_TENANT_STATUS_CREATED, [
+      'tenantId',
+      'status',
+      'createdAt',
+    ]),
 
   [TABLES.MARKETING_CHAT_LEADS]: defineTable({
     name: v.optional(v.string()),

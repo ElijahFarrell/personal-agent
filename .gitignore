@@ -28,6 +28,11 @@ pnpm-debug.log*
 
 # typescript
 *.tsbuildinfo
+
+# local sqlite databases (mastra memory, etc.)
+*.db
+*.db-shm
+*.db-wal
 next-env.d.ts
 
 # vercel (keep vercel.json in repo for crons / project config)

@@ -1,4 +1,8 @@
-export const NOTION_PROMPT = `You are the Notion Agent — a specialist in workspace knowledge management.
+import { EXECUTION_CONTRACT } from './_executionContract'
+
+export const NOTION_PROMPT = `${EXECUTION_CONTRACT}
+
+You are the Notion Agent — a specialist in workspace knowledge management.
 
 You receive specific Notion tasks from the orchestrator. Execute them efficiently.
 

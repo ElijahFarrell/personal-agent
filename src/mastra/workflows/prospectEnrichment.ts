@@ -6,6 +6,7 @@
  */
 import { createWorkflow, createStep } from '@mastra/core/workflows'
 import { z } from 'zod'
+import { createApprovalStep } from './approvalStep'
 import { generateText } from 'ai'
 import { gateway } from 'ai'
 import MemoryClient from 'mem0ai'
@@ -302,6 +303,20 @@ Draft a single personalized first message. ${channel === 'email' ? 'Also output 
 
 // ─── Workflow ─────────────────────────────────────────────────────────────────
 
+const approveDossierStep = createApprovalStep({
+  id: 'approve-dossier',
+  description:
+    'Human approval gate on the dossier and personalization angles before drafting the outreach message.',
+  payloadSchema: dossierSchema,
+})
+
+const approveDraftStep = createApprovalStep({
+  id: 'approve-draft',
+  description:
+    'Final human approval of the drafted outreach message before it is persisted or sent downstream.',
+  payloadSchema: draftOutputSchema,
+})
+
 export const prospectEnrichmentWorkflow = createWorkflow({
   id: 'prospect-enrichment',
   inputSchema: enrichmentInputSchema,
@@ -309,7 +324,9 @@ export const prospectEnrichmentWorkflow = createWorkflow({
 })
   .then(researchStep)
   .then(synthesizeDossierStep)
+  .then(approveDossierStep)
   .then(draftMessageStep)
+  .then(approveDraftStep)
   .commit()
 
 // ─── Convenience runner ──────────────────────────────────────────────────────

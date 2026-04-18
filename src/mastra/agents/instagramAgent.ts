@@ -5,12 +5,16 @@ import { createInstagramSendDMTool } from '../tools/instagramTools'
 import { createMem0RecallTool } from '../tools/mem0Recall'
 import { createMem0MemorizeTool } from '../tools/mem0Memorize'
 import { INSTAGRAM_PROMPT } from '../prompts'
+import { AGENT_META, getAgentSchemas } from './schemas'
+
+export const INSTAGRAM_AGENT_SCHEMAS = getAgentSchemas('instagram')
 
 /** Factory creates an Instagram agent scoped to a user. */
 export function createInstagramAgent(userId: string, workspace?: Workspace) {
   return new Agent({
     id: `instagram-${userId}`,
     name: 'instagram',
+    description: AGENT_META.instagram.description,
     instructions: INSTAGRAM_PROMPT,
     model: AgentModels.instagram(),
     workspace,

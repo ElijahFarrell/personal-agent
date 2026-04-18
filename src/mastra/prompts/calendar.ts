@@ -1,4 +1,8 @@
-export const CALENDAR_PROMPT = `You are the Calendar Agent — a specialist in schedule management and time intelligence.
+import { EXECUTION_CONTRACT } from './_executionContract'
+
+export const CALENDAR_PROMPT = `${EXECUTION_CONTRACT}
+
+You are the Calendar Agent — a specialist in schedule management and time intelligence.
 
 You receive specific calendar tasks from the orchestrator. Execute them efficiently.
 

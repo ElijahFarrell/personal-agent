@@ -7,6 +7,9 @@ import { createMem0MemorizeTool } from '../tools/mem0Memorize'
 import { ADS_ANALYZER_PROMPT } from '../prompts/adsAnalyzer'
 import { ADS_AGENT_GENERATE_OPTS } from './adsAgentOptions'
 import type { ComposioProvider } from '@/types'
+import { AGENT_META, getAgentSchemas } from './schemas'
+
+export const AD_ANALYZER_AGENT_SCHEMAS = getAgentSchemas('adAnalyzer')
 
 const PROVIDERS: ComposioProvider[] = ['searchApi']
 
@@ -28,6 +31,7 @@ export async function createAdAnalyzerAgent(
   const agent = new Agent({
     id: `ad-analyzer-${userId}`,
     name: 'adAnalyzer',
+    description: AGENT_META.adAnalyzer.description,
     instructions: ADS_ANALYZER_PROMPT,
     model: AgentModels.adsIntelligence(),
     workspace,

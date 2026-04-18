@@ -17,10 +17,18 @@ import {
   consumeMastraStreamToResult,
 } from '@/services/chatPipeline'
 import { CHAT_CREDIT_ACTION } from '@/constants/chat'
-import { CHAT_JOB_STATUS } from '@convex/constants'
+import { AGENT_RUN_STATUS, CHAT_JOB_STATUS } from '@convex/constants'
+import { shouldPromoteLongRunning } from '@/mastra/tools/longRunningRegistry'
+import { observeRun } from '@/mastra/agents/durableAgent'
 
-// Exa Websets can take 5–10 min for complex searches; allow long-running SDR tool calls
-export const maxDuration = 300
+// Next.js `maxDuration` is module-level, so the route exposes one budget for
+// both the streaming foreground branch and the auto-promoted background
+// branch. Background runs kick off a long-running Convex worker and return
+// almost immediately, but the in-route work (creating chatJobs + agentRuns,
+// starting the worker, tailing SSE from /api/chat?observe=<runId>) can still
+// sit open for the full Exa webset window. 800s matches the Convex worker
+// max-attempts ceiling (60 × 15s ≈ 15 min) with headroom.
+export const maxDuration = 800
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
 
@@ -196,7 +204,15 @@ export async function POST(req: NextRequest) {
       model,
     }
 
-    if (background) {
+    // Auto-promote to background when the user message hints at a tool that
+    // routinely outlives the serverless budget. Requires a signed-in user and
+    // persisted thread — otherwise we fall back to the streaming branch and
+    // accept the risk of timeout.
+    const autoPromote =
+      !background && Boolean(dbUser && threadId) && shouldPromoteLongRunning(message)
+    const runInBackground = background || autoPromote
+
+    if (runInBackground) {
       if (!dbUser || !threadId) {
         return NextResponse.json(
           { error: 'Background mode requires a saved thread and signed-in user.' },
@@ -215,12 +231,31 @@ export async function POST(req: NextRequest) {
         status: CHAT_JOB_STATUS.RUNNING,
       })
 
+      const runId = await convex.mutation(api.agentRuns.create, {
+        tenantId: dbUser.tenantId,
+        userId: dbUser._id,
+        agentId: 'orchestrator',
+        threadId,
+        title: message.slice(0, 120),
+        input: {
+          message,
+          attachmentUrls: pipelineArgs.attachmentUrls,
+          targetAgent,
+          deepResearch: Boolean(deepResearch),
+        },
+        tracingTags: autoPromote ? ['auto-promoted:long-running'] : undefined,
+      })
+
       const tenantIdStr = tenantId
       const dbUserId = dbUser._id
       const dbTenantId = dbUser.tenantId
 
       after(async () => {
         try {
+          await convex.mutation(api.agentRuns.updateStatus, {
+            runId,
+            status: 'running',
+          })
           const { mastraStream } = await prepareChatAgentStream(pipelineArgs)
           const { text, toolCalls } = await consumeMastraStreamToResult(mastraStream)
           await convex.mutation(api.messages.saveMessage, {
@@ -257,6 +292,11 @@ export async function POST(req: NextRequest) {
             jobId,
             status: CHAT_JOB_STATUS.COMPLETED,
           })
+          await convex.mutation(api.agentRuns.updateStatus, {
+            runId,
+            status: 'completed',
+            output: { text, toolCallCount: toolCalls.length },
+          })
         } catch (err) {
           const msg = err instanceof Error ? err.message : 'Chat job failed'
           console.error('[Chat API] Background job error:', err)
@@ -265,10 +305,22 @@ export async function POST(req: NextRequest) {
             status: CHAT_JOB_STATUS.FAILED,
             error: msg,
           })
+          await convex
+            .mutation(api.agentRuns.updateStatus, {
+              runId,
+              status: AGENT_RUN_STATUS.FAILED,
+              error: msg,
+            })
+            .catch(() => {})
         }
       })
 
-      return NextResponse.json({ jobId, status: 'running' })
+      return NextResponse.json({
+        jobId,
+        runId,
+        status: 'running',
+        autoPromoted: autoPromote,
+      })
     }
 
     const { mastraStream } = await prepareChatAgentStream(pipelineArgs)
@@ -328,6 +380,52 @@ export async function POST(req: NextRequest) {
     return createUIMessageStreamResponse({ stream: uiStream })
   } catch (error) {
     console.error('[Chat API] Error:', error)
+    const msg = error instanceof Error ? error.message : 'Internal server error'
+    return NextResponse.json({ error: msg }, { status: 500 })
+  }
+}
+
+/**
+ * Reconnect to a background/auto-promoted run as a Server-Sent Events stream.
+ *
+ * Usage: `GET /api/chat?observe=<runId>` — returns `text/event-stream` with
+ * `status`, `progress`, `done`, `timeout`, and `error` events. This is the
+ * durable equivalent of Mastra's native `agent.observe(runId)` pattern; the
+ * browser can call it freely after a page refresh because all state lives in
+ * Convex (agentRuns + runProgress).
+ */
+export async function GET(req: NextRequest) {
+  const url = new URL(req.url)
+  const runIdParam = url.searchParams.get('observe')
+  if (!runIdParam) {
+    return NextResponse.json(
+      { error: 'Missing `observe` query parameter (runId).' },
+      { status: 400 }
+    )
+  }
+
+  try {
+    const { tenantId } = await getTenantContext()
+    const runId = runIdParam as Id<'agentRuns'>
+
+    const run = await convex.query(api.agentRuns.getById, { runId })
+    if (!run) {
+      return NextResponse.json({ error: 'Run not found.' }, { status: 404 })
+    }
+    if (String(run.tenantId) !== tenantId) {
+      return NextResponse.json({ error: 'Forbidden.' }, { status: 403 })
+    }
+
+    const stream = observeRun({ runId, tenantId })
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache, no-transform',
+        Connection: 'keep-alive',
+      },
+    })
+  } catch (error) {
+    console.error('[Chat API] Observe error:', error)
     const msg = error instanceof Error ? error.message : 'Internal server error'
     return NextResponse.json({ error: msg }, { status: 500 })
   }

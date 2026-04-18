@@ -1,6 +1,13 @@
 import { Mastra } from '@mastra/core'
 import { MastraCompositeStore } from '@mastra/core/storage'
 import { LibSQLStore } from '@mastra/libsql'
+import {
+  Observability,
+  DefaultExporter,
+  SamplingStrategyType,
+  SensitiveDataFilter,
+} from '@mastra/observability'
+import { BraintrustExporter } from '@mastra/braintrust'
 import { workspace } from './workspace'
 import { ConvexWorkflowsStorage } from './storage/convexWorkflowsStorage'
 import { FallbackWorkflowsStorage } from './storage/fallbackWorkflowsStorage'
@@ -51,6 +58,81 @@ function createStorage() {
 const storage = createStorage()
 
 /**
+ * Observability: Braintrust + sensitive-data filter.
+ * Multi-config sampling: always for orchestrator + long-running tools, probability 0.1 elsewhere.
+ * The orchestrator-vs-other decision is encoded via tracingOptions.tags and the `configSelector`.
+ *
+ * Vendor: Braintrust (see plan phase 0). Returning `undefined` from the selector falls back to the
+ * default Observability instance.
+ */
+function createObservability(): Observability | undefined {
+  const braintrustKey = process.env.BRAINTRUST_API_KEY
+  if (!braintrustKey) return undefined
+
+  const sharedProcessors = [
+    new SensitiveDataFilter({
+      sensitiveFields: [
+        'password',
+        'token',
+        'secret',
+        'apiKey',
+        'authorization',
+        'bearer',
+        'email',
+        'phone',
+        'phoneNumber',
+        'ssn',
+      ],
+      redactionStyle: 'partial',
+    }),
+  ]
+  const projectName = process.env.BRAINTRUST_PROJECT ?? 'personal-agent'
+  const env = process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? 'development'
+
+  return new Observability({
+    configs: {
+      critical: {
+        serviceName: `${projectName}-critical`,
+        sampling: { type: SamplingStrategyType.ALWAYS },
+        exporters: [
+          new DefaultExporter(),
+          new BraintrustExporter({
+            apiKey: braintrustKey,
+            projectName,
+          }),
+        ],
+        spanOutputProcessors: sharedProcessors,
+        requestContextKeys: ['tenantId', 'userId', 'threadId', 'runId'],
+      },
+      sampled: {
+        serviceName: `${projectName}-sampled`,
+        sampling: { type: SamplingStrategyType.RATIO, probability: 0.1 },
+        exporters: [
+          new DefaultExporter(),
+          new BraintrustExporter({
+            apiKey: braintrustKey,
+            projectName,
+          }),
+        ],
+        spanOutputProcessors: sharedProcessors,
+        requestContextKeys: ['tenantId', 'userId', 'threadId', 'runId'],
+      },
+    },
+    configSelector: (options, _availableTracers) => {
+      const profile = options?.requestContext?.get?.('traceProfile') as
+        | string
+        | undefined
+      if (profile === 'critical') return 'critical'
+      if (profile === 'sampled') return 'sampled'
+      const runId = options?.requestContext?.get?.('runId')
+      return runId ? 'critical' : 'sampled'
+    },
+  })
+}
+
+const observability = createObservability()
+
+/**
  * The Mastra instance is the registry for all agents and workflows.
  * Agents are created per-user via factories (for memory isolation),
  * so we don't register them here directly — they're instantiated in route handlers.
@@ -62,7 +144,11 @@ const storage = createStorage()
  *
  * Storage (when configured) enables workflow suspend/resume persistence.
  */
-export const mastra = new Mastra({ workspace, storage })
+export const mastra = new Mastra({
+  workspace,
+  storage,
+  ...(observability ? { observability } : {}),
+})
 
 export {
   createOrchestratorAgent,
@@ -94,6 +180,7 @@ export { createVoice } from './voice'
 export { executeMorningBrief, morningBriefWorkflow } from './workflows/morningBrief'
 export {
   executeOutreachCampaign,
+  outreachCampaignWorkflow,
   type OutreachTarget,
   type OutreachCampaignInput,
   type OutreachCampaignResult,

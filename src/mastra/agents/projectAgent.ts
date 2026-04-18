@@ -6,6 +6,9 @@ import { createMem0MemorizeTool } from '../tools/mem0Memorize'
 import { getComposioToolsForProviders } from '@/lib/composio'
 import { PROJECT_PROMPT } from '../prompts/project'
 import type { ComposioProvider } from '@/types'
+import { AGENT_META, getAgentSchemas } from './schemas'
+
+export const PROJECT_AGENT_SCHEMAS = getAgentSchemas('project')
 
 const PROJECT_PROVIDERS: ComposioProvider[] = ['asana', 'monday']
 
@@ -33,6 +36,7 @@ export async function createProjectAgent(
   const agent = new Agent({
     id: `project-${userId}`,
     name: 'project',
+    description: AGENT_META.project.description,
     instructions: PROJECT_PROMPT,
     model: AgentModels.project(),
     workspace,

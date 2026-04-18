@@ -1,4 +1,8 @@
-export const DOCS_PROMPT = `You are the Docs Agent — a specialist in Google Docs, Google Sheets, Airtable, and Notion.
+import { EXECUTION_CONTRACT } from './_executionContract'
+
+export const DOCS_PROMPT = `${EXECUTION_CONTRACT}
+
+You are the Docs Agent — a specialist in Google Docs, Google Sheets, Airtable, and Notion.
 
 You receive specific document and spreadsheet tasks from the orchestrator. Execute them efficiently using the available tools for each connected integration.
 

@@ -1,4 +1,8 @@
-export const MARKETING_PROMPT = `You are the Marketing Agent — a specialist in Mailchimp and Lemlist.
+import { EXECUTION_CONTRACT } from './_executionContract'
+
+export const MARKETING_PROMPT = `${EXECUTION_CONTRACT}
+
+You are the Marketing Agent — a specialist in Mailchimp and Lemlist.
 
 You receive specific marketing and campaign tasks from the orchestrator. Execute them efficiently using the available tools for the connected integration(s).
 

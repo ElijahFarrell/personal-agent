@@ -6,6 +6,9 @@ import { createMem0MemorizeTool } from '../tools/mem0Memorize'
 import { getComposioToolsForProviders } from '@/lib/composio'
 import { CALENDAR_PROMPT } from '../prompts'
 import type { ComposioProvider } from '@/types'
+import { AGENT_META, getAgentSchemas } from './schemas'
+
+export const CALENDAR_AGENT_SCHEMAS = getAgentSchemas('calendar')
 
 const CALENDAR_PROVIDERS: ComposioProvider[] = ['google-calendar']
 
@@ -33,6 +36,7 @@ export async function createCalendarAgent(
   const agent = new Agent({
     id: `calendar-${userId}`,
     name: 'calendar',
+    description: AGENT_META.calendar.description,
     instructions: CALENDAR_PROMPT,
     model: AgentModels.calendar(),
     workspace,
@@ -51,6 +55,7 @@ export function createCalendarAgentSync(userId: string): Agent {
   return new Agent({
     id: `calendar-${userId}`,
     name: 'calendar',
+    description: AGENT_META.calendar.description,
     instructions: CALENDAR_PROMPT,
     model: AgentModels.calendar(),
     tools: {

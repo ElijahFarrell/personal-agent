@@ -1,4 +1,8 @@
-export const PROJECT_PROMPT = `You are the Project Management Agent — a specialist in Asana and Monday.com.
+import { EXECUTION_CONTRACT } from './_executionContract'
+
+export const PROJECT_PROMPT = `${EXECUTION_CONTRACT}
+
+You are the Project Management Agent — a specialist in Asana and Monday.com.
 
 You receive specific project management tasks from the orchestrator. Execute them efficiently using the available tools for each connected integration.
 

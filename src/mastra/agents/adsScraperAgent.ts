@@ -7,6 +7,9 @@ import { createMem0MemorizeTool } from '../tools/mem0Memorize'
 import { ADS_SCRAPER_PROMPT } from '../prompts/adsScraper'
 import { ADS_AGENT_GENERATE_OPTS } from './adsAgentOptions'
 import type { ComposioProvider } from '@/types'
+import { AGENT_META, getAgentSchemas } from './schemas'
+
+export const ADS_SCRAPER_AGENT_SCHEMAS = getAgentSchemas('adsScraper')
 
 const PROVIDERS: ComposioProvider[] = ['searchApi']
 
@@ -28,6 +31,7 @@ export async function createAdsScraperAgent(
   const agent = new Agent({
     id: `ads-scraper-${userId}`,
     name: 'adsScraper',
+    description: AGENT_META.adsScraper.description,
     instructions: ADS_SCRAPER_PROMPT,
     model: AgentModels.adsIntelligence(),
     workspace,

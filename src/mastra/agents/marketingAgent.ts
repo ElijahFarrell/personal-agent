@@ -6,6 +6,9 @@ import { createMem0MemorizeTool } from '../tools/mem0Memorize'
 import { getComposioToolsForProviders } from '@/lib/composio'
 import { MARKETING_PROMPT } from '../prompts/marketing'
 import type { ComposioProvider } from '@/types'
+import { AGENT_META, getAgentSchemas } from './schemas'
+
+export const MARKETING_AGENT_SCHEMAS = getAgentSchemas('marketing')
 
 const MARKETING_PROVIDERS: ComposioProvider[] = ['mailchimp', 'lemlist']
 
@@ -16,23 +19,31 @@ export interface MarketingAgentResult {
 
 /**
  * Creates the Marketing agent with Composio tools for Mailchimp and Lemlist.
+ *
+ * When `tenantId` is provided, Lemlist/Mailchimp destructive calls (push,
+ * launch, send, bulk import) are gated through the MCP elicitation flow so
+ * they require explicit user approval before firing.
  */
 export async function createMarketingAgent(
   userId: string,
   connectedProviders: string[],
-  workspace?: Workspace
+  workspace?: Workspace,
+  tenantId?: string
 ): Promise<MarketingAgentResult> {
   const activeProviders = MARKETING_PROVIDERS.filter((p) =>
     connectedProviders.includes(p)
   )
   const composioTools =
     activeProviders.length > 0
-      ? await getComposioToolsForProviders(userId, activeProviders)
+      ? await getComposioToolsForProviders(userId, activeProviders, {
+          elicit: tenantId ? { tenantId, agentId: 'agent-marketing' } : undefined,
+        })
       : {}
 
   const agent = new Agent({
     id: `marketing-${userId}`,
     name: 'marketing',
+    description: AGENT_META.marketing.description,
     instructions: MARKETING_PROMPT,
     model: AgentModels.marketing(),
     workspace,

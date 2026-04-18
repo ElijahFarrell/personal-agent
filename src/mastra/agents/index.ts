@@ -1,6 +1,7 @@
 /**
  * Central agent registry — factory functions for all agents.
  */
+export * from './schemas'
 export { createOrchestratorAgent } from './orchestrator'
 export { createEmailAgent, createEmailAgentSync } from './emailAgent'
 export { createResearchAgent } from './researchAgent'

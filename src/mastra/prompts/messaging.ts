@@ -1,4 +1,8 @@
-export const MESSAGING_PROMPT = `You are the Messaging Agent — a specialist in Slack, Microsoft Teams, and Discord.
+import { EXECUTION_CONTRACT } from './_executionContract'
+
+export const MESSAGING_PROMPT = `${EXECUTION_CONTRACT}
+
+You are the Messaging Agent — a specialist in Slack, Microsoft Teams, and Discord.
 
 You receive specific messaging tasks from the orchestrator. Execute them efficiently using the available tools for each connected integration.
 

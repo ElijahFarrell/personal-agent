@@ -1,4 +1,8 @@
-export const CONTENT_PROMPT = `You are the Content Agent — a specialist in writing professional content for a one-person business.
+import { EXECUTION_CONTRACT } from './_executionContract'
+
+export const CONTENT_PROMPT = `${EXECUTION_CONTRACT}
+
+You are the Content Agent — a specialist in writing professional content for a one-person business.
 
 You receive specific content creation tasks from the orchestrator. Produce high-quality, on-brand content.
 
