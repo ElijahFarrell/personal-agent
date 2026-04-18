@@ -38,7 +38,7 @@ export const Models = {
  */
 export const AgentModels = {
   /** Central orchestrator — needs strong reasoning and tool use */
-  orchestrator: Models.GEMINI_3_1_PRO,
+  orchestrator: Models.CLAUDE_SONNET_4_6,
 
   /** Sub-agents that need strong writing / reasoning */
   content:      Models.CLAUDE_SONNET,
@@ -91,7 +91,7 @@ export const CONTEXT_WINDOW_SIZES: Record<string, number> = {
 export const DEFAULT_CONTEXT_WINDOW = 1_000_000
 
 /** Default model when user selects "Auto" in the chat model selector */
-export const DEFAULT_CHAT_MODEL_ID = 'google/gemini-3.1-pro-preview'
+export const DEFAULT_CHAT_MODEL_ID = 'anthropic/claude-sonnet-4.6'
 
 /** Models available in the chat model selector, grouped by company */
 export const SELECTABLE_MODELS = [
