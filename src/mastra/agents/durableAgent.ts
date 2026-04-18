@@ -29,7 +29,12 @@ export interface ObserveRunOptions {
   tenantId?: string
   /** Polling cadence for Convex queries (default 1s). */
   pollIntervalMs?: number
-  /** Upper bound on observation duration (default 15 min). */
+  /**
+   * Upper bound on observation duration (default 290s). Must stay under the
+   * chat route's `maxDuration` (300s on Vercel Hobby) so the SSE stream emits
+   * a `timeout` event before the function is killed. The Convex worker keeps
+   * running; clients can reconnect via `/api/chat?observe=<runId>`.
+   */
   maxDurationMs?: number
 }
 
@@ -39,7 +44,7 @@ export interface ObserveRunOptions {
  */
 export function observeRun(opts: ObserveRunOptions): ReadableStream<Uint8Array> {
   const pollIntervalMs = opts.pollIntervalMs ?? 1_000
-  const maxDurationMs = opts.maxDurationMs ?? 15 * 60_000
+  const maxDurationMs = opts.maxDurationMs ?? 290_000
   const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
   const encoder = new TextEncoder()
 

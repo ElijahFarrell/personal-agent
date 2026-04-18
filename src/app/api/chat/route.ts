@@ -23,12 +23,12 @@ import { observeRun } from '@/mastra/agents/durableAgent'
 
 // Next.js `maxDuration` is module-level, so the route exposes one budget for
 // both the streaming foreground branch and the auto-promoted background
-// branch. Background runs kick off a long-running Convex worker and return
-// almost immediately, but the in-route work (creating chatJobs + agentRuns,
-// starting the worker, tailing SSE from /api/chat?observe=<runId>) can still
-// sit open for the full Exa webset window. 800s matches the Convex worker
-// max-attempts ceiling (60 × 15s ≈ 15 min) with headroom.
-export const maxDuration = 800
+// branch. Capped at 300s — the Vercel Hobby plan ceiling for Serverless
+// Functions. The Convex worker (60 × 15s poll loop) keeps running past this
+// ceiling as a scheduled task, so long Exa webset jobs still complete; the
+// browser just has to reconnect to `/api/chat?observe=<runId>` if the SSE
+// stream closes at the 300s mark.
+export const maxDuration = 300
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
 
