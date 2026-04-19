@@ -4,6 +4,7 @@ import { ConvexHttpClient } from 'convex/browser'
 import { api } from '@convex/_generated/api'
 import type { Id } from '@convex/_generated/dataModel'
 import type { ToolResult } from '@/types'
+import { createWebsetTools } from './websetTools'
 
 /**
  * Orchestrator-level run and artifact introspection tools.
@@ -73,21 +74,6 @@ const RunDetailSchema = RunRowSchema.extend({
   output: z.unknown().optional(),
   plan: z.unknown().optional(),
   children: z.array(RunRowSchema).optional(),
-})
-
-const WebsetPreviewEntrySchema = z.object({
-  companyName: z.string(),
-  domain: z.string().optional(),
-  email: z.string().optional(),
-})
-
-const WebsetSummarySchema = z.object({
-  websetId: z.string(),
-  websetTitle: z.string().optional(),
-  sourceRunId: z.string().optional(),
-  count: z.number(),
-  newestAt: z.number(),
-  preview: z.array(WebsetPreviewEntrySchema),
 })
 
 const ArtifactSchema = z.object({
@@ -162,61 +148,110 @@ export function createRunTools(userId: string, tenantId: string) {
     return (row?._id as Id<'agentRuns'> | undefined) ?? null
   }
 
-  const runsGetStatus = createTool({
-    id: 'runs-get-status',
-    description:
-      'Fetch the durable status of an agent run by id, including direct child delegations. ' +
-      'Use to answer "what happened on run X?" or to surface progress to the user.',
-    inputSchema: z.object({
-      runId: z.string().describe('Convex agentRuns id returned by a previous tool.'),
-    }),
-    outputSchema: makeResultSchema(RunDetailSchema),
-    execute: async (input): Promise<ToolResult<z.infer<typeof RunDetailSchema>>> => {
-      if (!convex) return toolErr('INTERNAL', 'No Convex client configured.')
-      try {
-        const bundle = await convex.query(api.agentRuns.getWithChildren, {
-          runId: input.runId as Id<'agentRuns'>,
-        })
-        if (!bundle || !bundle.run) {
-          return toolErr('NOT_FOUND', `Run ${input.runId} not found.`)
-        }
-        if (String(bundle.run.tenantId) !== tenantId) {
-          return toolErr('UNAUTHORIZED', 'Run belongs to a different tenant.')
-        }
-        const run = normalizeRun(bundle.run as RunRow)
-        const detail: z.infer<typeof RunDetailSchema> = {
-          ...run,
-          input: (bundle.run as RunRow).input,
-          output: (bundle.run as RunRow).output,
-          plan: (bundle.run as RunRow).plan,
-          children: (bundle.children as RunRow[]).map(normalizeRun),
-        }
-        return {
-          ok: true,
-          data: detail,
-          summary: `Run ${detail.runId} (${detail.agentId}) is ${detail.status}. ${detail.children?.length ?? 0} child delegations.`,
-        }
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err)
-        return toolErr('PROVIDER_ERROR', `Failed to load run: ${message}`, {
-          retryable: true,
+  /**
+   * Router tool covering the three low-frequency run-introspection calls.
+   * Merged from `runs-get-status` / `runs-list-recent` / `runs-cancel` so the
+   * orchestrator's tool surface stays under ~20 (see docs/agentic-orchestration.md).
+   */
+  const RunsActionSchema = z.enum(['get', 'list', 'cancel'])
+
+  const RunsInputSchema = z
+    .object({
+      action: RunsActionSchema.describe(
+        '`get` = fetch one run + its child delegations (requires runId). ' +
+          '`list` = recent runs for the current tenant (optional limit, default 10). ' +
+          '`cancel` = cancel a running/pending run (requires runId).'
+      ),
+      runId: z
+        .string()
+        .optional()
+        .describe('Convex agentRuns id. Required for `get` and `cancel`.'),
+      limit: z
+        .number()
+        .int()
+        .min(1)
+        .max(50)
+        .optional()
+        .describe('Only used when action="list". Defaults to 10.'),
+    })
+    .superRefine((val, ctx) => {
+      if ((val.action === 'get' || val.action === 'cancel') && !val.runId) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `action="${val.action}" requires runId`,
+          path: ['runId'],
         })
       }
-    },
-  })
+    })
 
-  const runsCancel = createTool({
-    id: 'runs-cancel',
+  const RunsOutputSchema = makeResultSchema(
+    z.object({
+      action: RunsActionSchema,
+      run: RunDetailSchema.optional(),
+      runs: z.array(RunRowSchema).optional(),
+      cancelledRunId: z.string().optional(),
+    })
+  )
+
+  type RunsOutput = {
+    action: z.infer<typeof RunsActionSchema>
+    run?: z.infer<typeof RunDetailSchema>
+    runs?: z.infer<typeof RunRowSchema>[]
+    cancelledRunId?: string
+  }
+
+  const runsRouter = createTool({
+    id: 'runs',
     description:
-      'Cancel a running or pending agent run. Child delegations are cancelled best-effort. ' +
-      'Use when the user asks to stop or abort a long-running job.',
-    inputSchema: z.object({
-      runId: z.string().describe('Convex agentRuns id to cancel.'),
-    }),
-    outputSchema: makeResultSchema(z.object({ runId: z.string() })),
-    execute: async (input): Promise<ToolResult<{ runId: string }>> => {
+      'Agent-run introspection router. Pick `action`: ' +
+      '`get` (load one run + its direct child delegations), ' +
+      '`list` (recent runs for the current tenant — use to find a runId), or ' +
+      '`cancel` (stop a running or pending run). ' +
+      'Use to answer "what happened on run X?", "what have you been doing lately?", or to abort a long-running job.',
+    inputSchema: RunsInputSchema,
+    outputSchema: RunsOutputSchema,
+    execute: async (input): Promise<ToolResult<RunsOutput>> => {
       if (!convex) return toolErr('INTERNAL', 'No Convex client configured.')
       try {
+        if (input.action === 'get') {
+          const bundle = await convex.query(api.agentRuns.getWithChildren, {
+            runId: input.runId as Id<'agentRuns'>,
+          })
+          if (!bundle || !bundle.run) {
+            return toolErr('NOT_FOUND', `Run ${input.runId} not found.`)
+          }
+          if (String(bundle.run.tenantId) !== tenantId) {
+            return toolErr('UNAUTHORIZED', 'Run belongs to a different tenant.')
+          }
+          const run = normalizeRun(bundle.run as RunRow)
+          const detail: z.infer<typeof RunDetailSchema> = {
+            ...run,
+            input: (bundle.run as RunRow).input,
+            output: (bundle.run as RunRow).output,
+            plan: (bundle.run as RunRow).plan,
+            children: (bundle.children as RunRow[]).map(normalizeRun),
+          }
+          return {
+            ok: true,
+            data: { action: 'get', run: detail },
+            summary: `Run ${detail.runId} (${detail.agentId}) is ${detail.status}. ${detail.children?.length ?? 0} child delegations.`,
+          }
+        }
+
+        if (input.action === 'list') {
+          const rows = await convex.query(api.agentRuns.listRecent, {
+            tenantId: tenantId as Id<'tenants'>,
+            limit: input.limit ?? 10,
+          })
+          const runs = (rows as RunRow[]).map(normalizeRun)
+          return {
+            ok: true,
+            data: { action: 'list', runs },
+            summary: `${runs.length} recent runs.`,
+          }
+        }
+
+        // action === 'cancel'
         const existing = await convex.query(api.agentRuns.getById, {
           runId: input.runId as Id<'agentRuns'>,
         })
@@ -229,44 +264,12 @@ export function createRunTools(userId: string, tenantId: string) {
         })
         return {
           ok: true,
-          data: { runId: input.runId },
+          data: { action: 'cancel', cancelledRunId: input.runId },
           summary: `Run ${input.runId} cancelled.`,
         }
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err)
-        return toolErr('PROVIDER_ERROR', `Failed to cancel run: ${message}`, {
-          retryable: true,
-        })
-      }
-    },
-  })
-
-  const runsListRecent = createTool({
-    id: 'runs-list-recent',
-    description:
-      'List recent agent runs for the current tenant. Use to answer "what have you been doing lately?" or to locate a runId.',
-    inputSchema: z.object({
-      limit: z.number().min(1).max(50).optional().default(10),
-    }),
-    outputSchema: makeResultSchema(z.object({ runs: z.array(RunRowSchema) })),
-    execute: async (
-      input
-    ): Promise<ToolResult<{ runs: z.infer<typeof RunRowSchema>[] }>> => {
-      if (!convex) return toolErr('INTERNAL', 'No Convex client configured.')
-      try {
-        const rows = await convex.query(api.agentRuns.listRecent, {
-          tenantId: tenantId as Id<'tenants'>,
-          limit: input.limit,
-        })
-        const runs = (rows as RunRow[]).map(normalizeRun)
-        return {
-          ok: true,
-          data: { runs },
-          summary: `${runs.length} recent runs.`,
-        }
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err)
-        return toolErr('PROVIDER_ERROR', `Failed to list runs: ${message}`, {
+        return toolErr('PROVIDER_ERROR', `runs[${input.action}] failed: ${message}`, {
           retryable: true,
         })
       }
@@ -389,56 +392,12 @@ export function createRunTools(userId: string, tenantId: string) {
     },
   })
 
-  const listRecentWebsets = createTool({
-    id: 'list-recent-websets',
-    description:
-      'List recently synced Exa webset searches for this tenant, with item counts and a short preview of companies. ' +
-      'Backed by the cached `websetItems` table so this is cheap to call and safe from Exa outages.',
-    inputSchema: z.object({
-      limit: z
-        .number()
-        .int()
-        .min(1)
-        .max(50)
-        .optional()
-        .default(10)
-        .describe('Maximum number of websets to return. Defaults to 10.'),
-    }),
-    outputSchema: makeResultSchema(
-      z.object({ websets: z.array(WebsetSummarySchema) })
-    ),
-    execute: async (
-      input
-    ): Promise<ToolResult<{ websets: z.infer<typeof WebsetSummarySchema>[] }>> => {
-      if (!convex) return toolErr('INTERNAL', 'No Convex client configured.')
-      try {
-        const rows = (await convex.query(api.websetItems.listRecent, {
-          tenantId: tenantId as Id<'tenants'>,
-          limit: input.limit,
-        })) as z.infer<typeof WebsetSummarySchema>[]
-        return {
-          ok: true,
-          data: { websets: rows },
-          summary: `${rows.length} past websets available (${rows.reduce(
-            (n, w) => n + w.count,
-            0
-          )} items total).`,
-        }
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err)
-        return toolErr('PROVIDER_ERROR', `Failed to list websets: ${message}`, {
-          retryable: true,
-        })
-      }
-    },
-  })
+  const websetTools = createWebsetTools(tenantId)
 
   return {
-    'runs-get-status': runsGetStatus,
-    'runs-cancel': runsCancel,
-    'runs-list-recent': runsListRecent,
+    runs: runsRouter,
     'artifacts-get': artifactsGet,
     'write-plan': writePlan,
-    'list-recent-websets': listRecentWebsets,
+    ...websetTools,
   }
 }

@@ -62,13 +62,18 @@ export const upsert = internalMutation({
 /**
  * List the most recent websets for a tenant with item counts and a preview.
  * Used by the `list-recent-websets` orchestrator tool.
+ *
+ * Optional `sinceMs` filter: only websets with at least one item updated at
+ * or after that epoch ms are returned. Lets callers answer "websets from
+ * today/yesterday" without loading the whole history.
  */
 export const listRecent = query({
   args: {
     tenantId: v.id(TABLES.TENANTS),
     limit: v.optional(v.number()),
+    sinceMs: v.optional(v.number()),
   },
-  handler: async (ctx, { tenantId, limit }) => {
+  handler: async (ctx, { tenantId, limit, sinceMs }) => {
     const take = Math.min(Math.max(limit ?? 10, 1), 50)
 
     const rows = await ctx.db
@@ -90,6 +95,7 @@ export const listRecent = query({
     >()
 
     for (const row of rows) {
+      if (sinceMs !== undefined && row.updatedAt < sinceMs) continue
       const entry = grouped.get(row.websetId)
       if (entry) {
         entry.count++

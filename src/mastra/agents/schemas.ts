@@ -482,8 +482,8 @@ export const AGENT_META: Record<AgentKey, { description: string }> = {
   adsScraper: { description: 'Ads scraper — collect competitor ad creatives across platforms.' },
   adAnalyzer: { description: 'Ad analyzer — extract themes, messaging, and winning patterns from scrapes.' },
   campaignBuilder: { description: 'Campaign builder — turn competitor analysis into a briefed channel plan.' },
-  sdr: { description: 'SDR specialist — Exa company search, Apollo enrichment, outbound sequences.' },
-  lead: { description: 'Lead research — find, qualify, and enrich contacts and companies.' },
+  sdr: { description: 'SDR specialist — Exa Websets company search and past-webset retrieval. No people search, enrichment, or sending.' },
+  lead: { description: 'Lead specialist — Apollo people search/enrichment/sequences plus Outlook send, with access to cached Exa webset results.' },
   auditReport: { description: 'Audit specialist — produce a findings/risks/recommendations report.' },
 }
 

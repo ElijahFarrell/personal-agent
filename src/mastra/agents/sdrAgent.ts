@@ -11,10 +11,10 @@ import {
   createCompanyWebset,
   waitForWebsetResults,
   fetchItemsByWebsetId,
-  fetchAllPastWebsetResults,
   type ExaCompanyResult,
   type WebsetWaitResult,
 } from '@/services/exaWebsetsService'
+import { createWebsetTools } from '../tools/websetTools'
 import { AGENT_META, getAgentSchemas } from './schemas'
 import type { ToolResult } from '@/types'
 
@@ -78,19 +78,6 @@ const FetchWebsetResultSchema = makeResultSchema(
   })
 )
 
-const AllPastWebsetsResultSchema = makeResultSchema(
-  z.object({
-    websets: z.array(
-      z.object({
-        id: z.string(),
-        createdAt: z.string(),
-        dashboardUrl: z.string().optional(),
-      })
-    ),
-    companies: z.array(CompanyRowSchema),
-  })
-)
-
 const websetIdSchema = z.object({
   websetId: z
     .string()
@@ -101,8 +88,20 @@ const searchInputSchema = z.object({
   query: z
     .string()
     .describe('Natural language search query for companies (e.g. AI startups in San Francisco)'),
-  count: z.number().min(1).max(50).default(5).describe('Number of companies to fetch'),
+  count: z
+    .number()
+    .int()
+    .min(1)
+    .max(100)
+    .default(10)
+    .describe(
+      'Number of companies to fetch. Default 10 (finishes well inside the 260s chat budget). ' +
+        'Values > 20 may return partial results (status="timeout") — the caller should fall back to fetch-exa-webset-by-id.'
+    ),
 })
+
+/** Hard cap — matches WEBSET_WAIT_BUDGET_MS in exaWebsetsService. */
+const EXA_SYNC_WAIT_MS = 260_000
 
 const addToProspectsSchema = z.object({
   artifactId: z
@@ -234,8 +233,8 @@ export function getSDRTools(userId: string, tenantId: string) {
     runExaWebsetSearch: createTool({
       id: 'run-exa-webset-search',
       description:
-        'Search for companies via Exa Websets. Returns a ToolResult envelope with the websetId, companies, and an artifactId. ' +
-        'First run: use count=5 for a sample. If user wants more, run again with count=15 or 20. ' +
+        'Search for companies via Exa Websets. SYNCHRONOUS — awaits results up to 260s (the chat budget) and returns a ToolResult with the websetId, companies, status, and an artifactId. ' +
+        'Default count=10 reliably finishes inside the budget. For count > 20, the call may return status="timeout" with partial companies; the user can fetch the rest via fetch-exa-webset-by-id using the returned websetId. ' +
         'Always hand the artifactId to addExaResultsToProspects rather than re-inlining the list.',
       inputSchema: searchInputSchema,
       outputSchema: SearchResultSchema,
@@ -259,7 +258,8 @@ export function getSDRTools(userId: string, tenantId: string) {
 
         const wait: WebsetWaitResult = await waitForWebsetResults(
           websetId,
-          input.count
+          input.count,
+          EXA_SYNC_WAIT_MS
         )
 
         const artifact = await persistCompaniesArtifact(
@@ -271,9 +271,11 @@ export function getSDRTools(userId: string, tenantId: string) {
 
         const summary =
           wait.status === 'idle'
-            ? `Webset ${websetId} complete — ${wait.results.length} companies.`
+            ? `Webset ${websetId} complete — ${wait.results.length} of ${input.count} requested companies.`
             : wait.status === 'timeout'
-              ? `Webset ${websetId} still running after wait budget — returning ${wait.results.length} partial companies. Retry with fetch-exa-webset-by-id.`
+              ? `Partial result — returned ${wait.results.length} of ${input.count} companies; ` +
+                `webset ${websetId} is still running on Exa's side. ` +
+                `Tell the user and offer to fetch the rest via fetch-exa-webset-by-id with websetId="${websetId}".`
               : `Webset ${websetId} errored (${wait.error ?? 'unknown'}) — returning ${wait.results.length} partial companies.`
 
         return {
@@ -426,53 +428,7 @@ export function getSDRTools(userId: string, tenantId: string) {
       },
     }),
 
-    fetchAllPastWebsetResults: createTool({
-      id: 'fetch-all-past-webset-results',
-      description:
-        'List all Exa websets and fetch deduplicated company results. Returns a ToolResult with webset summaries, companies, and an artifactId.',
-      inputSchema: z.object({
-        itemsPerWebset: z.number().min(1).max(100).optional().default(100),
-      }),
-      outputSchema: AllPastWebsetsResultSchema,
-      execute: async (input): Promise<ToolResult<{
-        websets: Array<{ id: string; createdAt: string; dashboardUrl?: string }>
-        companies: ExaCompanyResult[]
-      }>> => {
-        try {
-          const { websets, results } = await fetchAllPastWebsetResults(
-            input.itemsPerWebset
-          )
-          const artifact = await persistCompaniesArtifact(
-            results,
-            'exa.pastWebsets',
-            'All past Exa websets',
-            `${results.length} deduplicated companies across ${websets.length} websets`
-          )
-          return {
-            ok: true,
-            data: { websets, companies: results },
-            summary:
-              `Found ${websets.length} websets, ${results.length} deduplicated companies.\n\n` +
-              formatCompaniesPreview(results),
-            artifact: artifact
-              ? {
-                  artifactId: artifact.artifactId,
-                  kind: 'exa.pastWebsets',
-                  title: 'All past Exa websets',
-                  summary: `${results.length} companies`,
-                }
-              : undefined,
-          }
-        } catch (err) {
-          const message = err instanceof Error ? err.message : String(err)
-          return toolErr(
-            'PROVIDER_ERROR',
-            `Failed to fetch past websets: ${message}`,
-            { retryable: true }
-          )
-        }
-      },
-    }),
+    ...createWebsetTools(tenantId),
   }
 }
 

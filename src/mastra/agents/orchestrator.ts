@@ -163,6 +163,7 @@ async function buildSubAgents(args: {
     ['instagram', () => createInstagramAgent(userId, workspace)],
     ['browser', () => createBrowserAgent(userId, workspace)],
     ['sdr', () => createSDRAgent(userId, tenantId)],
+    ['lead', async () => await createLeadAgent(userId, tenantId, workspace)],
   ]
 
   const selected = registry.filter(([id]) => allow(id))
@@ -174,14 +175,10 @@ async function buildSubAgents(args: {
     agents[`agent-${id}`] = instances[i]
   }
 
-  // Deep-research and lead are auxiliary agents not listed in AGENT_REGISTRY;
-  // keep them tied to the research/sdr permissions so they appear alongside
-  // their primary counterparts when allowed.
+  // Deep-research is an auxiliary agent not listed in AGENT_REGISTRY; keep it
+  // tied to the research permission so it appears alongside agent-research.
   if (allow('research')) {
     agents['agent-deepResearch'] = createDeepResearchAgent(userId)
-  }
-  if (allow('sdr')) {
-    agents['agent-lead'] = await createLeadAgent(userId, tenantId, workspace)
   }
 
   return agents
