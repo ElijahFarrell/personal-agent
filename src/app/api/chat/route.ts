@@ -18,16 +18,12 @@ import {
 } from '@/services/chatPipeline'
 import { CHAT_CREDIT_ACTION } from '@/constants/chat'
 import { AGENT_RUN_STATUS, CHAT_JOB_STATUS } from '@convex/constants'
-import { shouldPromoteLongRunning } from '@/mastra/tools/longRunningRegistry'
 import { observeRun } from '@/mastra/agents/durableAgent'
 
-// Next.js `maxDuration` is module-level, so the route exposes one budget for
-// both the streaming foreground branch and the auto-promoted background
-// branch. Capped at 300s — the Vercel Hobby plan ceiling for Serverless
-// Functions. The Convex worker (60 × 15s poll loop) keeps running past this
-// ceiling as a scheduled task, so long Exa webset jobs still complete; the
-// browser just has to reconnect to `/api/chat?observe=<runId>` if the SSE
-// stream closes at the 300s mark.
+// Next.js `maxDuration` is module-level. Capped at 300s — the Vercel Hobby
+// plan ceiling for Serverless Functions. Background chat (`background: true`)
+// runs work in `after()` and returns immediately; the user can reconnect via
+// `/api/chat?observe=<runId>` if needed.
 export const maxDuration = 300
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
@@ -204,13 +200,9 @@ export async function POST(req: NextRequest) {
       model,
     }
 
-    // Auto-promote to background when the user message hints at a tool that
-    // routinely outlives the serverless budget. Requires a signed-in user and
-    // persisted thread — otherwise we fall back to the streaming branch and
-    // accept the risk of timeout.
-    const autoPromote =
-      !background && Boolean(dbUser && threadId) && shouldPromoteLongRunning(message)
-    const runInBackground = background || autoPromote
+    // Background mode only when the client explicitly sends `background: true`
+    // (e.g. "Continue in background" in the chat UI).
+    const runInBackground = Boolean(background)
 
     if (runInBackground) {
       if (!dbUser || !threadId) {
@@ -243,10 +235,8 @@ export async function POST(req: NextRequest) {
           targetAgent,
           deepResearch: Boolean(deepResearch),
         },
-        tracingTags: autoPromote ? ['auto-promoted:long-running'] : undefined,
       })
 
-      const tenantIdStr = tenantId
       const dbUserId = dbUser._id
       const dbTenantId = dbUser.tenantId
 
@@ -319,7 +309,6 @@ export async function POST(req: NextRequest) {
         jobId,
         runId,
         status: 'running',
-        autoPromoted: autoPromote,
       })
     }
 

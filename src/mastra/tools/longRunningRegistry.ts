@@ -1,8 +1,7 @@
 /**
  * Registry of tool ids that routinely exceed the default Next.js serverless
- * timeout (60s-ish on Fluid Compute, 300s on upgraded plans). The chat route
- * consults this map to auto-promote requests into the background branch so
- * the orchestrator returns `{jobId, runId}` instead of racing the timeout.
+ * timeout (60s-ish on Fluid Compute, 300s on upgraded plans). Useful for
+ * workers, UI hints, or future routing — not used for silent auto-promote.
  *
  * Keep the registry small and explicit: each entry is an executable operation
  * that talks to a slow third-party service (Exa websets, large workflow
@@ -15,7 +14,7 @@
 export interface LongRunningToolMetadata {
   /** True when the tool routinely outlives a standard Vercel invocation. */
   longRunning: true
-  /** Rough p90 duration budget used by auto-promote logic (ms). */
+  /** Rough p90 duration budget (ms). */
   estDurationMs: number
   /** Short human-readable reason — surfaced in logs and UI. */
   reason?: string
@@ -66,46 +65,4 @@ export function getLongRunningMetadata(
   id: string
 ): LongRunningToolMetadata | null {
   return isLongRunningToolId(id) ? LONG_RUNNING_TOOLS[id] : null
-}
-
-/**
- * Cheap intent keywords used by the chat route to pre-flag requests that will
- * probably invoke a long-running tool. We can't wait for the LLM to commit to
- * a tool call before deciding whether to promote to the background branch —
- * the request would already be half-way through the 60s serverless budget —
- * so this list errs on the side of false positives. Keep each entry short,
- * lowercase, and user-facing.
- */
-const LONG_RUNNING_INTENT_KEYWORDS: ReadonlyArray<string> = [
-  'exa webset',
-  'webset id',
-  'add webset',
-  'past websets',
-  'find companies',
-  'find leads',
-  'find 50',
-  'find 100',
-  'list of companies',
-  'scrape companies',
-  'build a list of',
-  'ads intelligence',
-  'competitive ads',
-  'competitor ads',
-  'ad library',
-  'run the workflow',
-  'run workflow',
-  'enrich leads',
-  'enrich prospects',
-  'enrichment',
-]
-
-/**
- * Heuristic intent detector — returns true when the message text is likely to
- * trigger at least one {@link LONG_RUNNING_TOOLS} id. Pure keyword match for
- * now; we upgrade to an LLM classifier only if false positives become costly.
- */
-export function shouldPromoteLongRunning(message: string | null | undefined): boolean {
-  if (!message) return false
-  const text = message.toLowerCase()
-  return LONG_RUNNING_INTENT_KEYWORDS.some((kw) => text.includes(kw))
 }
