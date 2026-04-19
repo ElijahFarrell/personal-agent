@@ -23,6 +23,7 @@ import { createAdsScraperAgent } from '@/mastra/agents/adsScraperAgent'
 import { createAdAnalyzerAgent } from '@/mastra/agents/adAnalyzerAgent'
 import { createCampaignBuilderAgent } from '@/mastra/agents/campaignBuilderAgent'
 import { createSDRAgent } from '@/mastra/agents/sdrAgent'
+import { createLeadAgent } from '@/mastra/agents/leadAgent'
 import { createDeepResearchAgent } from '@/mastra/agents/deepResearchAgent'
 
 /** Mastral tool object key returned by createAgentTools (camelCase). */
@@ -46,6 +47,7 @@ export type AgentToolsDelegateKey =
   | 'adAnalyzerAgent'
   | 'campaignBuilderAgent'
   | 'sdrAgent'
+  | 'leadAgent'
 
 export interface AgentCatalogEntry {
   id: AgentId
@@ -73,6 +75,7 @@ const TOOLS_KEY_BY_ID: Record<AgentId, AgentToolsDelegateKey> = {
   adAnalyzer: 'adAnalyzerAgent',
   campaignBuilder: 'campaignBuilderAgent',
   sdr: 'sdrAgent',
+  lead: 'leadAgent',
 }
 
 export const AGENT_CATALOG: AgentCatalogEntry[] = AGENT_REGISTRY.map((a) => ({
@@ -109,6 +112,7 @@ export const WORKFLOW_AGENT_FACTORIES: Record<string, (userId: string, tenantId?
     campaignBuilder: async (userId) =>
       (await createCampaignBuilderAgent(userId, [])).agent,
     sdr: async (userId, tenantId) => createSDRAgent(userId, tenantId ?? ''),
+    lead: async (userId, tenantId) => createLeadAgent(userId, tenantId ?? ''),
     deepResearch: async (userId) => createDeepResearchAgent(userId),
   }
 
