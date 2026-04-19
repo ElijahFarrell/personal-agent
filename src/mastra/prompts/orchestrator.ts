@@ -12,12 +12,7 @@ import type { ResolvedPlatformConfig } from '@/platform/niche/types'
 import type { AgentId } from '@/constants/agents'
 import { EXECUTION_CONTRACT } from './_executionContract'
 
-const SCHEDULE_TOOL_KEYS = new Set([
-  'create-schedule',
-  'list-schedules',
-  'toggle-schedule',
-  'delete-schedule',
-])
+const SCHEDULE_TOOL_KEYS = new Set(['create-schedule', 'schedules'])
 
 const WORKFLOW_BUILDER_TOOL_KEYS = new Set(['build-workflow', 'run-workflow'])
 
@@ -44,6 +39,7 @@ const AGENT_KEY_TO_ID: Record<string, AgentId> = {
   'agent-adAnalyzer': 'adAnalyzer',
   'agent-campaignBuilder': 'campaignBuilder',
   'agent-sdr': 'sdr',
+  'agent-lead': 'lead',
 }
 
 function shouldIncludeOrchestratorToolKey(
@@ -83,7 +79,7 @@ function shouldIncludeOrchestratorToolKey(
 
 const AGENT_DESCRIPTIONS: Record<
   string,
-  { provider?: string | null; providers?: string[]; desc: string; sdrProviders?: string[] }
+  { provider?: string | null; providers?: string[]; desc: string }
 > = {
   'agent-email': {
     provider: 'gmail',
@@ -167,8 +163,13 @@ const AGENT_DESCRIPTIONS: Record<
   },
   'agent-sdr': {
     provider: null,
-    desc: 'Lead gen: Exa company search, Apollo (search/enrich/sequences), Outlook (send). Use for "find 50 CEOs", "research leads", "personalize outreach", "add to sequence".',
-    sdrProviders: ['apollo', 'outlook'],
+    desc:
+      'Exa Websets ONLY — natural-language company search (`runExaWebsetSearch`, default count=10, synchronous with a 260s cap and partial-result envelope), past-webset retrieval by id (`fetchExaWebsetById`), cached recent websets (`list-recent-websets`), and add-to-Prospects. Use when the user wants to **find companies that X** or **retrieve an Exa webset**. Does not do people search, enrichment, sequences, or email send — route those to agent-lead.',
+  },
+  'agent-lead': {
+    providers: ['apollo', 'outlook'],
+    desc:
+      'Apollo (people search, bulk enrich, sequences) + Outlook (send) + Exa (via shared tools). Use for "find 50 CEOs at fintech companies", "enrich these leads", "add to a sequence", "send personalized outreach from my work email". Always confirms before sending or bulk-pushing.',
   },
   'create-schedule': {
     provider: null,
@@ -184,32 +185,21 @@ const AGENT_DESCRIPTIONS: Record<
     provider: null,
     desc: 'Run a saved workflow definition once by id (same engine as the Workflows UI).',
   },
-  'list-prospects': {
+  'prospects-query': {
     provider: null,
-    desc: 'List and filter prospects in the pipeline (stage, status, owner).',
-  },
-  'get-prospect': {
-    provider: null,
-    desc: 'Load full prospect detail, research snapshot, and outreach drafts by id.',
-  },
-  'search-prospects': {
-    provider: null,
-    desc: 'Text search across prospect name, company, email, and notes.',
+    desc:
+      'Prospect read router. Pass `action`: `list` (filter by stage/status/owner), `search` (free-text match against name/company/email/notes — requires query), or `get` (full detail + research snapshot + drafts — requires prospectId).',
   },
   'create-prospect': { provider: null, desc: 'Create a new prospect row (manual entry).' },
   'update-prospect': {
     provider: null,
     desc: 'Update stage, status, notes, owner, and contact fields for a prospect.',
   },
-  'list-schedules': {
+  schedules: {
     provider: null,
-    desc: "List the user's schedules. Use when they ask to see their schedules, cron jobs, or automated tasks.",
+    desc:
+      "Schedule-management router. Pass `action`: `list` (show the user's schedules), `toggle` (enable/disable by scheduleId + isEnabled), or `delete` (remove by scheduleId). For creating new schedules use `create-schedule`.",
   },
-  'toggle-schedule': {
-    provider: null,
-    desc: 'Enable or disable a schedule. Use when the user wants to turn a schedule on or off.',
-  },
-  'delete-schedule': { provider: null, desc: 'Delete a schedule permanently.' },
   'agent-crm': {
     providers: ['hubspot', 'salesforce', 'zoho-crm', 'pipedrive'],
     desc: 'HubSpot, Salesforce, Zoho CRM, Pipedrive — contacts, deals, companies, tasks, notes.',
@@ -218,20 +208,10 @@ const AGENT_DESCRIPTIONS: Record<
     providers: ['asana', 'monday'],
     desc: 'Asana, Monday.com — issues, tasks, projects, boards, sprints, updates.',
   },
-  'runs-get-status': {
+  runs: {
     provider: null,
     desc:
-      'Fetch the durable status of an agent run by id (plus its direct child delegations). Use when the user asks about a prior run or you need to resume a long-running job.',
-  },
-  'runs-cancel': {
-    provider: null,
-    desc:
-      'Cancel a running or pending agent run. Use when the user wants to stop or abort a long-running job.',
-  },
-  'runs-list-recent': {
-    provider: null,
-    desc:
-      'List recent agent runs for the current tenant. Use to answer "what have you been doing lately?" or to locate a runId before calling runs-get-status.',
+      'Run introspection router. Pass `action`: `get` (one run + child delegations by id), `list` (recent runs for this tenant), or `cancel` (stop a running/pending run). Use to answer "what happened on run X?", "what have you been doing lately?", or to abort a long-running job.',
   },
   'artifacts-get': {
     provider: null,
@@ -260,7 +240,7 @@ export function buildOrchestratorPrompt(
 
   const agentLines = Object.entries(AGENT_DESCRIPTIONS)
     .filter(([name]) => shouldIncludeOrchestratorToolKey(name, resolved))
-    .map(([name, { provider, providers, desc, sdrProviders }]) => {
+    .map(([name, { provider, providers, desc }]) => {
       const isConnected = provider
         ? providerSet.has(provider)
         : providers
@@ -270,15 +250,7 @@ export function buildOrchestratorPrompt(
         const providerList = providers?.join(', ') ?? provider ?? ''
         return `- **${name}**: *(not connected — user needs to connect ${providerList} in Integrations)*`
       }
-      // SDR agent: add explicit Apollo/Outlook availability when connected
-      let finalDesc = desc
-      if (name === 'agent-sdr' && sdrProviders?.length) {
-        const connected = sdrProviders.filter((p) => providerSet.has(p))
-        if (connected.length > 0) {
-          finalDesc += ` **Connected: ${connected.join(', ')}** — use for lead search, enrichment, sequences, and email sending.`
-        }
-      }
-      return `- **${name}**: ${finalDesc}`
+      return `- **${name}**: ${desc}`
     })
     .join('\n')
 
@@ -344,7 +316,7 @@ When the user wants something to run automatically (e.g. "every morning at 9am c
 - "every Monday at 9am" → \`0 9 * * 1\`
 - "every hour" → \`0 * * * *\`
 - "every day at noon" → \`0 12 * * *\`
-For **agent_prompt** schedules, the prompt should be a clear instruction (e.g. "Check all my communication channels…"). For **workflow** schedules, pass **workflowDefinitionId** from **build-workflow** instead of an agent prompt. Use **build-workflow** / **run-workflow** for one-off automations. Use **list-schedules** when they ask to see their schedules, **toggle-schedule** to enable/disable, **delete-schedule** to remove.
+For **agent_prompt** schedules, the prompt should be a clear instruction (e.g. "Check all my communication channels…"). For **workflow** schedules, pass **workflowDefinitionId** from **build-workflow** instead of an agent prompt. Use **build-workflow** / **run-workflow** for one-off automations. Use the **schedules** router (\`action: 'list' | 'toggle' | 'delete'\`) for day-to-day schedule management.
 
 ## Memory Protocol
 

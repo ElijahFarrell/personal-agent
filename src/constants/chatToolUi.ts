@@ -6,8 +6,8 @@ export const CHAT_TOOL_UI: Record<
   { title: string; hint?: string; slow?: boolean }
 > = {
   'sdr-agent': {
-    title: 'Lead & outreach (SDR)',
-    hint: 'Apollo search and Exa websets often take 1–6 minutes.',
+    title: 'Company search (Exa)',
+    hint: 'Exa webset searches wait up to ~4 minutes; partial results return on timeout.',
     slow: true,
   },
   'research-agent': {
@@ -42,11 +42,14 @@ export const CHAT_TOOL_UI: Record<
   mem0Recall: { title: 'Memory recall' },
   mem0Memorize: { title: 'Save to memory' },
   'create-schedule': { title: 'Create schedule' },
-  'list-schedules': { title: 'List schedules' },
+  schedules: { title: 'Schedules' },
+  runs: { title: 'Agent runs' },
+  'list-recent-websets': { title: 'Recent websets' },
+  'prospects-query': { title: 'Prospects' },
   'generate-chart': { title: 'Chart' },
   'run-exa-webset-search': {
     title: 'Exa company search',
-    hint: 'Exa websets can take 5–10 minutes for large searches.',
+    hint: 'Synchronous — waits up to ~4 minutes then returns full or partial results.',
     slow: true,
   },
   'add-exa-results-to-prospects': { title: 'Add Exa results to prospects' },
@@ -58,9 +61,6 @@ export const CHAT_TOOL_UI: Record<
     hint: 'Workflow runs may take a minute or more.',
     slow: true,
   },
-  'list-prospects': { title: 'List prospects' },
-  'get-prospect': { title: 'Load prospect' },
-  'search-prospects': { title: 'Search prospects' },
   'create-prospect': { title: 'Create prospect' },
   'update-prospect': { title: 'Update prospect' },
 }

@@ -45,6 +45,7 @@ export const AGENT_IDS = {
   AD_ANALYZER: 'adAnalyzer',
   CAMPAIGN_BUILDER: 'campaignBuilder',
   SDR: 'sdr',
+  LEAD: 'lead',
 } as const
 
 export type AgentId = (typeof AGENT_IDS)[keyof typeof AGENT_IDS]
@@ -225,12 +226,21 @@ export const AGENT_REGISTRY: AgentMeta[] = [
   },
   {
     id: AGENT_IDS.SDR,
-    displayName: 'Lead / SDR',
-    description: 'Exa, Apollo, Outlook — find leads, enrich, sequences, send',
+    displayName: 'SDR',
+    description: 'Exa Websets — company search by natural-language query, past-webset retrieval, add to Prospects',
     icon: UserSearch,
     iconBg: 'bg-cyan-500/10',
     iconColor: 'text-cyan-400',
     toolId: 'sdr-agent',
+  },
+  {
+    id: AGENT_IDS.LEAD,
+    displayName: 'Lead',
+    description: 'Apollo (people search, enrich, sequences) + Outlook (send) — turns companies into outreach',
+    icon: UserSearch,
+    iconBg: 'bg-emerald-500/10',
+    iconColor: 'text-emerald-400',
+    toolId: 'lead-agent',
   },
 ]
 

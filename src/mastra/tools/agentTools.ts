@@ -183,87 +183,87 @@ export function createAgentTools(
       },
     }),
 
-    listSchedules: createTool({
-      id: 'list-schedules',
+    /**
+     * Router covering the three low-frequency schedule-management calls.
+     * `create-schedule` stays separate because it's the high-intent one —
+     * keep it visible to the LLM as its own tool.
+     */
+    schedules: createTool({
+      id: 'schedules',
       description:
-        "List all of the user's schedules. Use when the user asks to see their schedules, cron jobs, or automated tasks.",
-      inputSchema: z.object({}),
-      execute: async () => {
+        'Schedule management router. Pick `action`: ' +
+        '`list` (show the tenant\'s schedules — use for "show my schedules", "what cron jobs are running?"), ' +
+        '`toggle` (enable/disable a schedule — pass scheduleId and isEnabled), or ' +
+        '`delete` (remove a schedule permanently — pass scheduleId). ' +
+        'Creating new schedules uses `create-schedule` (separate tool).',
+      inputSchema: z
+        .object({
+          action: z
+            .enum(['list', 'toggle', 'delete'])
+            .describe('list = show schedules; toggle = enable/disable; delete = remove.'),
+          scheduleId: z
+            .string()
+            .optional()
+            .describe('Required for `toggle` and `delete`.'),
+          isEnabled: z
+            .boolean()
+            .optional()
+            .describe('Required when action="toggle". true enables, false disables.'),
+        })
+        .superRefine((val, ctx) => {
+          if ((val.action === 'toggle' || val.action === 'delete') && !val.scheduleId) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `action="${val.action}" requires scheduleId`,
+              path: ['scheduleId'],
+            })
+          }
+          if (val.action === 'toggle' && typeof val.isEnabled !== 'boolean') {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: 'action="toggle" requires isEnabled',
+              path: ['isEnabled'],
+            })
+          }
+        }),
+      execute: async (input) => {
         try {
           const dbUser = await convex.query(api.users.getUserByClerkUserId, {
             clerkUserId: userId,
           })
-          if (!dbUser) return 'User not found. Please sign in to view schedules.'
+          if (!dbUser) return 'User not found. Please sign in to manage schedules.'
 
-          const schedules = await convex.query(api.schedules.listByTenantId, {
-            tenantId: dbUser.tenantId,
-          })
-
-          if (schedules.length === 0) {
-            return 'No schedules configured. You can create one by saying something like "every morning at 9am check my channels and give me a brief".'
+          if (input.action === 'list') {
+            const schedules = await convex.query(api.schedules.listByTenantId, {
+              tenantId: dbUser.tenantId,
+            })
+            if (schedules.length === 0) {
+              return 'No schedules configured. You can create one by saying something like "every morning at 9am check my channels and give me a brief".'
+            }
+            return schedules
+              .map(
+                (s) =>
+                  `- **${s.name}** [ID: ${s._id}] (${s.isEnabled ? 'enabled' : 'disabled'}): ${s.cronExpression} ${s.timezone} | Next: ${s.nextRunAt ? new Date(s.nextRunAt).toLocaleString() : 'N/A'}`
+              )
+              .join('\n')
           }
 
-          return schedules
-            .map(
-              (s) =>
-                `- **${s.name}** [ID: ${s._id}] (${s.isEnabled ? 'enabled' : 'disabled'}): ${s.cronExpression} ${s.timezone} | Next: ${s.nextRunAt ? new Date(s.nextRunAt).toLocaleString() : 'N/A'}`
-            )
-            .join('\n')
-        } catch (error) {
-          const message = error instanceof Error ? error.message : 'Unknown error'
-          return `Failed to list schedules: ${message}`
-        }
-      },
-    }),
+          if (input.action === 'toggle') {
+            await convex.mutation(api.schedules.toggleEnabled, {
+              scheduleId: input.scheduleId as Id<'schedules'>,
+              isEnabled: input.isEnabled as boolean,
+            })
+            return `Schedule ${input.isEnabled ? 'enabled' : 'disabled'}.`
+          }
 
-    toggleSchedule: createTool({
-      id: 'toggle-schedule',
-      description:
-        'Enable or disable a schedule. Use when the user wants to turn a schedule on or off.',
-      inputSchema: z.object({
-        scheduleId: z.string().describe('The schedule ID (from listSchedules)'),
-        isEnabled: z.boolean().describe('true to enable, false to disable'),
-      }),
-      execute: async (input) => {
-        try {
-          const dbUser = await convex.query(api.users.getUserByClerkUserId, {
-            clerkUserId: userId,
-          })
-          if (!dbUser) return 'User not found.'
-
-          await convex.mutation(api.schedules.toggleEnabled, {
-            scheduleId: input.scheduleId as Id<'schedules'>,
-            isEnabled: input.isEnabled,
-          })
-          return `Schedule ${input.isEnabled ? 'enabled' : 'disabled'}.`
-        } catch (error) {
-          const message = error instanceof Error ? error.message : 'Unknown error'
-          return `Failed to toggle schedule: ${message}`
-        }
-      },
-    }),
-
-    deleteSchedule: createTool({
-      id: 'delete-schedule',
-      description:
-        'Delete a schedule permanently. Use when the user wants to remove a schedule.',
-      inputSchema: z.object({
-        scheduleId: z.string().describe('The schedule ID (from listSchedules)'),
-      }),
-      execute: async (input) => {
-        try {
-          const dbUser = await convex.query(api.users.getUserByClerkUserId, {
-            clerkUserId: userId,
-          })
-          if (!dbUser) return 'User not found.'
-
+          // delete
           await convex.mutation(api.schedules.remove, {
             scheduleId: input.scheduleId as Id<'schedules'>,
           })
           return 'Schedule deleted.'
         } catch (error) {
           const message = error instanceof Error ? error.message : 'Unknown error'
-          return `Failed to delete schedule: ${message}`
+          return `Failed to ${input.action} schedule: ${message}`
         }
       },
     }),

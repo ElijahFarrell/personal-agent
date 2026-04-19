@@ -90,7 +90,18 @@ function mapItemToResult(item: Record<string, unknown>): ExaCompanyResult | null
   }
 }
 
-const WEBSET_TIMEOUT_MS = 600_000 // 10 min — Exa FAQ: large/complex searches can take up to ~1 hour
+/**
+ * Default synchronous wait budget: 260s.
+ *
+ * The Next.js chat route (src/app/api/chat/route.ts) has maxDuration = 300.
+ * Leaving a 40s safety margin keeps the Exa poll inside the chat budget and
+ * avoids killing the stream mid-answer.
+ *
+ * Exa's own timeout for large websets can be up to ~1 hour; callers that are
+ * **not** inside the chat stream (e.g. the hourly pullPastWebsets cron) can
+ * pass a larger value explicitly.
+ */
+const WEBSET_TIMEOUT_MS = 260_000
 
 function itemsToResults(
   items: Record<string, unknown>[],
@@ -204,7 +215,11 @@ export interface WebsetWaitResult {
   error?: string
 }
 
-/** Default wait budget: 10 min — Exa FAQ: large searches can run up to ~1 hour. */
+/**
+ * Default wait budget used by {@link waitForWebsetResults}. Capped at 260s to
+ * fit inside the Next.js chat route's 300s maxDuration with a 40s safety
+ * margin. Background workers can override via the `timeoutMs` arg.
+ */
 const WEBSET_WAIT_BUDGET_MS = WEBSET_TIMEOUT_MS
 
 /**

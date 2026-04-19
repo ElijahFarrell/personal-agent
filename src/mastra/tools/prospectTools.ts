@@ -64,61 +64,119 @@ function matchesSearch(
  */
 export function createProspectTools(clerkUserId: string) {
   return {
-    listProspects: createTool({
-      id: 'list-prospects',
+    /**
+     * Router covering the three read-side prospect operations — list, search,
+     * and get. Create/update stay on their own tools because mutations
+     * deserve their own visible LLM surface.
+     */
+    prospectsQuery: createTool({
+      id: 'prospects-query',
       description:
-        'List prospects for the user\'s organization. Filter by stage, status, or owner. ' +
-        'Use for pipeline views, follow-up lists, and bulk context.',
-      inputSchema: z.object({
-        stage: stageSchema.optional().describe('Filter by pipeline stage'),
-        status: statusSchema.optional().describe('Filter by prospect status'),
-        ownerId: z
-          .string()
-          .optional()
-          .describe('Convex user id of owner, or omit for all'),
-        limit: z.number().min(1).max(200).optional().default(50),
-      }),
-      execute: async ({ stage, status, ownerId, limit }) => {
+        'Prospect read router. Pass `action`: ' +
+        '`list` (pipeline view with optional stage/status/owner filters), ' +
+        '`search` (text search across name/company/email/notes — requires query), or ' +
+        '`get` (load one prospect with research snapshot and drafts — requires prospectId). ' +
+        'Use `list` for pipeline summaries and follow-up lists, `search` when the user names a person/company, ' +
+        '`get` when you already have the prospect id and need full detail.',
+      inputSchema: z
+        .object({
+          action: z
+            .enum(['list', 'search', 'get'])
+            .describe('list | search | get — pick one of the read operations.'),
+          stage: stageSchema.optional().describe('Only for `list`.'),
+          status: statusSchema.optional().describe('Only for `list`.'),
+          ownerId: z
+            .string()
+            .optional()
+            .describe('Convex user id to filter by. Only for `list`.'),
+          limit: z
+            .number()
+            .int()
+            .min(1)
+            .max(200)
+            .optional()
+            .describe('list: default 50 (max 200). search: default 20 (max 50).'),
+          query: z
+            .string()
+            .optional()
+            .describe(
+              'Required when action="search". Free text matched against name/company/email/notes.'
+            ),
+          prospectId: z
+            .string()
+            .optional()
+            .describe('Required when action="get". Convex prospect document id.'),
+        })
+        .superRefine((val, ctx) => {
+          if (val.action === 'search' && !val.query?.trim()) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: 'action="search" requires query',
+              path: ['query'],
+            })
+          }
+          if (val.action === 'get' && !val.prospectId) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: 'action="get" requires prospectId',
+              path: ['prospectId'],
+            })
+          }
+        }),
+      execute: async (input) => {
         const dbUser = await requireDbUser(clerkUserId)
         if (!dbUser) return 'User not found. Sign in to manage prospects.'
 
-        let rows = await convex.query(api.prospects.getProspectsByTenantId, {
-          tenantId: dbUser.tenantId,
-        })
-        if (status) {
-          rows = rows.filter((p) => p.status === status)
+        if (input.action === 'list') {
+          const limit = input.limit ?? 50
+          let rows = await convex.query(api.prospects.getProspectsByTenantId, {
+            tenantId: dbUser.tenantId,
+          })
+          if (input.status) rows = rows.filter((p) => p.status === input.status)
+          if (input.stage)
+            rows = rows.filter((p) => (p.stage ?? 'new') === input.stage)
+          if (input.ownerId)
+            rows = rows.filter((p) => String(p.ownerId) === input.ownerId)
+
+          const sliced = rows.slice(0, limit)
+          if (sliced.length === 0) return 'No prospects match the filters.'
+
+          const lines = sliced.map(
+            (p) =>
+              `- **${p.name}** [id: ${p._id}] — stage: ${p.stage ?? 'n/a'}, status: ${p.status}, company: ${p.company ?? '—'}, updated: ${new Date(p.updatedAt).toISOString()}`
+          )
+          return `Found ${sliced.length} prospect(s) (showing up to ${limit}):\n\n${lines.join('\n')}`
         }
-        if (stage) {
-          rows = rows.filter((p) => (p.stage ?? 'new') === stage)
+
+        if (input.action === 'search') {
+          const limit = input.limit ?? 20
+          const q = (input.query ?? '').trim()
+          const all = await convex.query(api.prospects.getProspectsByTenantId, {
+            tenantId: dbUser.tenantId,
+          })
+          const matched = all.filter((p) =>
+            matchesSearch(
+              {
+                name: p.name,
+                company: p.company,
+                email: p.email,
+                notes: p.notes,
+              },
+              q
+            )
+          )
+          const sliced = matched.slice(0, limit)
+          if (sliced.length === 0) return `No prospects matching "${q}".`
+          const lines = sliced.map(
+            (p) =>
+              `- **${p.name}** [id: ${p._id}] — ${p.company ?? 'no company'} — ${p.stage ?? 'n/a'} / ${p.status}`
+          )
+          return `Matches for "${q}" (${sliced.length} of ${matched.length}):\n\n${lines.join('\n')}`
         }
-        if (ownerId) {
-          rows = rows.filter((p) => String(p.ownerId) === ownerId)
-        }
 
-        const sliced = rows.slice(0, limit)
-        if (sliced.length === 0) return 'No prospects match the filters.'
-
-        const lines = sliced.map(
-          (p) =>
-            `- **${p.name}** [id: ${p._id}] — stage: ${p.stage ?? 'n/a'}, status: ${p.status}, company: ${p.company ?? '—'}, updated: ${new Date(p.updatedAt).toISOString()}`
-        )
-        return `Found ${sliced.length} prospect(s) (showing up to ${limit}):\n\n${lines.join('\n')}`
-      },
-    }),
-
-    getProspect: createTool({
-      id: 'get-prospect',
-      description:
-        'Load one prospect by ID with research snapshot and outreach drafts. Use when you need full detail on a lead.',
-      inputSchema: z.object({
-        prospectId: z.string().describe('Convex prospect document id'),
-      }),
-      execute: async ({ prospectId }) => {
-        const dbUser = await requireDbUser(clerkUserId)
-        if (!dbUser) return 'User not found.'
-
+        // action === 'get'
         const prospect = await convex.query(api.prospects.getProspect, {
-          prospectId: prospectId as Id<'prospects'>,
+          prospectId: input.prospectId as Id<'prospects'>,
         })
         if (!prospect || prospect.tenantId !== dbUser.tenantId) {
           return 'Prospect not found or access denied.'
@@ -126,10 +184,10 @@ export function createProspectTools(clerkUserId: string) {
 
         const [snapshot, drafts] = await Promise.all([
           convex.query(api.prospects.getResearchSnapshot, {
-            prospectId: prospectId as Id<'prospects'>,
+            prospectId: input.prospectId as Id<'prospects'>,
           }),
           convex.query(api.prospects.getDraftsByProspect, {
-            prospectId: prospectId as Id<'prospects'>,
+            prospectId: input.prospectId as Id<'prospects'>,
           }),
         ])
 
@@ -262,43 +320,5 @@ export function createProspectTools(clerkUserId: string) {
       },
     }),
 
-    searchProspects: createTool({
-      id: 'search-prospects',
-      description:
-        'Search prospects by text across name, company, email, and notes (client-side filter).',
-      inputSchema: z.object({
-        query: z.string().min(1),
-        limit: z.number().min(1).max(50).optional().default(20),
-      }),
-      execute: async ({ query, limit }) => {
-        const dbUser = await requireDbUser(clerkUserId)
-        if (!dbUser) return 'User not found.'
-
-        const all = await convex.query(api.prospects.getProspectsByTenantId, {
-          tenantId: dbUser.tenantId,
-        })
-        const q = query.trim()
-        const matched = all.filter((p) =>
-          matchesSearch(
-            {
-              name: p.name,
-              company: p.company,
-              email: p.email,
-              notes: p.notes,
-            },
-            q
-          )
-        )
-        const sliced = matched.slice(0, limit)
-        if (sliced.length === 0) {
-          return `No prospects matching "${q}".`
-        }
-        const lines = sliced.map(
-          (p) =>
-            `- **${p.name}** [id: ${p._id}] — ${p.company ?? 'no company'} — ${p.stage ?? 'n/a'} / ${p.status}`
-        )
-        return `Matches for "${q}" (${sliced.length} of ${matched.length}):\n\n${lines.join('\n')}`
-      },
-    }),
   }
 }

@@ -60,9 +60,7 @@ export interface ListToolsOptions {
 
 /** Run/artifact tool ids live in the `runs`/`artifacts` buckets. */
 const RUN_TOOL_IDS = new Set<string>([
-  'runs-get-status',
-  'runs-cancel',
-  'runs-list-recent',
+  'runs',
   'list-recent-websets',
 ])
 const ARTIFACT_TOOL_IDS = new Set<string>([
