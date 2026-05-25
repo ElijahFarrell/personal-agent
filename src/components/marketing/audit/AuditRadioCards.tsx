@@ -36,14 +36,14 @@ export function AuditRadioCards({
             className={cn(
               'flex cursor-pointer items-start gap-3 rounded-xl border px-4 py-3 text-left text-sm font-normal transition-colors',
               selected
-                ? 'border-brand-500/50 bg-brand-500/10 text-white'
-                : 'border-white/10 bg-white/[0.03] text-muted-foreground hover:border-white/20'
+                ? 'border-brand-400 bg-brand-50 text-foreground'
+                : 'border-border bg-card text-muted-foreground hover:border-brand-200'
             )}
           >
             <RadioGroupItem
               value={opt.value}
               id={id}
-              className="mt-0.5 border-white/20 text-brand-500"
+              className="mt-0.5 border-border text-brand-600"
             />
             <span className="leading-snug">{opt.label}</span>
           </Label>

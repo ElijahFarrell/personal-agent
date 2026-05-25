@@ -12,15 +12,15 @@ export function CTASection() {
       aria-labelledby="cta-heading"
     >
       <div className="mx-auto max-w-4xl">
-        <div className="glass relative overflow-hidden rounded-3xl border border-brand-500/20 bg-gradient-to-br from-brand-900/40 via-card/50 to-background px-6 py-14 text-center sm:px-12">
+        <div className="relative overflow-hidden rounded-3xl border border-brand-200 bg-gradient-to-br from-brand-50 via-card to-background px-6 py-14 text-center shadow-sm sm:px-12">
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(124,58,237,0.25),_transparent_65%)]"
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,_hsl(14_52%_50%_/_0.12),_transparent_65%)]"
           />
           <div className="relative">
             <h2
               id="cta-heading"
-              className="font-display text-3xl font-bold tracking-tight text-white md:text-4xl"
+              className="font-display text-3xl font-semibold tracking-tight text-foreground md:text-4xl"
             >
               {ctaCopy.heading}
             </h2>
@@ -30,7 +30,7 @@ export function CTASection() {
             <div className="mt-8 flex flex-col items-center gap-4">
               <Button
                 size="lg"
-                className="h-12 rounded-full bg-white px-8 text-base font-semibold text-brand-900 shadow-xl hover:bg-white/90"
+                className="h-12 rounded-full bg-brand-600 px-8 text-base font-semibold text-white shadow-md shadow-brand-600/20 hover:bg-brand-700"
                 asChild
               >
                 <a href="/audit" className="gap-2">
@@ -42,7 +42,7 @@ export function CTASection() {
                 or{' '}
                 <Link
                   href={book}
-                  className="font-medium text-brand-300 underline-offset-4 hover:text-brand-200 hover:underline"
+                  className="font-medium text-brand-600 underline-offset-4 hover:text-brand-700 hover:underline"
                   target="_blank"
                   rel="noopener noreferrer"
                 >

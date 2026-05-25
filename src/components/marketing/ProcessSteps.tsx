@@ -11,7 +11,7 @@ export function ProcessSteps() {
         <div className="mb-10 text-center">
           <h2
             id="process-heading"
-            className="font-display text-3xl font-bold tracking-tight text-white md:text-4xl"
+            className="font-display text-3xl font-semibold tracking-tight text-foreground md:text-4xl"
           >
             {heading}
           </h2>
@@ -23,15 +23,15 @@ export function ProcessSteps() {
           {steps.map((s) => (
             <li
               key={s.step}
-              className="glass relative rounded-2xl border border-white/10 bg-card/40 p-6"
+              className="glass relative rounded-2xl border border-border bg-card p-6"
             >
               <span
-                className="font-display text-3xl font-bold tabular-nums text-brand-400"
+                className="font-display text-3xl font-semibold tabular-nums text-brand-500"
                 aria-hidden
               >
                 {s.step}
               </span>
-              <h3 className="font-display mt-3 text-lg font-semibold text-white">
+              <h3 className="font-display mt-3 text-lg font-semibold text-foreground">
                 {s.title}
               </h3>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">

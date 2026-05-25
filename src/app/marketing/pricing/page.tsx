@@ -41,7 +41,7 @@ export default function PricingPage() {
           complexity, and ongoing partnership. We align to business impact, not
           seat-count alone.
         </p>
-        <h1 className="font-display mt-6 text-4xl font-bold tracking-tight text-white md:text-5xl">
+        <h1 className="font-display mt-6 text-4xl font-bold tracking-tight text-foreground md:text-5xl">
           Engagement packages
         </h1>
         <p className="mt-4 text-lg text-muted-foreground">

@@ -46,7 +46,7 @@ export default async function BlogPostPage({ params }: Props) {
       </Button>
       <header>
         <p className="text-xs text-muted-foreground">{post.date}</p>
-        <h1 className="font-display mt-2 text-4xl font-bold tracking-tight text-white md:text-5xl">
+        <h1 className="font-display mt-2 text-4xl font-bold tracking-tight text-foreground md:text-5xl">
           {post.title}
         </h1>
         <p className="mt-4 text-lg text-muted-foreground">{post.description}</p>

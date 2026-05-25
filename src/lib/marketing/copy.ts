@@ -78,13 +78,9 @@ export const metricsBar: readonly MetricRow[] = [
   { label: 'Industries served', value: '5+' },
   {
     label: 'Revenue generated for clients',
-    value: '$13K+ in a single engagement',
+    value: '$13K+ in one engagement',
   },
-  { label: 'Client cost savings', value: 'Up to $2,100/mo per client' },
-  {
-    label: 'Founder background',
-    value: 'Ex-Microsoft SDE · Fortune 10 tech background',
-  },
+  { label: 'Client cost savings', value: 'Up to $2,100/mo' },
 ] as const
 
 export type CredibilityBadge = {
@@ -143,10 +139,10 @@ export const founderAbout = {
 
 /** Home hero — static text; CTAs from heroCtas() */
 export const heroCopy = {
-  badge: 'AI consulting',
-  title: 'AI consulting that actually ships',
+  badge: 'Free AI audit',
+  title: 'Find where AI saves you real time and money — then we help you ship it',
   subtitle:
-    'From audit to roadmap to production — we deploy AI that fits your ops, your data, and your risk profile. Start from our platform or plug agents into the tools you already use.',
+    'Answer a few questions and get a personalized audit report in minutes. When you’re ready, we build production AI — on our platform or inside the tools you already use.',
 } as const
 
 export function heroCtas(): {
@@ -154,10 +150,23 @@ export function heroCtas(): {
   secondaryCta: { label: string; href: string }
 } {
   return {
-    primaryCta: { label: 'Book a strategy call', href: bookCallUrl() },
-    secondaryCta: { label: 'Get a free AI audit', href: '/audit' },
+    primaryCta: { label: 'Get your free AI audit', href: '/audit' },
+    secondaryCta: { label: 'Book a strategy call', href: bookCallUrl() },
   }
 }
+
+/** Compact founder block on the homepage */
+export const founderHome = {
+  name: 'Elijah',
+  role: 'Founder, Shiloh AI',
+  bio: 'Software engineer who builds AI systems that run in production — not slide decks. Shiloh exists because growing businesses kept losing hours to manual work and tools that never talked to each other.',
+  credential: 'Former Microsoft SDE · Fortune 10 technology background',
+  highlights: [
+    'AI grant system: 10+ hours saved per submission, 25%+ more submissions',
+    'Real estate client: $500+/mo CRM savings; AI lead manager with six-figure revenue upside',
+    'Healthcare voice agents: automated patient outreach so nurses focus on care',
+  ],
+} as const
 
 export type ValuePropId =
   | 'platform'
@@ -358,8 +367,8 @@ export const industriesList: readonly {
 ] as const
 
 export const processStepsSection = {
-  heading: 'How engagements run',
-  subheading: 'Clear phases — no black box.',
+  heading: 'How it works',
+  subheading: 'Start with clarity. Ship when the ROI is obvious.',
   steps: [
     {
       step: 1,
@@ -385,9 +394,16 @@ export const processStepsSection = {
 }
 
 export const ctaCopy = {
-  heading: 'Let’s figure out where AI actually pays off for your business',
+  heading: 'See where AI pays off for your business — free',
   subheading:
-    'Get a free AI audit — personalized opportunities, time savings, and a clear action plan.',
+    'Personalized opportunities, estimated time savings, and a clear action plan in your inbox. No credit card.',
   primaryLabel: 'Get your free AI audit',
   secondaryLabel: 'Book a strategy call',
+} as const
+
+export const homeServicesTeaser = {
+  heading: 'Need the full picture?',
+  body: 'Platform deployments, custom integrations, and ongoing partnership — see how we deliver.',
+  href: '/services',
+  label: 'View services',
 } as const

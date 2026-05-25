@@ -27,13 +27,13 @@ export default function AboutPage() {
             AI consulting that ships — ex-Microsoft engineering standards, real
             production systems.
           </p>
-          <h1 className="font-display mt-6 text-4xl font-bold tracking-tight text-white md:text-5xl">
+          <h1 className="font-display mt-6 text-4xl font-bold tracking-tight text-foreground md:text-5xl">
             About Shiloh AI
           </h1>
         </header>
         <div className="mt-10 space-y-8 text-muted-foreground">
           <div>
-            <h2 className="font-display text-2xl font-semibold text-white">
+            <h2 className="font-display text-2xl font-semibold text-foreground">
               {founderAbout.title}
             </h2>
             <p className="mt-4 leading-relaxed">{founderAbout.lead}</p>
@@ -54,7 +54,7 @@ export default function AboutPage() {
 
           <p className="leading-relaxed">{founderAbout.closing}</p>
 
-          <h2 className="font-display pt-4 text-2xl font-semibold text-white">
+          <h2 className="font-display pt-4 text-2xl font-semibold text-foreground">
             What we believe
           </h2>
           <ul className="list-inside list-disc space-y-2 pl-1">

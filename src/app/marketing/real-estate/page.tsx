@@ -76,7 +76,7 @@ export default function RealEstatePage() {
             fragmented, and fast, contextual follow-up wins deals. We consult on
             the right delivery model, then ship.
           </p>
-          <h1 className="font-display mt-6 text-4xl font-bold tracking-tight text-white md:text-5xl">
+          <h1 className="font-display mt-6 text-4xl font-bold tracking-tight text-foreground md:text-5xl">
             AI consulting for real estate teams
           </h1>
           <p className="mt-4 text-lg text-muted-foreground">
@@ -92,31 +92,31 @@ export default function RealEstatePage() {
         >
           <h2
             id="pain-heading"
-            className="font-display text-2xl font-semibold text-white"
+            className="font-display text-2xl font-semibold text-foreground"
           >
             Pain we solve
           </h2>
           <ul className="mt-4 list-inside list-disc space-y-2 text-muted-foreground">
             <li>
-              <strong className="text-white">Qualification bottleneck</strong>{' '}
+              <strong className="text-foreground">Qualification bottleneck</strong>{' '}
               — hundreds of leads, limited humans; AI scores and routes
               automatically.
             </li>
             <li>
-              <strong className="text-white">Fragmented stack</strong> — CRM,
+              <strong className="text-foreground">Fragmented stack</strong> — CRM,
               email, SMS, social, and transaction tools do not share context; we
               unify with a tailored platform or integrations.
             </li>
             <li>
-              <strong className="text-white">Follow-up failure</strong> — slow
+              <strong className="text-foreground">Follow-up failure</strong> — slow
               or missing touches; always-on sequences and reactivation.
             </li>
             <li>
-              <strong className="text-white">Dead pipeline</strong> — old leads
+              <strong className="text-foreground">Dead pipeline</strong> — old leads
               in CRM; contextual reactivation campaigns.
             </li>
             <li>
-              <strong className="text-white">Time poverty</strong> — agents
+              <strong className="text-foreground">Time poverty</strong> — agents
               buried in admin; agents and workflows handle the busywork.
             </li>
           </ul>
@@ -128,45 +128,45 @@ export default function RealEstatePage() {
         >
           <h2
             id="offer-heading"
-            className="font-display text-2xl font-semibold text-white"
+            className="font-display text-2xl font-semibold text-foreground"
           >
             Offerings
           </h2>
           <ul className="mt-4 space-y-3 text-muted-foreground">
             <li>
-              <span className="font-medium text-white">
+              <span className="font-medium text-foreground">
                 AI lead qualification agent
               </span>{' '}
               — inbound across channels.
             </li>
             <li>
-              <span className="font-medium text-white">
+              <span className="font-medium text-foreground">
                 Lead reactivation agent
               </span>{' '}
               — revive cold contacts with context.
             </li>
             <li>
-              <span className="font-medium text-white">
+              <span className="font-medium text-foreground">
                 Property research agent
               </span>{' '}
               — comps and market snapshots.
             </li>
             <li>
-              <span className="font-medium text-white">Outreach agent</span> —
+              <span className="font-medium text-foreground">Outreach agent</span> —
               email, SMS, social with approvals.
             </li>
             <li>
-              <span className="font-medium text-white">Unified inbox</span> —
+              <span className="font-medium text-foreground">Unified inbox</span> —
               one queue with AI triage.
             </li>
             <li>
-              <span className="font-medium text-white">
+              <span className="font-medium text-foreground">
                 AI voice patterns
               </span>{' '}
               — qualify and book by phone.
             </li>
             <li>
-              <span className="font-medium text-white">
+              <span className="font-medium text-foreground">
                 CRM workflow automation
               </span>{' '}
               — tasks, fields, pipeline hygiene.

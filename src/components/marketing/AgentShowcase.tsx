@@ -19,7 +19,7 @@ export function AgentShowcase() {
           </Badge>
           <h2
             id="engagements-heading"
-            className="font-display text-3xl font-bold tracking-tight text-white md:text-4xl"
+            className="font-display text-3xl font-bold tracking-tight text-foreground md:text-4xl"
           >
             {heading}
           </h2>
@@ -29,10 +29,10 @@ export function AgentShowcase() {
           {items.map((a) => (
             <Card
               key={a.name}
-              className="glass border-white/10 bg-gradient-to-br from-card/80 to-card/30"
+              className="glass border-border bg-gradient-to-br from-card/80 to-card/30"
             >
               <CardHeader>
-                <CardTitle className="font-display text-xl text-white">
+                <CardTitle className="font-display text-xl text-foreground">
                   {a.name}
                 </CardTitle>
               </CardHeader>

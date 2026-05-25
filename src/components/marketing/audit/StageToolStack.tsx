@@ -36,7 +36,7 @@ export function StageToolStack({
   return (
     <div className="space-y-8">
       <header className="space-y-2">
-        <h2 className="font-display text-2xl font-bold text-white md:text-3xl">
+        <h2 className="font-display text-2xl font-semibold text-foreground md:text-3xl">
           What tools are you currently using?
         </h2>
         <p className="text-sm text-muted-foreground">
@@ -61,16 +61,16 @@ export function StageToolStack({
                 className={cn(
                   'flex cursor-pointer items-start gap-3 rounded-xl border px-3 py-3 text-left text-sm transition-colors outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50',
                   checked
-                    ? 'border-brand-500/40 bg-brand-500/10 text-white'
-                    : 'border-white/10 bg-white/[0.03] text-muted-foreground hover:border-white/20'
+                    ? 'border-brand-400 bg-brand-50 text-foreground'
+                    : 'border-border bg-card text-muted-foreground hover:border-brand-200'
                 )}
               >
                 <span
                   className={cn(
                     'mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border transition-colors',
                     checked
-                      ? 'border-brand-500 bg-brand-600 text-white'
-                      : 'border-white/25 bg-transparent'
+                      ? 'border-brand-600 bg-brand-600 text-white'
+                      : 'border-border bg-transparent'
                   )}
                   aria-hidden
                 >

@@ -24,7 +24,7 @@ export default function IndustriesPage() {
           Same consulting rigor — different workflows, compliance, and data
           models.
         </p>
-        <h1 className="font-display mt-6 text-4xl font-bold tracking-tight text-white md:text-5xl">
+        <h1 className="font-display mt-6 text-4xl font-bold tracking-tight text-foreground md:text-5xl">
           Industries we serve
         </h1>
         <p className="mt-4 text-lg text-muted-foreground">
@@ -39,7 +39,7 @@ export default function IndustriesPage() {
           const inner = (
             <>
               <CardHeader>
-                <CardTitle className="font-display flex items-center justify-between text-xl text-white">
+                <CardTitle className="font-display flex items-center justify-between text-xl text-foreground">
                   {ind.label}
                   {isRealEstate ? (
                     <ArrowUpRight className="h-5 w-5 shrink-0 text-brand-400" />

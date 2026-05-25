@@ -4,10 +4,6 @@ import * as React from 'react'
 import { metricsBar } from '@/lib/marketing/copy'
 
 function MetricsMarquee() {
-  /**
-   * One flex row, two copies, `gap-8` between every item (including the seam).
-   * Keyframes use `calc(-50% - 1rem)` because total width is 2U + gap, not 2U.
-   */
   return (
     <div
       className="flex w-max shrink-0 animate-marquee gap-8 motion-reduce:animate-none will-change-transform"
@@ -22,10 +18,10 @@ function MetricsMarquee() {
             <span className="font-medium uppercase tracking-wide text-muted-foreground">
               {row.label}
             </span>
-            <span className="text-[10px] text-white/25 sm:text-xs" aria-hidden>
+            <span className="text-[10px] text-border sm:text-xs" aria-hidden>
               ·
             </span>
-            <span className="font-display font-semibold tabular-nums text-white">
+            <span className="font-display font-semibold tabular-nums text-foreground">
               {row.value}
             </span>
           </span>
@@ -47,10 +43,10 @@ function MetricsStatic() {
             <span className="font-medium uppercase tracking-wide text-muted-foreground">
               {row.label}
             </span>
-            <span className="text-[10px] text-white/25 sm:text-xs" aria-hidden>
+            <span className="text-[10px] text-border sm:text-xs" aria-hidden>
               ·
             </span>
-            <span className="font-display font-semibold tabular-nums text-white">
+            <span className="font-display font-semibold tabular-nums text-foreground">
               {row.value}
             </span>
           </span>
@@ -75,19 +71,15 @@ export function MetricsBar() {
 
   return (
     <section
-      className="relative border-y border-white/[0.06] bg-white/[0.02] py-2 sm:py-2.5"
+      className="relative border-y border-border bg-card/50 py-3 sm:py-3.5"
       aria-labelledby="metrics-heading"
     >
       <h2 id="metrics-heading" className="sr-only">
-        Trust and results at a glance
+        Client results at a glance
       </h2>
       <p className="sr-only">{summary}</p>
       <div className="mx-auto max-w-6xl overflow-hidden px-4 sm:px-6">
-        {reducedMotion ? (
-          <MetricsStatic />
-        ) : (
-          <MetricsMarquee />
-        )}
+        {reducedMotion ? <MetricsStatic /> : <MetricsMarquee />}
       </div>
     </section>
   )
