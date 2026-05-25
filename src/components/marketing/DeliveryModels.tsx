@@ -12,7 +12,7 @@ export function DeliveryModels() {
         <div className="mb-10 max-w-3xl">
           <h2
             id="delivery-heading"
-            className="font-display text-3xl font-bold tracking-tight text-white md:text-4xl"
+            className="font-display text-3xl font-bold tracking-tight text-foreground md:text-4xl"
           >
             {heading}
           </h2>
@@ -21,9 +21,9 @@ export function DeliveryModels() {
         <ul className="grid gap-4 md:grid-cols-2">
           {models.map((m) => (
             <li key={m.id}>
-              <Card className="glass h-full border-white/10 bg-gradient-to-br from-card/80 to-card/30">
+              <Card className="glass h-full border-border bg-gradient-to-br from-card/80 to-card/30">
                 <CardHeader>
-                  <CardTitle className="font-display text-xl text-white">
+                  <CardTitle className="font-display text-xl text-foreground">
                     {m.title}
                   </CardTitle>
                 </CardHeader>

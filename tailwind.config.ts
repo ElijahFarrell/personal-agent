@@ -11,16 +11,16 @@ const config: Config = {
   	extend: {
   		colors: {
   			brand: {
-  				'50': '#f5f0ff',
-  				'100': '#ebe0ff',
-  				'200': '#d4bfff',
-  				'300': '#b794ff',
-  				'400': '#9b6dff',
-  				'500': '#7c3aed',
-  				'600': '#6d28d9',
-  				'700': '#5b21b6',
-  				'800': '#4c1d95',
-  				'900': '#3b0f7a'
+  				'50': 'hsl(var(--brand-50) / <alpha-value>)',
+  				'100': 'hsl(var(--brand-100) / <alpha-value>)',
+  				'200': 'hsl(var(--brand-200) / <alpha-value>)',
+  				'300': 'hsl(var(--brand-300) / <alpha-value>)',
+  				'400': 'hsl(var(--brand-400) / <alpha-value>)',
+  				'500': 'hsl(var(--brand-500) / <alpha-value>)',
+  				'600': 'hsl(var(--brand-600) / <alpha-value>)',
+  				'700': 'hsl(var(--brand-700) / <alpha-value>)',
+  				'800': 'hsl(var(--brand-800) / <alpha-value>)',
+  				'900': 'hsl(var(--brand-900) / <alpha-value>)'
   			},
   			border: 'hsl(var(--border))',
   			input: 'hsl(var(--input))',

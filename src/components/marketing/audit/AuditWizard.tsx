@@ -217,12 +217,12 @@ export function AuditWizard() {
           </div>
           <Progress
             value={progress}
-            className="h-1.5 bg-white/10 [&>div]:bg-brand-500"
+            className="h-1.5 bg-muted [&>div]:bg-brand-500"
           />
         </div>
       ) : null}
 
-      <div className="glass rounded-2xl border border-white/10 p-6 sm:p-10">
+      <div className="glass rounded-2xl border border-border p-6 sm:p-10">
         <AnimatePresence mode="wait">
           {stage === 0 ? (
             <motion.div
@@ -317,12 +317,12 @@ export function AuditWizard() {
         </AnimatePresence>
 
         {error ? (
-          <p className="mt-6 text-center text-sm text-red-400" role="alert">
+          <p className="mt-6 text-center text-sm text-destructive" role="alert">
             {error}
           </p>
         ) : null}
         {submitError ? (
-          <p className="mt-6 text-center text-sm text-red-400" role="alert">
+          <p className="mt-6 text-center text-sm text-destructive" role="alert">
             {submitError}
           </p>
         ) : null}
@@ -342,7 +342,7 @@ export function AuditWizard() {
             {stage < STAGES ? (
               <Button
                 type="button"
-                className="rounded-full bg-brand-600 hover:bg-brand-500"
+                className="rounded-full bg-brand-600 text-white hover:bg-brand-700"
                 onClick={next}
               >
                 Next
@@ -351,7 +351,7 @@ export function AuditWizard() {
             ) : (
               <Button
                 type="button"
-                className="rounded-full bg-brand-600 hover:bg-brand-500"
+                className="rounded-full bg-brand-600 text-white hover:bg-brand-700"
                 onClick={handleFinalSubmit}
                 disabled={submitting}
               >

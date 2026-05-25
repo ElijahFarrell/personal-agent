@@ -70,18 +70,18 @@ export function PricingCards() {
           key={tier.name}
           className={
             tier.highlighted
-              ? 'glass border-brand-500/40 bg-brand-950/20 shadow-xl shadow-brand-500/10'
-              : 'glass border-white/10'
+              ? 'glass border-brand-300 bg-brand-50/80 shadow-md shadow-brand-600/10'
+              : 'glass border-border'
           }
         >
           <CardHeader>
-            <CardTitle className="font-display text-2xl text-white">
+            <CardTitle className="font-display text-2xl text-foreground">
               {tier.name}
             </CardTitle>
             <CardDescription className="text-muted-foreground">
               {tier.description}
             </CardDescription>
-            <p className="font-display pt-2 text-3xl font-bold text-white">
+            <p className="font-display pt-2 text-3xl font-bold text-foreground">
               {tier.price}
             </p>
           </CardHeader>

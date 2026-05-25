@@ -25,7 +25,7 @@ export default function ServicesPage() {
           accountable to metrics — whether you start from our platform or plug
           into tools you already run.
         </p>
-        <h1 className="font-display mt-6 text-4xl font-bold tracking-tight text-white md:text-5xl">
+        <h1 className="font-display mt-6 text-4xl font-bold tracking-tight text-foreground md:text-5xl">
           AI consulting services
         </h1>
         <p className="mt-4 text-lg text-muted-foreground">

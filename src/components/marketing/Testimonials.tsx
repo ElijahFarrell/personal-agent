@@ -25,37 +25,37 @@ function TestimonialCard({
   item: (typeof testimonials)[number]
 }) {
   return (
-    <Card className="glass mx-auto flex h-full max-w-3xl flex-col border-white/10">
+    <Card className="glass mx-auto flex h-full max-w-3xl flex-col border-border">
       <CardContent className="flex flex-1 flex-col pt-8">
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <Quote
-            className="h-8 w-8 shrink-0 text-brand-400/80"
+            className="h-8 w-8 shrink-0 text-brand-400"
             aria-hidden
           />
           {item.isParaphrase ? (
             <Badge
               variant="outline"
-              className="border-white/20 text-[10px] font-normal uppercase tracking-wide text-muted-foreground"
+              className="border-border text-[10px] font-normal uppercase tracking-wide text-muted-foreground"
             >
               Representative quote
             </Badge>
           ) : null}
         </div>
-        <blockquote className="flex-1 text-base leading-relaxed text-white/95">
+        <blockquote className="flex-1 text-base leading-relaxed text-foreground">
           &ldquo;{item.quote}&rdquo;
         </blockquote>
-        <p className="mt-4 text-sm font-medium text-white">
+        <p className="mt-4 text-sm font-medium text-foreground">
           — {item.attribution}
         </p>
         {item.project ? (
           <p className="mt-3 text-xs text-muted-foreground">
-            <span className="font-medium text-white/80">Project:</span>{' '}
+            <span className="font-medium text-foreground/80">Project:</span>{' '}
             {item.project}
           </p>
         ) : null}
         {item.results && item.results.length > 0 ? (
-          <div className="mt-3 border-t border-white/10 pt-3">
-            <p className="text-xs font-medium uppercase tracking-wide text-brand-200/90">
+          <div className="mt-3 border-t border-border pt-3">
+            <p className="text-xs font-medium uppercase tracking-wide text-brand-700">
               Result
             </p>
             <ul className="mt-2 list-inside list-disc space-y-1 text-xs text-muted-foreground">
@@ -100,7 +100,7 @@ export function Testimonials() {
       <div className="mx-auto max-w-6xl">
         <h2
           id="social-heading"
-          className="font-display text-center text-3xl font-bold tracking-tight text-white md:text-4xl"
+          className="font-display text-center text-3xl font-semibold tracking-tight text-foreground md:text-4xl"
         >
           {testimonialsHeadline}
         </h2>
@@ -136,8 +136,8 @@ export function Testimonials() {
               className={cn(
                 'h-2 w-2 rounded-full transition-colors',
                 current === i
-                  ? 'bg-brand-400'
-                  : 'bg-white/20 hover:bg-white/35'
+                  ? 'bg-brand-500'
+                  : 'bg-border hover:bg-brand-300'
               )}
               onClick={() => api?.scrollTo(i)}
             />

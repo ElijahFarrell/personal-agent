@@ -29,7 +29,7 @@ export function ValueProps() {
       <div className="mx-auto max-w-6xl">
         <h2
           id="value-heading"
-          className="font-display text-center text-3xl font-bold tracking-tight text-white md:text-4xl"
+          className="font-display text-center text-3xl font-bold tracking-tight text-foreground md:text-4xl"
         >
           {heading}
         </h2>
@@ -41,12 +41,12 @@ export function ValueProps() {
             const Icon = valuePropIcons[id]
             return (
               <li key={id}>
-                <Card className="glass h-full border-white/10 bg-card/40 transition-shadow hover:shadow-lg hover:shadow-brand-500/10">
+                <Card className="glass h-full border-border bg-card/40 transition-shadow hover:shadow-lg hover:shadow-brand-500/10">
                   <CardHeader className="pb-2">
                     <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-lg border border-brand-500/25 bg-brand-500/10 text-brand-300">
                       <Icon className="h-5 w-5" aria-hidden />
                     </div>
-                    <CardTitle className="font-display text-lg text-white">
+                    <CardTitle className="font-display text-lg text-foreground">
                       {title}
                     </CardTitle>
                   </CardHeader>

@@ -38,23 +38,23 @@ export function AuditReportDashboard({
   return (
     <div className="space-y-8">
       <div className="space-y-3 text-center">
-        <h2 className="font-display text-3xl font-bold text-white md:text-4xl">
+        <h2 className="font-display text-3xl font-semibold text-foreground md:text-4xl">
           You&apos;re in
         </h2>
         <p className="text-lg text-muted-foreground">
           Your personalized AI Audit is ready. We also emailed it to{' '}
-          <span className="font-medium text-brand-200">{email}</span>.
+          <span className="font-medium text-brand-700">{email}</span>.
         </p>
       </div>
 
       {hasHours ? (
         <div className="grid gap-4 sm:grid-cols-2">
-          <Card className="glass border-white/10 bg-white/[0.04] shadow-lg shadow-brand-600/5">
+          <Card className="glass border-border shadow-sm">
             <CardContent className="space-y-1 p-6 pt-6">
-              <p className="text-xs font-medium uppercase tracking-wider text-brand-300/90">
+              <p className="text-xs font-medium uppercase tracking-wider text-brand-700">
                 Est. time back
               </p>
-              <p className="font-display text-3xl font-bold tabular-nums text-white md:text-4xl">
+              <p className="font-display text-3xl font-semibold tabular-nums text-foreground md:text-4xl">
                 {hoursSavedPerWeekMin}–{hoursSavedPerWeekMax}{' '}
                 <span className="text-lg font-semibold text-muted-foreground">
                   hrs/wk
@@ -65,12 +65,12 @@ export function AuditReportDashboard({
               </p>
             </CardContent>
           </Card>
-          <Card className="glass border-white/10 bg-white/[0.04] shadow-lg shadow-brand-600/5">
+          <Card className="glass border-border shadow-sm">
             <CardContent className="space-y-1 p-6 pt-6">
-              <p className="text-xs font-medium uppercase tracking-wider text-brand-300/90">
+              <p className="text-xs font-medium uppercase tracking-wider text-brand-700">
                 Annualized
               </p>
-              <p className="font-display text-3xl font-bold tabular-nums text-white md:text-4xl">
+              <p className="font-display text-3xl font-semibold tabular-nums text-foreground md:text-4xl">
                 {yearLo!.toLocaleString()}–{yearHi!.toLocaleString()}{' '}
                 <span className="text-lg font-semibold text-muted-foreground">
                   hrs/yr
@@ -84,12 +84,12 @@ export function AuditReportDashboard({
         </div>
       ) : null}
 
-      <div className="glass rounded-xl border border-white/10 bg-white/[0.02] p-5 sm:p-8">
-        <h3 className="mb-4 font-display text-lg font-semibold text-white">
+      <div className="glass rounded-xl border border-border bg-card p-5 sm:p-8">
+        <h3 className="mb-4 font-display text-lg font-semibold text-foreground">
           Your report
         </h3>
         <div className="max-h-[min(70vh,720px)] overflow-y-auto pr-1 text-left">
-          <MessageResponse className="text-sm leading-relaxed text-zinc-200 [&_a]:text-brand-300 [&_h1]:font-display [&_h1]:text-2xl [&_h2]:mt-8 [&_h2]:font-display [&_h2]:text-xl [&_h3]:font-display [&_table]:text-xs [&_th]:text-brand-200">
+          <MessageResponse className="text-sm leading-relaxed text-foreground [&_a]:text-brand-600 [&_h1]:font-display [&_h1]:text-2xl [&_h2]:mt-8 [&_h2]:font-display [&_h2]:text-xl [&_h3]:font-display [&_table]:text-xs [&_th]:text-brand-700">
             {reportMarkdown}
           </MessageResponse>
         </div>
@@ -104,7 +104,7 @@ export function AuditReportDashboard({
       <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
         <Button
           size="lg"
-          className="h-12 rounded-full bg-brand-600 px-8 hover:bg-brand-500"
+          className="h-12 rounded-full bg-brand-600 px-8 text-white hover:bg-brand-700"
           asChild
         >
           <a href={reportUrl} target="_blank" rel="noopener noreferrer">
@@ -114,7 +114,7 @@ export function AuditReportDashboard({
         <Button
           size="lg"
           variant="outline"
-          className="glass h-12 rounded-full border-white/15 px-8"
+          className="h-12 rounded-full border-border px-8"
           asChild
         >
           <a href={book} target="_blank" rel="noopener noreferrer">
@@ -128,7 +128,7 @@ export function AuditReportDashboard({
         Follow our journey on{' '}
         <a
           href={li}
-          className="text-brand-300 underline-offset-4 hover:underline"
+          className="text-brand-600 underline-offset-4 hover:underline"
           target="_blank"
           rel="noopener noreferrer"
         >
@@ -137,7 +137,7 @@ export function AuditReportDashboard({
         or{' '}
         <a
           href={tw}
-          className="text-brand-300 underline-offset-4 hover:underline"
+          className="text-brand-600 underline-offset-4 hover:underline"
           target="_blank"
           rel="noopener noreferrer"
         >

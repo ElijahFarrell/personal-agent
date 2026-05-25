@@ -19,7 +19,7 @@ export function PlatformCapabilities() {
           </Badge>
           <h2
             id="platform-cap-heading"
-            className="font-display text-3xl font-bold tracking-tight text-white md:text-4xl"
+            className="font-display text-3xl font-bold tracking-tight text-foreground md:text-4xl"
           >
             {heading}
           </h2>
@@ -28,9 +28,9 @@ export function PlatformCapabilities() {
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((item) => (
             <li key={item.title}>
-              <Card className="glass h-full border-white/10 bg-card/40">
+              <Card className="glass h-full border-border bg-card/40">
                 <CardHeader className="pb-2">
-                  <CardTitle className="font-display text-lg text-white">
+                  <CardTitle className="font-display text-lg text-foreground">
                     {item.title}
                   </CardTitle>
                 </CardHeader>

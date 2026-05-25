@@ -11,30 +11,30 @@ type HeroProps = {
 }
 
 export function Hero({
-  badge = 'AI consulting',
+  badge = 'Free AI audit',
   title,
   subtitle,
-  primaryCta = { label: 'Book a strategy call', href: bookCallUrl() },
-  secondaryCta = { label: 'Get a free AI audit', href: '/audit' },
+  primaryCta = { label: 'Get your free AI audit', href: '/audit' },
+  secondaryCta = { label: 'Book a strategy call', href: bookCallUrl() },
 }: HeroProps) {
   return (
-    <section className="relative px-4 pb-20 pt-10 sm:px-6 sm:pb-28 sm:pt-16">
+    <section className="relative px-4 pb-16 pt-8 sm:px-6 sm:pb-24 sm:pt-14">
       <div className="mx-auto max-w-4xl text-center">
         {badge ? (
-          <p className="mb-6 inline-flex items-center rounded-full border border-brand-500/30 bg-brand-500/10 px-4 py-1.5 text-xs font-medium text-brand-200 shadow-[0_0_32px_-8px_rgba(124,58,237,0.5)]">
+          <p className="mb-6 inline-flex items-center rounded-full border border-brand-200 bg-brand-50 px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-brand-700">
             {badge}
           </p>
         ) : null}
-        <h1 className="font-display text-4xl font-bold leading-[1.08] tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl">
+        <h1 className="font-display text-4xl font-semibold leading-[1.12] tracking-tight text-foreground sm:text-5xl md:text-[3.25rem] md:leading-[1.08]">
           {title}
         </h1>
-        <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground sm:text-xl">
+        <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
           {subtitle}
         </p>
         <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row sm:gap-4">
           <Button
             size="lg"
-            className="h-12 rounded-full bg-brand-600 px-8 text-base shadow-xl shadow-brand-600/30 hover:bg-brand-500"
+            className="h-12 rounded-full bg-brand-600 px-8 text-base font-semibold text-white shadow-md shadow-brand-600/20 hover:bg-brand-700"
             asChild
           >
             <a href={primaryCta.href} className="gap-2">
@@ -45,12 +45,15 @@ export function Hero({
           <Button
             size="lg"
             variant="outline"
-            className="glass h-12 rounded-full border-white/15 bg-white/5 px-8 text-base text-white hover:bg-white/10"
+            className="h-12 rounded-full border-border bg-card/80 px-8 text-base text-foreground hover:bg-muted"
             asChild
           >
             <a href={secondaryCta.href}>{secondaryCta.label}</a>
           </Button>
         </div>
+        <p className="mt-6 text-sm text-muted-foreground">
+          ~5 minutes · No credit card · Report in your inbox
+        </p>
       </div>
     </section>
   )

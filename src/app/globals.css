@@ -4,6 +4,17 @@
 
 @layer base {
   :root {
+    /* Brand scale — purple (app); overridden to terracotta under .marketing-site */
+    --brand-50: 270 100% 98%;
+    --brand-100: 268 100% 95%;
+    --brand-200: 260 100% 91%;
+    --brand-300: 258 96% 84%;
+    --brand-400: 263 93% 73%;
+    --brand-500: 263 84% 58%;
+    --brand-600: 262 83% 53%;
+    --brand-700: 263 70% 42%;
+    --brand-800: 263 65% 35%;
+    --brand-900: 263 80% 27%;
     /* Geist / Vercel design system — dark mode with brand purple accent */
     --background: 0 0% 3%;
     --foreground: 0 0% 98%;

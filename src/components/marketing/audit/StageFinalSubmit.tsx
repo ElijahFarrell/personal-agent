@@ -15,7 +15,7 @@ export function StageFinalSubmit({
   return (
     <div className="space-y-8">
       <header className="space-y-2">
-        <h2 className="font-display text-2xl font-bold text-white md:text-3xl">
+        <h2 className="font-display text-2xl font-semibold text-foreground md:text-3xl">
           Last step — let&apos;s make this actionable
         </h2>
         <p className="text-sm text-muted-foreground">

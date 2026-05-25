@@ -23,7 +23,7 @@ export function FAQSection({
       <div className="mx-auto max-w-3xl">
         <h2
           id={id}
-          className="font-display text-center text-3xl font-bold tracking-tight text-white md:text-4xl"
+          className="font-display text-center text-3xl font-bold tracking-tight text-foreground md:text-4xl"
         >
           {title}
         </h2>
@@ -37,7 +37,7 @@ export function FAQSection({
               value={`item-${i}`}
               className="glass rounded-xl border border-white/10 px-4 data-[state=open]:border-brand-500/25"
             >
-              <AccordionTrigger className="text-left font-medium text-white hover:no-underline">
+              <AccordionTrigger className="text-left font-medium text-foreground hover:no-underline">
                 {item.question}
               </AccordionTrigger>
               <AccordionContent className="text-sm leading-relaxed text-muted-foreground">
