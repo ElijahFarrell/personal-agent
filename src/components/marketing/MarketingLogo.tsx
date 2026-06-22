@@ -18,8 +18,8 @@ export function MarketingLogo({ className }: { className?: string }) {
         >
           <defs>
             <linearGradient id="shilohLogoStroke" x1="7" y1="6" x2="30" y2="31" gradientUnits="userSpaceOnUse">
-              <stop stopColor="#C45C3E" />
-              <stop offset="1" stopColor="#9A4528" />
+              <stop stopColor="#1F8A7A" />
+              <stop offset="1" stopColor="#145C52" />
             </linearGradient>
           </defs>
           <path
@@ -48,10 +48,10 @@ export function MarketingLogo({ className }: { className?: string }) {
             strokeLinecap="round"
             opacity="0.85"
           />
-          <circle cx="8" cy="27.3" r="1.7" fill="#C45C3E" />
-          <circle cx="18" cy="27.3" r="1.7" fill="#B8522F" />
-          <circle cx="28" cy="27.3" r="1.7" fill="#9A4528" />
-          <circle cx="18" cy="7.7" r="1.4" fill="#D4A99A" />
+          <circle cx="8" cy="27.3" r="1.7" fill="#1F8A7A" />
+          <circle cx="18" cy="27.3" r="1.7" fill="#187A6C" />
+          <circle cx="28" cy="27.3" r="1.7" fill="#145C52" />
+          <circle cx="18" cy="7.7" r="1.4" fill="#8ECFC4" />
         </svg>
       </span>
       <span className="font-display text-lg">Shiloh AI</span>

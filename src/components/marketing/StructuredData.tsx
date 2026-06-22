@@ -49,23 +49,27 @@ export function organizationSchema(): JsonLd {
     name: 'Shiloh AI',
     url,
     description:
-      'AI consulting for SMBs, founders, and ops leaders — production AI systems, tailored platform deployments, and custom integrations into existing tools.',
+      'HIPAA-compliant pre-op and post-op calling agent for independent ambulatory surgery centers.',
     sameAs: [] as string[],
   }
 }
 
-/** Consulting / professional services framing for the marketing home page */
-export function professionalServiceSchema(): JsonLd {
+/** ASC healthcare voice agent service */
+export function ascHealthcareServiceSchema(): JsonLd {
   const url = getMarketingSiteUrl()
   return {
     '@context': 'https://schema.org',
     '@type': 'ProfessionalService',
-    name: 'Shiloh AI',
+    name: 'Shiloh AI — ASC Patient Calling',
     url,
     description:
-      'AI consulting engagements: audits, tailored platform deployment, custom integrations, and ongoing fractional AI partnership for growing businesses.',
+      'HIPAA-compliant AI calling agent for independent surgery centers: pre-op confirmation, prep verification, and post-op follow-up to reduce no-shows and cancellations.',
     areaServed: 'US',
-    serviceType: 'Artificial intelligence consulting and implementation',
+    serviceType: 'Healthcare patient outreach and AI voice automation',
+    audience: {
+      '@type': 'Audience',
+      audienceType: 'Independent ambulatory surgery centers',
+    },
   }
 }
 

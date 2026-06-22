@@ -34,6 +34,6 @@ export function appDashboardUrl(): string {
 export function bookCallUrl(): string {
   return (
     process.env.NEXT_PUBLIC_BOOK_CALL_URL?.replace(/\/$/, '') ??
-    'https://cal.com/shilohai/30min'
+    'https://cal.com/shilohai/15min'
   )
 }

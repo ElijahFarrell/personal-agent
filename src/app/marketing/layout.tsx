@@ -1,17 +1,16 @@
-import { Fraunces, Source_Sans_3 } from 'next/font/google'
+import { Newsreader, Figtree } from 'next/font/google'
 import { MarketingBackground } from '@/components/marketing/MarketingBackground'
-import { ChatWidget } from '@/components/marketing/ChatWidget'
 import { MarketingFooter } from '@/components/marketing/MarketingFooter'
 import { MarketingNavbar } from '@/components/marketing/MarketingNavbar'
 import '@/styles/marketing-theme.css'
 
-const fraunces = Fraunces({
+const newsreader = Newsreader({
   subsets: ['latin'],
   variable: '--font-display',
   display: 'swap',
 })
 
-const sourceSans = Source_Sans_3({
+const figtree = Figtree({
   subsets: ['latin'],
   variable: '--font-marketing-sans',
   display: 'swap',
@@ -24,14 +23,23 @@ export default function MarketingLayout({
 }) {
   return (
     <div
-      className={`marketing-site ${fraunces.variable} ${sourceSans.variable} font-sans antialiased`}
-      style={{ fontFamily: 'var(--font-marketing-sans), var(--font-geist-sans), sans-serif' }}
+      className={`marketing-site ${newsreader.variable} ${figtree.variable} font-sans antialiased`}
+      style={{
+        fontFamily: 'var(--font-marketing-sans), ui-sans-serif, sans-serif',
+      }}
     >
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-brand-600 focus:px-4 focus:py-2 focus:text-white"
+      >
+        Skip to main content
+      </a>
       <MarketingBackground />
       <MarketingNavbar />
-      <div className="relative z-10">{children}</div>
+      <main id="main-content" className="relative z-10">
+        {children}
+      </main>
       <MarketingFooter />
-      <ChatWidget />
     </div>
   )
 }

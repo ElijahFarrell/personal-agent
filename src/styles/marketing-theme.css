@@ -1,52 +1,52 @@
 /**
- * Light editorial theme for the public marketing site only.
- * Scoped under `.marketing-site` so the app dashboard keeps the dark purple UI.
+ * ASC healthcare marketing theme — calm, authoritative, conversion-focused.
+ * Scoped under `.marketing-site` so the app dashboard keeps its own UI.
  */
 
 .marketing-site {
   color-scheme: light;
 
-  --background: 40 33% 97%;
-  --foreground: 24 10% 12%;
-  --card: 40 40% 99%;
-  --card-foreground: 24 10% 12%;
-  --popover: 40 40% 99%;
-  --popover-foreground: 24 10% 12%;
+  --background: 210 22% 98%;
+  --foreground: 215 28% 14%;
+  --card: 0 0% 100%;
+  --card-foreground: 215 28% 14%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 215 28% 14%;
 
-  --glass-bg: 40 40% 100% / 0.75;
-  --glass-border: 24 10% 12% / 0.08;
-  --glass-blur: 16px;
-  --glass-card-bg: 40 40% 100% / 0.82;
-  --glass-popover-bg: 40 40% 100% / 0.92;
-  --glass-sidebar-bg: 40 33% 97% / 0.95;
+  --glass-bg: 0 0% 100% / 0.82;
+  --glass-border: 215 20% 20% / 0.08;
+  --glass-blur: 20px;
+  --glass-card-bg: 0 0% 100% / 0.88;
+  --glass-popover-bg: 0 0% 100% / 0.94;
+  --glass-sidebar-bg: 210 22% 98% / 0.95;
 
-  --primary: 14 52% 50%;
+  --primary: 175 62% 32%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 30 25% 93%;
-  --secondary-foreground: 24 10% 18%;
-  --muted: 32 22% 92%;
-  --muted-foreground: 24 8% 42%;
-  --accent: 28 30% 90%;
-  --accent-foreground: 24 10% 12%;
+  --secondary: 210 18% 94%;
+  --secondary-foreground: 215 22% 22%;
+  --muted: 210 16% 93%;
+  --muted-foreground: 215 12% 44%;
+  --accent: 175 35% 92%;
+  --accent-foreground: 175 55% 22%;
   --destructive: 0 62.8% 50%;
   --destructive-foreground: 0 0% 100%;
-  --border: 32 18% 86%;
-  --input: 32 18% 86%;
-  --ring: 14 52% 50%;
+  --border: 210 16% 88%;
+  --input: 210 16% 88%;
+  --ring: 175 62% 32%;
 
-  --brand-50: 20 55% 97%;
-  --brand-100: 18 45% 94%;
-  --brand-200: 16 40% 88%;
-  --brand-300: 14 45% 78%;
-  --brand-400: 12 50% 62%;
-  --brand-500: 14 52% 50%;
-  --brand-600: 12 56% 45%;
-  --brand-700: 10 50% 38%;
-  --brand-800: 8 45% 30%;
-  --brand-900: 8 40% 22%;
+  --brand-50: 175 40% 97%;
+  --brand-100: 175 38% 92%;
+  --brand-200: 175 35% 84%;
+  --brand-300: 175 40% 68%;
+  --brand-400: 175 50% 48%;
+  --brand-500: 175 62% 32%;
+  --brand-600: 175 65% 28%;
+  --brand-700: 175 60% 24%;
+  --brand-800: 175 55% 18%;
+  --brand-900: 175 50% 12%;
 
-  --chart-1: hsl(14 52% 50%);
-  --chart-2: hsl(199 89% 42%);
+  --chart-1: hsl(175 62% 32%);
+  --chart-2: hsl(215 45% 45%);
   --chart-3: hsl(142 45% 40%);
   --chart-4: hsl(38 80% 48%);
   --chart-5: hsl(330 60% 48%);
@@ -57,20 +57,93 @@
 }
 
 .marketing-site .glass {
+  background: hsl(var(--glass-card-bg));
+  backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid hsl(var(--glass-border));
   box-shadow:
-    0 1px 2px hsl(24 10% 12% / 0.04),
-    0 8px 24px hsl(24 10% 12% / 0.06);
+    0 1px 2px hsl(215 28% 14% / 0.04),
+    0 12px 32px hsl(215 28% 14% / 0.06);
 }
 
 .marketing-site .marketing-paper-grain::before {
   content: '';
   position: absolute;
   inset: 0;
-  opacity: 0.04;
+  opacity: 0.035;
   pointer-events: none;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 .marketing-site :focus-visible {
-  outline-color: hsl(var(--brand-500));
+  outline: 2px solid hsl(var(--brand-500));
+  outline-offset: 2px;
+}
+
+.marketing-site .marketing-section {
+  scroll-margin-top: 5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marketing-site *,
+  .marketing-site *::before,
+  .marketing-site *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.marketing-site .animate-fade-up {
+  animation: marketing-fade-up 0.7s ease-out both;
+}
+
+.marketing-site .animate-fade-up-delay-1 {
+  animation: marketing-fade-up 0.7s ease-out 0.1s both;
+}
+
+.marketing-site .animate-fade-up-delay-2 {
+  animation: marketing-fade-up 0.7s ease-out 0.2s both;
+}
+
+.marketing-site .animate-fade-up-delay-3 {
+  animation: marketing-fade-up 0.7s ease-out 0.3s both;
+}
+
+@keyframes marketing-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marketing-site .animate-fade-up,
+  .marketing-site .animate-fade-up-delay-1,
+  .marketing-site .animate-fade-up-delay-2,
+  .marketing-site .animate-fade-up-delay-3 {
+    animation: none;
+  }
+}
+
+.marketing-site .waveform-bar-active {
+  animation: marketing-wave 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes marketing-wave {
+  from {
+    transform: scaleY(0.55);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marketing-site .waveform-bar-active {
+    animation: none;
+  }
 }

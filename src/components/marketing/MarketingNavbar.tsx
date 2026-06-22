@@ -17,10 +17,9 @@ import { bookCallUrl } from '@/lib/marketing/site'
 import { MarketingLogo } from './MarketingLogo'
 
 const nav = [
-  { href: '/services', label: 'Services' },
-  { href: '/industries', label: 'Industries' },
-  { href: '/pricing', label: 'Engagements' },
-  { href: '/about', label: 'About' },
+  { href: '#how-it-works-heading', label: 'How It Works' },
+  { href: '#pricing-heading', label: 'Pricing' },
+  { href: '#faq-heading', label: 'FAQ' },
 ] as const
 
 function normalizeMarketingPath(pathname: string | null): string {
@@ -37,9 +36,10 @@ export function MarketingNavbar() {
   const pathname = normalizeMarketingPath(usePathname())
   const [open, setOpen] = useState(false)
   const book = bookCallUrl()
+  const isHome = pathname === '/'
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-background/85 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-border bg-background/90 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
         <MarketingLogo />
         <nav
@@ -47,10 +47,35 @@ export function MarketingNavbar() {
           aria-label="Primary"
         >
           {nav.map(({ href, label }) => {
+            const isHash = href.startsWith('#')
             const isActive =
-              pathname === href ||
-              pathname === `/marketing${href}` ||
-              pathname.startsWith(`${href}/`)
+              !isHash &&
+              (pathname === href || pathname.startsWith(`${href}/`))
+
+            if (isHash && isHome) {
+              return (
+                <a
+                  key={href}
+                  href={href}
+                  className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  {label}
+                </a>
+              )
+            }
+
+            if (isHash) {
+              return (
+                <Link
+                  key={href}
+                  href={`/${href}`}
+                  className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  {label}
+                </Link>
+              )
+            }
+
             return (
               <Link
                 key={href}
@@ -67,21 +92,13 @@ export function MarketingNavbar() {
         </nav>
         <div className="flex items-center gap-2">
           <Button
-            variant="outline"
             size="sm"
-            className="hidden rounded-full border-border bg-card text-foreground hover:bg-muted sm:inline-flex"
+            className="hidden rounded-full bg-brand-600 px-5 font-semibold text-white shadow-sm transition-colors hover:bg-brand-700 sm:inline-flex"
             asChild
           >
             <a href={book} target="_blank" rel="noopener noreferrer">
-              Book a call
+              Book a 15-min call
             </a>
-          </Button>
-          <Button
-            size="sm"
-            className="hidden rounded-full bg-brand-600 px-4 font-semibold text-white shadow-sm hover:bg-brand-700 sm:inline-flex"
-            asChild
-          >
-            <Link href="/audit">Free AI audit</Link>
           </Button>
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
@@ -91,7 +108,7 @@ export function MarketingNavbar() {
                 className="border-border bg-card md:hidden"
                 aria-label="Open menu"
               >
-                <Menu className="h-5 w-5" />
+                <Menu className="h-5 w-5" aria-hidden />
               </Button>
             </SheetTrigger>
             <SheetContent
@@ -102,31 +119,42 @@ export function MarketingNavbar() {
                 <SheetTitle className="text-left text-foreground">Menu</SheetTitle>
               </SheetHeader>
               <nav className="mt-6 flex flex-col gap-1" aria-label="Mobile">
-                {nav.map(({ href, label }) => (
-                  <Link
-                    key={href}
-                    href={href}
-                    onClick={() => setOpen(false)}
-                    className="rounded-lg px-3 py-3 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
-                  >
-                    {label}
-                  </Link>
-                ))}
-                <Link
-                  href="/audit"
-                  onClick={() => setOpen(false)}
-                  className="rounded-lg px-3 py-3 text-sm font-semibold text-brand-700 hover:bg-brand-50"
-                >
-                  Free AI audit
-                </Link>
+                {nav.map(({ href, label }) => {
+                  const isHash = href.startsWith('#')
+                  const linkHref = isHash && !isHome ? `/${href}` : href
+
+                  if (isHash || href.startsWith('#')) {
+                    return (
+                      <a
+                        key={href}
+                        href={linkHref}
+                        onClick={() => setOpen(false)}
+                        className="rounded-lg px-3 py-3 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+                      >
+                        {label}
+                      </a>
+                    )
+                  }
+
+                  return (
+                    <Link
+                      key={href}
+                      href={href}
+                      onClick={() => setOpen(false)}
+                      className="rounded-lg px-3 py-3 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+                    >
+                      {label}
+                    </Link>
+                  )
+                })}
                 <a
                   href={book}
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => setOpen(false)}
-                  className="rounded-lg px-3 py-3 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+                  className="mt-2 rounded-lg bg-brand-600 px-3 py-3 text-center text-sm font-semibold text-white hover:bg-brand-700"
                 >
-                  Book a strategy call
+                  Book a 15-min call
                 </a>
               </nav>
             </SheetContent>
