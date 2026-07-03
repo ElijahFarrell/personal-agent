@@ -222,7 +222,7 @@ export function AuditWizard() {
         </div>
       ) : null}
 
-      <div className="glass rounded-2xl border border-border p-6 sm:p-10">
+      <div className="marketing-card rounded-2xl border border-border p-6 sm:p-10">
         <AnimatePresence mode="wait">
           {stage === 0 ? (
             <motion.div

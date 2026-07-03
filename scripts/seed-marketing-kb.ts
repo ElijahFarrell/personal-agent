@@ -38,15 +38,15 @@ const chunks: MarketingChunk[] = [
 
   {
     id: 'founder-background',
-    title: 'About the Founder',
+    title: 'About Shiloh AI',
     content:
-      'Elijah is the founder of Shiloh AI. He is a software engineer, former Microsoft SDE, and former SDE at a Fortune 10 technology company with 3+ years building AI systems in production. At Microsoft, he implemented AI into Microsoft Teams — building real-time audio quality monitoring features used at scale. He has delivered 10+ AI projects across real estate, healthcare, nonprofits, finance, education, and more.',
+      'Shiloh AI is engineering-led AI consulting. The team includes engineers with Microsoft and Fortune 10 technology company backgrounds and 3+ years building AI systems in production — including AI shipped into Microsoft Teams (real-time audio quality monitoring at scale). Shiloh has delivered 10+ AI projects across real estate, healthcare, nonprofits, finance, education, and more.',
     category: 'company',
-    sourceFile: 'copy.ts',
+    sourceFile: 'consulting-copy.ts',
   },
   {
     id: 'founder-track-record',
-    title: 'Founder Track Record',
+    title: 'Shiloh Track Record',
     content:
       'Key results: Built an AI grant-writing system that cut 10+ hours per submission and increased submission velocity by 25%+ for a nonprofit. Migrated a wholesale real estate client off an expensive CRM, saving $500+/mo, then built an AI Lead Manager projected to save $1,600/mo and generate $8K–$50K in new revenue. Built AI voice agents for surgery centers that automated patient outreach. Generated $13K+ in revenue for a single client in one engagement.',
     category: 'company',
@@ -234,7 +234,7 @@ const chunks: MarketingChunk[] = [
     id: 'testimonial-cyborg',
     title: 'Testimonial: Cyborg Mobile',
     content:
-      'Cyborg Mobile: "From day one, Elijah brought genuine passion and focus to our project. As a software engineer on the team, he quickly picked up the technical requirements and took full ownership of the project\'s development." Project: AI-powered grant writing system for nonprofits. Results: 10+ hours saved per submission, 25%+ increase in grant submission velocity, expanded capacity without adding staff.',
+      'Cyborg Mobile: "From day one, the engineering lead brought genuine passion and focus to our project. They quickly picked up the technical requirements and took full ownership of the project\'s development." Project: AI-powered grant writing system for nonprofits. Results: 10+ hours saved per submission, 25%+ increase in grant submission velocity, expanded capacity without adding staff.',
     category: 'social-proof',
     sourceFile: 'copy.ts',
   },

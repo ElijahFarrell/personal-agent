@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next'
 import { BLOG_POSTS } from '@/app/marketing/blog/posts'
+import { getAllCaseStudySlugs } from '@/lib/marketing/case-studies'
 import { getMarketingSiteUrl } from '@/lib/marketing/site'
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -8,9 +9,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '',
     '/audit',
     '/services',
-    '/industries',
+    '/work',
     '/pricing',
-    '/real-estate',
+    '/about',
     '/blog',
   ]
   const entries: MetadataRoute.Sitemap = staticPaths.map((path) => ({
@@ -19,6 +20,16 @@ export default function sitemap(): MetadataRoute.Sitemap {
     changeFrequency: 'weekly' as const,
     priority: path === '' ? 1 : 0.8,
   }))
+
+  for (const slug of getAllCaseStudySlugs()) {
+    entries.push({
+      url: `${base}/work/${slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.7,
+    })
+  }
+
   for (const post of BLOG_POSTS) {
     entries.push({
       url: `${base}/blog/${post.slug}`,

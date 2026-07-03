@@ -3,10 +3,6 @@ import { getMarketingSiteUrl } from '@/lib/marketing/site'
 
 type JsonLd = Record<string, unknown>
 
-/**
- * Emits Review JSON-LD for GEO / rich results (author, reviewBody, itemReviewed).
- * Omits reviewRating — add only if you want to assert a numeric score.
- */
 export function reviewsJsonLd(
   items: ReadonlyArray<Pick<TestimonialItem, 'quote' | 'reviewAuthorOrg'>>
 ): JsonLd {
@@ -49,21 +45,37 @@ export function organizationSchema(): JsonLd {
     name: 'Shiloh AI',
     url,
     description:
-      'HIPAA-compliant pre-op and post-op calling agent for independent ambulatory surgery centers.',
+      'Engineering-led AI consulting — audit, build, train, and hand off production systems for businesses.',
     sameAs: [] as string[],
   }
 }
 
-/** ASC healthcare voice agent service */
+/** Consulting-first professional service (homepage) */
+export function consultingServiceSchema(): JsonLd {
+  const url = getMarketingSiteUrl()
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ProfessionalService',
+    name: 'Shiloh AI — AI Consulting',
+    url,
+    description:
+      'Software engineer-led AI consulting: AI readiness audits, RAG systems, workflow automation, voice agents, and fractional AI advisory.',
+    areaServed: 'US',
+    serviceType: 'AI consulting and implementation',
+    priceRange: '$$$',
+  }
+}
+
+/** ASC healthcare voice agent service (case study page) */
 export function ascHealthcareServiceSchema(): JsonLd {
   const url = getMarketingSiteUrl()
   return {
     '@context': 'https://schema.org',
     '@type': 'ProfessionalService',
     name: 'Shiloh AI — ASC Patient Calling',
-    url,
+    url: `${url}/work/surgery-center-voice-agent`,
     description:
-      'HIPAA-compliant AI calling agent for independent surgery centers: pre-op confirmation, prep verification, and post-op follow-up to reduce no-shows and cancellations.',
+      'HIPAA-compliant AI calling agent for independent surgery centers: pre-op confirmation, prep verification, and post-op follow-up.',
     areaServed: 'US',
     serviceType: 'Healthcare patient outreach and AI voice automation',
     audience: {
@@ -87,9 +99,9 @@ export function productSchema(): JsonLd {
       priceCurrency: 'USD',
       description: 'Contact for enterprise pricing',
     },
-    url: `${url}/real-estate`,
+    url: `${url}/services`,
     description:
-      'Production AI platform for real estate engagements: lead qualification, reactivation, unified inbox, workflows, and voice agents — deployed or integrated via consulting.',
+      'Production AI consulting and implementation for businesses — audits, RAG, agents, voice, and advisory.',
   }
 }
 

@@ -49,7 +49,7 @@ export function AuditReportDashboard({
 
       {hasHours ? (
         <div className="grid gap-4 sm:grid-cols-2">
-          <Card className="glass border-border shadow-sm">
+          <Card className="marketing-card border-border shadow-sm">
             <CardContent className="space-y-1 p-6 pt-6">
               <p className="text-xs font-medium uppercase tracking-wider text-brand-700">
                 Est. time back
@@ -65,7 +65,7 @@ export function AuditReportDashboard({
               </p>
             </CardContent>
           </Card>
-          <Card className="glass border-border shadow-sm">
+          <Card className="marketing-card border-border shadow-sm">
             <CardContent className="space-y-1 p-6 pt-6">
               <p className="text-xs font-medium uppercase tracking-wider text-brand-700">
                 Annualized
@@ -84,7 +84,7 @@ export function AuditReportDashboard({
         </div>
       ) : null}
 
-      <div className="glass rounded-xl border border-border bg-card p-5 sm:p-8">
+      <div className="marketing-card rounded-xl border border-border bg-card p-5 sm:p-8">
         <h3 className="mb-4 font-display text-lg font-semibold text-foreground">
           Your report
         </h3>

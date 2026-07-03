@@ -206,7 +206,7 @@ export const ascFaq = [
   {
     question: 'Who built this?',
     answer:
-      'Shiloh AI was founded by Elijah, a software engineer with production AI experience at Microsoft (Teams audio quality) and a Fortune\u00a010 technology company. Healthcare voice agents are built to the same shipping standard as enterprise software.',
+      'Shiloh AI is led by engineers with production AI experience at Microsoft (Teams audio quality) and a Fortune\u00a010 technology company. Healthcare voice agents are built to the same shipping standard as enterprise software.',
   },
   {
     question: 'What happens on the 15-minute discovery call?',

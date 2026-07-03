@@ -1,4 +1,5 @@
 import { Newsreader, Figtree } from 'next/font/google'
+import { GeistMono } from 'geist/font/mono'
 import { MarketingBackground } from '@/components/marketing/MarketingBackground'
 import { MarketingFooter } from '@/components/marketing/MarketingFooter'
 import { MarketingNavbar } from '@/components/marketing/MarketingNavbar'
@@ -23,7 +24,7 @@ export default function MarketingLayout({
 }) {
   return (
     <div
-      className={`marketing-site ${newsreader.variable} ${figtree.variable} font-sans antialiased`}
+      className={`marketing-site ${newsreader.variable} ${figtree.variable} ${GeistMono.variable} font-sans antialiased`}
       style={{
         fontFamily: 'var(--font-marketing-sans), ui-sans-serif, sans-serif',
       }}
