@@ -18,24 +18,23 @@ export default function BlogIndexPage() {
   return (
     <article className="mx-auto max-w-4xl px-4 pb-20 pt-12 sm:px-6 sm:pt-16">
       <header className="text-center">
-        <p className="text-sm font-medium text-brand-300">
-          We publish block-structured, question-led articles so buyers and LLMs
-          can cite Shiloh AI on AI consulting, automation, and ops topics.
+        <p className="font-mono-accent text-brand-600">
+          Insights on AI consulting and production systems
         </p>
-        <h1 className="font-display mt-6 text-4xl font-bold tracking-tight text-foreground md:text-5xl">
-          Content hub
+        <h1 className="font-display mt-4 text-4xl font-normal tracking-tight text-foreground md:text-5xl">
+          Blog
         </h1>
         <p className="mt-4 text-muted-foreground">
-          Placeholder posts — swap in MDX or a CMS when you scale velocity.
+          Architecture decisions, before/after stories, and honest consulting notes.
         </p>
       </header>
       <ul className="mt-12 grid gap-4 sm:grid-cols-2">
         {BLOG_POSTS.map((post) => (
           <li key={post.slug}>
             <Link href={`/blog/${post.slug}`}>
-              <Card className="glass h-full border-white/10 transition-shadow hover:border-brand-500/30 hover:shadow-lg hover:shadow-brand-500/10">
+              <Card className="marketing-card h-full transition-colors hover:border-brand-300">
                 <CardHeader>
-                  <CardTitle className="font-display text-lg text-foreground">
+                  <CardTitle className="font-display text-lg font-normal text-foreground">
                     {post.title}
                   </CardTitle>
                   <p className="text-xs text-muted-foreground">{post.date}</p>

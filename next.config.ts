@@ -25,6 +25,16 @@ const nextConfig: NextConfig = {
         destination: '/services',
         permanent: true,
       },
+      {
+        source: '/industries',
+        destination: '/work',
+        permanent: true,
+      },
+      {
+        source: '/real-estate',
+        destination: '/work/real-estate-crm-and-voice',
+        permanent: true,
+      },
     ]
   },
   serverExternalPackages: [

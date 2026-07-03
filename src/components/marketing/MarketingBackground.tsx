@@ -1,5 +1,5 @@
 /**
- * Fixed decorative layer: cool clinical base + soft teal wash + grain.
+ * Warm editorial background — cream base with subtle grid and paper grain.
  */
 export function MarketingBackground() {
   return (
@@ -9,15 +9,13 @@ export function MarketingBackground() {
     >
       <div className="absolute inset-0 bg-[hsl(var(--background))]" />
       <div
-        className="absolute inset-0 opacity-40"
+        className="absolute inset-0 opacity-30"
         style={{
           backgroundImage:
-            'linear-gradient(hsl(210 16% 88% / 0.5) 1px, transparent 1px), linear-gradient(90deg, hsl(210 16% 88% / 0.5) 1px, transparent 1px)',
-          backgroundSize: '64px 64px',
+            'linear-gradient(hsl(30 15% 86% / 0.4) 1px, transparent 1px), linear-gradient(90deg, hsl(30 15% 86% / 0.4) 1px, transparent 1px)',
+          backgroundSize: '72px 72px',
         }}
       />
-      <div className="absolute -right-[15%] top-[-10%] h-[min(65vh,26rem)] w-[min(75vw,32rem)] rounded-full bg-gradient-to-bl from-brand-100/70 via-brand-50/30 to-transparent blur-3xl" />
-      <div className="absolute bottom-[-20%] left-[-10%] h-[20rem] w-[20rem] rounded-full bg-gradient-to-tr from-brand-100/50 to-transparent blur-3xl" />
     </div>
   )
 }

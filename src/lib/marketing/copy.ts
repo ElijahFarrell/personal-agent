@@ -28,7 +28,7 @@ export const testimonials: readonly TestimonialItem[] = [
   {
     id: 'nonprofit-client',
     quote:
-      'From day one, Elijah brought genuine passion and focus to our project. As a software engineer on the team, he quickly picked up the technical requirements and took full ownership of the project\'s development. He stood out not just for the quality of his engineering work, but for his thoughtful approach to customer interactions. His contributions made a real impact.',
+      'From day one, the engineering lead brought genuine passion and focus to our project. They quickly picked up the technical requirements and took full ownership of the project\u2019s development — standing out for quality of work, thoughtful customer interactions, and real impact.',
     attribution: 'Nonprofit client team',
     project: 'AI-powered grant writing system for nonprofits',
     results: [
@@ -117,13 +117,13 @@ export const credibilityBadges: readonly CredibilityBadge[] = [
 
 /** Long-form About page — paragraphs and bullet sections */
 export const founderAbout = {
-  title: 'Elijah — Founder, Shiloh AI',
+  title: 'About Shiloh AI',
   lead:
-    'Software engineer. Former Microsoft SDE. Former SDE at a Fortune 10 technology company. 3+ years building AI systems in production.',
+    'Engineering-led AI consulting. Former Microsoft SDE background. Fortune 10 technology experience. 3+ years building AI systems in production.',
   microsoft:
-    'At Microsoft, Elijah implemented AI into Microsoft Teams — building real-time audio quality monitoring features used at scale.',
+    'The Shiloh team includes engineers who implemented AI into Microsoft Teams — building real-time audio quality monitoring features used at scale.',
   fortune10:
-    'At a Fortune 10 technology company, he ran an internal AI audit: interviewed product managers, compiled research, presented to senior engineers, and built the POC and roadmap for AI implementation.',
+    'At a Fortune 10 technology company, our team ran an internal AI audit: interviewed product managers, compiled research, presented to senior engineers, and built the POC and roadmap for AI implementation.',
   sideProjectsIntro:
     'On the side, he started building AI systems for businesses — and the results spoke for themselves:',
   bullets: [
@@ -157,10 +157,10 @@ export function heroCtas(): {
 
 /** Compact founder block on the homepage */
 export const founderHome = {
-  name: 'Elijah',
-  role: 'Founder, Shiloh AI',
-  bio: 'Software engineer who builds AI systems that run in production — not slide decks. Shiloh exists because growing businesses kept losing hours to manual work and tools that never talked to each other.',
-  credential: 'Former Microsoft SDE · Fortune 10 technology background',
+  name: 'Shiloh AI',
+  role: 'Engineering-led AI consulting',
+  bio: 'Shiloh builds AI systems that run in production — not slide decks. We exist because growing businesses kept losing hours to manual work and tools that never talked to each other.',
+  credential: 'Engineers from Microsoft · Fortune 10 technology background',
   highlights: [
     'AI grant system: 10+ hours saved per submission, 25%+ more submissions',
     'Real estate client: $500+/mo CRM savings; AI lead manager with six-figure revenue upside',

@@ -1,68 +1,66 @@
 /**
- * ASC healthcare marketing theme — calm, authoritative, conversion-focused.
+ * Consulting-first marketing theme — warm editorial studio.
  * Scoped under `.marketing-site` so the app dashboard keeps its own UI.
  */
 
 .marketing-site {
   color-scheme: light;
 
-  --background: 210 22% 98%;
-  --foreground: 215 28% 14%;
-  --card: 0 0% 100%;
-  --card-foreground: 215 28% 14%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 215 28% 14%;
+  --background: 36 33% 97%;
+  --foreground: 24 12% 13%;
+  --card: 40 30% 99%;
+  --card-foreground: 24 12% 13%;
+  --popover: 40 30% 99%;
+  --popover-foreground: 24 12% 13%;
 
-  --glass-bg: 0 0% 100% / 0.82;
-  --glass-border: 215 20% 20% / 0.08;
-  --glass-blur: 20px;
-  --glass-card-bg: 0 0% 100% / 0.88;
-  --glass-popover-bg: 0 0% 100% / 0.94;
-  --glass-sidebar-bg: 210 22% 98% / 0.95;
-
-  --primary: 175 62% 32%;
+  --primary: 16 62% 47%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 210 18% 94%;
-  --secondary-foreground: 215 22% 22%;
-  --muted: 210 16% 93%;
-  --muted-foreground: 215 12% 44%;
-  --accent: 175 35% 92%;
-  --accent-foreground: 175 55% 22%;
+  --secondary: 36 20% 92%;
+  --secondary-foreground: 24 12% 20%;
+  --muted: 36 18% 93%;
+  --muted-foreground: 24 8% 42%;
+  --accent: 20 45% 92%;
+  --accent-foreground: 16 55% 28%;
   --destructive: 0 62.8% 50%;
   --destructive-foreground: 0 0% 100%;
-  --border: 210 16% 88%;
-  --input: 210 16% 88%;
-  --ring: 175 62% 32%;
+  --border: 30 15% 86%;
+  --input: 30 15% 86%;
+  --ring: 16 62% 47%;
 
-  --brand-50: 175 40% 97%;
-  --brand-100: 175 38% 92%;
-  --brand-200: 175 35% 84%;
-  --brand-300: 175 40% 68%;
-  --brand-400: 175 50% 48%;
-  --brand-500: 175 62% 32%;
-  --brand-600: 175 65% 28%;
-  --brand-700: 175 60% 24%;
-  --brand-800: 175 55% 18%;
-  --brand-900: 175 50% 12%;
+  --success: 150 30% 35%;
 
-  --chart-1: hsl(175 62% 32%);
-  --chart-2: hsl(215 45% 45%);
-  --chart-3: hsl(142 45% 40%);
-  --chart-4: hsl(38 80% 48%);
-  --chart-5: hsl(330 60% 48%);
+  --brand-50: 24 40% 97%;
+  --brand-100: 20 45% 92%;
+  --brand-200: 18 42% 84%;
+  --brand-300: 17 48% 68%;
+  --brand-400: 16 55% 55%;
+  --brand-500: 16 62% 47%;
+  --brand-600: 16 65% 41%;
+  --brand-700: 15 58% 34%;
+  --brand-800: 14 50% 26%;
+  --brand-900: 12 45% 18%;
+
+  --chart-1: hsl(16 62% 47%);
+  --chart-2: hsl(24 12% 35%);
+  --chart-3: hsl(150 30% 35%);
+  --chart-4: hsl(38 60% 48%);
+  --chart-5: hsl(215 35% 45%);
 
   min-height: 100vh;
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
 }
 
+.marketing-site .marketing-card {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  box-shadow: 0 1px 2px hsl(24 12% 13% / 0.04);
+}
+
 .marketing-site .glass {
-  background: hsl(var(--glass-card-bg));
-  backdrop-filter: blur(var(--glass-blur));
-  border: 1px solid hsl(var(--glass-border));
-  box-shadow:
-    0 1px 2px hsl(215 28% 14% / 0.04),
-    0 12px 32px hsl(215 28% 14% / 0.06);
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  box-shadow: 0 1px 2px hsl(24 12% 13% / 0.04);
 }
 
 .marketing-site .marketing-paper-grain::before {
@@ -83,6 +81,13 @@
   scroll-margin-top: 5rem;
 }
 
+.marketing-site .font-mono-accent {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .marketing-site *,
   .marketing-site *::before,
@@ -98,15 +103,19 @@
 }
 
 .marketing-site .animate-fade-up-delay-1 {
-  animation: marketing-fade-up 0.7s ease-out 0.1s both;
+  animation: marketing-fade-up 0.7s ease-out 0.06s both;
 }
 
 .marketing-site .animate-fade-up-delay-2 {
-  animation: marketing-fade-up 0.7s ease-out 0.2s both;
+  animation: marketing-fade-up 0.7s ease-out 0.12s both;
 }
 
 .marketing-site .animate-fade-up-delay-3 {
-  animation: marketing-fade-up 0.7s ease-out 0.3s both;
+  animation: marketing-fade-up 0.7s ease-out 0.18s both;
+}
+
+.marketing-site .animate-fade-up-delay-4 {
+  animation: marketing-fade-up 0.7s ease-out 0.24s both;
 }
 
 @keyframes marketing-fade-up {
@@ -124,7 +133,8 @@
   .marketing-site .animate-fade-up,
   .marketing-site .animate-fade-up-delay-1,
   .marketing-site .animate-fade-up-delay-2,
-  .marketing-site .animate-fade-up-delay-3 {
+  .marketing-site .animate-fade-up-delay-3,
+  .marketing-site .animate-fade-up-delay-4 {
     animation: none;
   }
 }

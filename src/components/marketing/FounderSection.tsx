@@ -1,40 +1,37 @@
 import Link from 'next/link'
-import { founderHome } from '@/lib/marketing/copy'
+import { founderHome } from '@/lib/marketing/consulting-copy'
 
 export function FounderSection() {
   return (
     <section
-      className="relative px-4 py-16 sm:px-6"
+      className="relative px-4 py-20 sm:px-6 sm:py-28"
       aria-labelledby="founder-heading"
     >
       <div className="mx-auto max-w-3xl">
-        <div className="glass rounded-2xl border border-border bg-card px-6 py-10 sm:px-10">
-          <p className="text-xs font-semibold uppercase tracking-wider text-brand-700">
-            Who builds this
-          </p>
+        <div className="marketing-card rounded-xl px-6 py-10 sm:px-10">
+          <p className="font-mono-accent text-muted-foreground">Who we are</p>
           <h2
             id="founder-heading"
-            className="font-display mt-2 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl"
+            className="font-display mt-2 text-2xl text-foreground sm:text-3xl"
           >
             {founderHome.name}
-            <span className="block text-lg font-normal text-muted-foreground sm:inline sm:pl-2 sm:text-xl">
+            <span className="block text-lg text-muted-foreground sm:inline sm:pl-2">
               · {founderHome.role}
             </span>
           </h2>
           <p className="mt-4 text-base leading-relaxed text-muted-foreground">
             {founderHome.bio}
           </p>
-          <p className="mt-3 text-sm font-medium text-foreground">
-            {founderHome.credential}
-          </p>
-          <ul className="mt-6 space-y-2 border-t border-border pt-6 text-sm text-muted-foreground">
-            {founderHome.highlights.map((line) => (
-              <li key={line} className="flex gap-2 leading-relaxed">
-                <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-brand-500" aria-hidden />
-                {line}
-              </li>
+          <div className="mt-6 flex flex-wrap gap-2">
+            {founderHome.tags.map((tag) => (
+              <span
+                key={tag}
+                className="rounded-md border border-border bg-secondary/50 px-2.5 py-1 font-mono text-[10px] tracking-wider text-muted-foreground"
+              >
+                {tag}
+              </span>
             ))}
-          </ul>
+          </div>
           <Link
             href="/about"
             className="mt-8 inline-block text-sm font-semibold text-brand-600 hover:text-brand-700"
