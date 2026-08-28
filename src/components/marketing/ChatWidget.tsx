@@ -9,7 +9,7 @@ import { MessageCircle, X, Send, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 const WELCOME_MESSAGE =
-  "Hi! I'm the Shiloh AI assistant. Ask me anything about our services, the free audit, or I can help connect you with our team."
+  "Hi! I'm the Shiloh assistant. Ask me anything about our services, the free audit, or I can help connect you with our team."
 
 function AssistantMessage({ text }: { text: string }) {
   return (
@@ -116,7 +116,7 @@ export function ChatWidget() {
         <button
           onClick={() => setOpen(true)}
           aria-label="Open chat"
-          className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-brand-600 text-white shadow-lg shadow-brand-600/25 transition-all hover:scale-105 hover:bg-brand-700 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-brand-600 text-background shadow-lg shadow-brand-600/25 transition-all hover:scale-105 hover:bg-brand-700 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           <MessageCircle className="h-6 w-6" />
         </button>
@@ -138,7 +138,7 @@ export function ChatWidget() {
                   id={`${a11yId}-title`}
                   className="text-sm font-semibold text-foreground"
                 >
-                  Shiloh AI
+                  Shiloh
                 </h2>
                 <p className="text-xs text-muted-foreground">Ask us anything</p>
               </div>
@@ -180,7 +180,7 @@ export function ChatWidget() {
                     <div
                       className={`max-w-[85%] rounded-xl px-3 py-2 text-sm ${
                         isUser
-                          ? 'rounded-tr-sm bg-brand-600 text-white'
+                          ? 'rounded-tr-sm bg-brand-600 text-background'
                           : 'rounded-tl-sm bg-muted text-foreground'
                       }`}
                     >
@@ -228,7 +228,7 @@ export function ChatWidget() {
               type="submit"
               size="icon"
               disabled={isLoading || !draft.trim()}
-              className="h-9 w-9 shrink-0 rounded-lg bg-brand-600 text-white hover:bg-brand-700 disabled:opacity-40"
+              className="h-9 w-9 shrink-0 rounded-lg bg-brand-600 text-background hover:bg-brand-700 disabled:opacity-40"
               aria-label="Send message"
             >
               <Send className="h-4 w-4" />

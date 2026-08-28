@@ -37,8 +37,8 @@ export function MarketingNavbar() {
   const [open, setOpen] = useState(false)
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur-sm">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
+    <header className="sticky top-0 z-50 border-b border-border/70 bg-background/80 backdrop-blur-md">
+      <div className="mx-auto flex h-[4.25rem] max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
         <MarketingLogo />
         <nav
           className="hidden items-center gap-1 md:flex"
@@ -65,7 +65,7 @@ export function MarketingNavbar() {
         <div className="flex items-center gap-2">
           <Button
             size="sm"
-            className="hidden rounded-full bg-brand-600 px-5 font-semibold text-white hover:bg-brand-700 sm:inline-flex"
+            className="hidden rounded-md bg-brand-600 px-5 font-semibold text-background hover:bg-brand-700 sm:inline-flex"
             asChild
           >
             <Link href="/audit">Get your free AI audit</Link>
@@ -103,7 +103,7 @@ export function MarketingNavbar() {
               <Link
                 href="/audit"
                 onClick={() => setOpen(false)}
-                className="mt-auto rounded-full bg-brand-600 px-3 py-3 text-center text-sm font-semibold text-white hover:bg-brand-700"
+                className="mt-auto rounded-md bg-brand-600 px-3 py-3 text-center text-sm font-semibold text-background hover:bg-brand-700"
               >
                 Get your free AI audit
               </Link>

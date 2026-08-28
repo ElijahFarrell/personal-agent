@@ -66,7 +66,7 @@ export function PricingSection() {
         <div className="mt-8 flex justify-center">
           <Button
             size="lg"
-            className="h-12 rounded-full bg-brand-600 px-8 font-semibold text-white hover:bg-brand-700"
+            className="h-12 rounded-full bg-brand-600 px-8 font-semibold text-background hover:bg-brand-700"
             asChild
           >
             <a href={book} target="_blank" rel="noopener noreferrer" className="gap-2">

@@ -13,7 +13,7 @@ export function AgentShowcase() {
         <div className="mb-10 max-w-3xl">
           <Badge
             variant="secondary"
-            className="mb-4 border border-brand-500/20 bg-brand-500/10 text-brand-200"
+            className="mb-4 border border-brand-500/20 bg-brand-500/10 text-brand-700"
           >
             {badge}
           </Badge>

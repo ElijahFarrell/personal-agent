@@ -104,7 +104,7 @@ export function AuditReportDashboard({
       <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
         <Button
           size="lg"
-          className="h-12 rounded-full bg-brand-600 px-8 text-white hover:bg-brand-700"
+          className="h-12 rounded-full bg-brand-600 px-8 text-background hover:bg-brand-700"
           asChild
         >
           <a href={reportUrl} target="_blank" rel="noopener noreferrer">

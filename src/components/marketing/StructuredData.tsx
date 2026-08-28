@@ -18,7 +18,7 @@ export function reviewsJsonLd(
       reviewBody: item.quote,
       itemReviewed: {
         '@type': 'Organization',
-        name: 'Shiloh AI',
+        name: 'Shiloh',
         url,
       },
     })),
@@ -42,7 +42,7 @@ export function organizationSchema(): JsonLd {
   return {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    name: 'Shiloh AI',
+    name: 'Shiloh',
     url,
     description:
       'Engineering-led AI consulting — audit, build, train, and hand off production systems for businesses.',
@@ -56,7 +56,7 @@ export function consultingServiceSchema(): JsonLd {
   return {
     '@context': 'https://schema.org',
     '@type': 'ProfessionalService',
-    name: 'Shiloh AI — AI Consulting',
+    name: 'Shiloh — AI Consulting',
     url,
     description:
       'Software engineer-led AI consulting: AI readiness audits, RAG systems, workflow automation, voice agents, and fractional AI advisory.',
@@ -72,7 +72,7 @@ export function ascHealthcareServiceSchema(): JsonLd {
   return {
     '@context': 'https://schema.org',
     '@type': 'ProfessionalService',
-    name: 'Shiloh AI — ASC Patient Calling',
+    name: 'Shiloh — ASC Patient Calling',
     url: `${url}/work/surgery-center-voice-agent`,
     description:
       'HIPAA-compliant AI calling agent for independent surgery centers: pre-op confirmation, prep verification, and post-op follow-up.',
@@ -90,7 +90,7 @@ export function productSchema(): JsonLd {
   return {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
-    name: 'Shiloh AI platform',
+    name: 'Shiloh platform',
     applicationCategory: 'BusinessApplication',
     operatingSystem: 'Web',
     offers: {

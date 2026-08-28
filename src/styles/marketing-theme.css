@@ -1,75 +1,76 @@
 /**
- * Consulting-first marketing theme — warm editorial studio.
+ * Consulting-first marketing theme — dark minimal studio with purple accents.
  * Scoped under `.marketing-site` so the app dashboard keeps its own UI.
+ *
+ * The brand scale is inverted relative to a light theme: 50 is the darkest
+ * tint and 900 the lightest, so existing utility usage keeps its intent on
+ * dark surfaces (`bg-brand-50` = subtle tint, `text-brand-600` = readable
+ * accent, `hover:*-700` = brighter on hover).
  */
 
 .marketing-site {
-  color-scheme: light;
+  color-scheme: dark;
 
-  --background: 36 33% 97%;
-  --foreground: 24 12% 13%;
-  --card: 40 30% 99%;
-  --card-foreground: 24 12% 13%;
-  --popover: 40 30% 99%;
-  --popover-foreground: 24 12% 13%;
+  --background: 260 22% 5%;
+  --foreground: 260 20% 96%;
+  --card: 260 18% 8%;
+  --card-foreground: 260 20% 96%;
+  --popover: 260 18% 8%;
+  --popover-foreground: 260 20% 96%;
 
-  --primary: 16 62% 47%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 36 20% 92%;
-  --secondary-foreground: 24 12% 20%;
-  --muted: 36 18% 93%;
-  --muted-foreground: 24 8% 42%;
-  --accent: 20 45% 92%;
-  --accent-foreground: 16 55% 28%;
+  --primary: 263 88% 66%;
+  --primary-foreground: 260 22% 5%;
+  --secondary: 260 12% 13%;
+  --secondary-foreground: 260 15% 88%;
+  --muted: 260 12% 12%;
+  --muted-foreground: 258 12% 68%;
+  --accent: 263 30% 17%;
+  --accent-foreground: 265 90% 92%;
   --destructive: 0 62.8% 50%;
   --destructive-foreground: 0 0% 100%;
-  --border: 30 15% 86%;
-  --input: 30 15% 86%;
-  --ring: 16 62% 47%;
+  --border: 260 14% 16%;
+  --input: 260 14% 16%;
+  --ring: 263 84% 62%;
 
-  --success: 150 30% 35%;
+  --success: 150 45% 55%;
 
-  --brand-50: 24 40% 97%;
-  --brand-100: 20 45% 92%;
-  --brand-200: 18 42% 84%;
-  --brand-300: 17 48% 68%;
-  --brand-400: 16 55% 55%;
-  --brand-500: 16 62% 47%;
-  --brand-600: 16 65% 41%;
-  --brand-700: 15 58% 34%;
-  --brand-800: 14 50% 26%;
-  --brand-900: 12 45% 18%;
+  --brand-50: 263 40% 11%;
+  --brand-100: 263 40% 16%;
+  --brand-200: 263 40% 23%;
+  --brand-300: 263 50% 35%;
+  --brand-400: 263 70% 52%;
+  --brand-500: 263 84% 60%;
+  --brand-600: 263 88% 66%;
+  --brand-700: 264 92% 74%;
+  --brand-800: 265 95% 83%;
+  --brand-900: 266 100% 91%;
 
-  --chart-1: hsl(16 62% 47%);
-  --chart-2: hsl(24 12% 35%);
-  --chart-3: hsl(150 30% 35%);
-  --chart-4: hsl(38 60% 48%);
-  --chart-5: hsl(215 35% 45%);
+  --chart-1: hsl(263 84% 62%);
+  --chart-2: hsl(258 15% 70%);
+  --chart-3: hsl(150 45% 55%);
+  --chart-4: hsl(38 80% 60%);
+  --chart-5: hsl(199 80% 60%);
 
   min-height: 100vh;
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
 }
 
+.marketing-site .font-display {
+  font-weight: 500;
+  letter-spacing: -0.03em;
+}
+
 .marketing-site .marketing-card {
   background: hsl(var(--card));
   border: 1px solid hsl(var(--border));
-  box-shadow: 0 1px 2px hsl(24 12% 13% / 0.04);
+  box-shadow: 0 1px 2px hsl(0 0% 0% / 0.4);
 }
 
 .marketing-site .glass {
   background: hsl(var(--card));
   border: 1px solid hsl(var(--border));
-  box-shadow: 0 1px 2px hsl(24 12% 13% / 0.04);
-}
-
-.marketing-site .marketing-paper-grain::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  opacity: 0.035;
-  pointer-events: none;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  box-shadow: 0 1px 2px hsl(0 0% 0% / 0.4);
 }
 
 .marketing-site :focus-visible {

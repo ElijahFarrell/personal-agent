@@ -9,9 +9,9 @@ import { getMarketingSiteUrl } from '@/lib/marketing/site'
 export const metadata: Metadata = {
   title: 'About',
   description:
-    'About Shiloh AI — engineering-led AI consulting from Amazon and Microsoft backgrounds. Audit, build, train, and hand off production systems.',
+    'About Shiloh — engineering-led AI consulting from Amazon and Microsoft backgrounds. Audit, build, train, and hand off production systems.',
   openGraph: {
-    title: 'About · Shiloh AI',
+    title: 'About · Shiloh',
     url: `${getMarketingSiteUrl()}/about`,
   },
 }
@@ -67,7 +67,7 @@ export default function AboutPage() {
 
       <div className="mx-auto mt-12 max-w-3xl">
         <Button
-          className="rounded-full bg-brand-600 font-semibold text-white hover:bg-brand-700"
+          className="rounded-full bg-brand-600 font-semibold text-background hover:bg-brand-700"
           asChild
         >
           <Link href="/audit" className="gap-2">

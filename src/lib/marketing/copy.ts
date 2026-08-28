@@ -117,7 +117,7 @@ export const credibilityBadges: readonly CredibilityBadge[] = [
 
 /** Long-form About page — paragraphs and bullet sections */
 export const founderAbout = {
-  title: 'About Shiloh AI',
+  title: 'About Shiloh',
   lead:
     'Engineering-led AI consulting. Former Microsoft SDE background. Fortune 10 technology experience. 3+ years building AI systems in production.',
   microsoft:
@@ -134,7 +134,7 @@ export const founderAbout = {
     'Generated $13K+ in revenue for a single client in one engagement',
   ],
   closing:
-    'After seeing the same pattern — businesses drowning in tools that do not talk to each other, losing leads, wasting hours on work AI should handle — he built Shiloh AI to fix it. Not another slide deck. An AI consulting practice that ships production systems: tailored deployments of our platform, or custom integrations into the stack you already run.',
+    'After seeing the same pattern — businesses drowning in tools that do not talk to each other, losing leads, wasting hours on work AI should handle — he built Shiloh to fix it. Not another slide deck. An AI consulting practice that ships production systems: tailored deployments of our platform, or custom integrations into the stack you already run.',
 } as const
 
 /** Home hero — static text; CTAs from heroCtas() */
@@ -157,7 +157,7 @@ export function heroCtas(): {
 
 /** Compact founder block on the homepage */
 export const founderHome = {
-  name: 'Shiloh AI',
+  name: 'Shiloh',
   role: 'Engineering-led AI consulting',
   bio: 'Shiloh builds AI systems that run in production — not slide decks. We exist because growing businesses kept losing hours to manual work and tools that never talked to each other.',
   credential: 'Engineers from Microsoft · Fortune 10 technology background',
@@ -177,7 +177,7 @@ export type ValuePropId =
   | 'roi'
 
 export const valuePropsSection = {
-  heading: 'What you get with Shiloh AI',
+  heading: 'What you get with Shiloh',
   subheading:
     'Consulting outcomes backed by a real production platform — not generic prompts or one-off Zaps.',
   items: [

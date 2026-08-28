@@ -43,7 +43,7 @@ export function ValueProps() {
               <li key={id}>
                 <Card className="glass h-full border-border bg-card/40 transition-shadow hover:shadow-lg hover:shadow-brand-500/10">
                   <CardHeader className="pb-2">
-                    <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-lg border border-brand-500/25 bg-brand-500/10 text-brand-300">
+                    <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-lg border border-brand-500/25 bg-brand-500/10 text-brand-700">
                       <Icon className="h-5 w-5" aria-hidden />
                     </div>
                     <CardTitle className="font-display text-lg text-foreground">

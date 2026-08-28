@@ -27,7 +27,7 @@ export async function generateMetadata({
     title: study.headline,
     description: study.summary,
     openGraph: {
-      title: `${study.headline} · Shiloh AI`,
+      title: `${study.headline} · Shiloh`,
       description: study.summary,
       url: `${getMarketingSiteUrl()}/work/${slug}`,
     },

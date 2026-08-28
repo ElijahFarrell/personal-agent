@@ -7,9 +7,9 @@ import { BLOG_POSTS } from './posts'
 export const metadata: Metadata = {
   title: 'Blog',
   description:
-    'Guides and updates from Shiloh AI — AI consulting, production systems, GEO, and automation.',
+    'Guides and updates from Shiloh — AI consulting, production systems, GEO, and automation.',
   openGraph: {
-    title: 'Blog · Shiloh AI',
+    title: 'Blog · Shiloh',
     url: `${getMarketingSiteUrl()}/blog`,
   },
 }

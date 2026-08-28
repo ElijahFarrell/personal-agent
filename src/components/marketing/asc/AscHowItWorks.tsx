@@ -17,7 +17,7 @@ export function AscHowItWorks() {
         <ol className="mt-14 grid gap-8 md:grid-cols-3">
           {howItWorks.steps.map((step) => (
             <li key={step.step} className="relative">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-600 text-sm font-bold text-white">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-600 text-sm font-bold text-background">
                 {step.step}
               </div>
               <h3 className="mt-5 font-display text-xl font-semibold text-foreground">

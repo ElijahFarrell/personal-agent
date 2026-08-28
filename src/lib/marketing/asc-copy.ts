@@ -206,7 +206,7 @@ export const ascFaq = [
   {
     question: 'Who built this?',
     answer:
-      'Shiloh AI is led by engineers with production AI experience at Microsoft (Teams audio quality) and a Fortune\u00a010 technology company. Healthcare voice agents are built to the same shipping standard as enterprise software.',
+      'Shiloh is led by engineers with production AI experience at Microsoft (Teams audio quality) and a Fortune\u00a010 technology company. Healthcare voice agents are built to the same shipping standard as enterprise software.',
   },
   {
     question: 'What happens on the 15-minute discovery call?',
@@ -224,7 +224,7 @@ export const finalCta = {
 } as const
 
 export const siteMeta = {
-  title: 'Shiloh AI \u2014 Recover surgical cases your ASC is losing to no-shows',
+  title: 'Shiloh \u2014 Recover surgical cases your ASC is losing to no-shows',
   description:
     'HIPAA-compliant pre-op and post-op calling agent for independent surgery centers. Confirm patients, verify prep, and keep revenue you were losing to cancellations.',
 } as const

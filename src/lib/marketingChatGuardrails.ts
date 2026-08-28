@@ -57,7 +57,7 @@ export function validateInput(
       return {
         allowed: false,
         reason:
-          "I'm the Shiloh AI website assistant. I can help you learn about our platform or connect you with our team. What would you like to know?",
+          "I'm the Shiloh website assistant. I can help you learn about our platform or connect you with our team. What would you like to know?",
       }
     }
   }

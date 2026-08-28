@@ -57,7 +57,7 @@ export function ServiceSection({ service }: { service: ServiceDetail }) {
         <div className="mt-10">
           <Button
             size="sm"
-            className="rounded-full bg-brand-600 font-semibold text-white hover:bg-brand-700"
+            className="rounded-full bg-brand-600 font-semibold text-background hover:bg-brand-700"
             asChild
           >
             <Link href="/audit" className="gap-2">
