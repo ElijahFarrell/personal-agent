@@ -24,7 +24,7 @@ export function AscFinalCTA() {
         <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Button
             size="lg"
-            className="h-12 rounded-full bg-brand-600 px-8 text-base font-semibold text-white shadow-lg shadow-brand-600/25 hover:bg-brand-700"
+            className="h-12 rounded-full bg-brand-600 px-8 text-base font-semibold text-background shadow-lg shadow-brand-600/25 hover:bg-brand-700"
             asChild
           >
             <a href={book} target="_blank" rel="noopener noreferrer" className="gap-2">

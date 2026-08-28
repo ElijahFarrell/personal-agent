@@ -5,7 +5,7 @@
 import { bookCallUrl } from '@/lib/marketing/site'
 
 export const siteMeta = {
-  title: 'Shiloh AI — Engineering-led AI consulting',
+  title: 'Shiloh — Engineering-led AI consulting',
   description:
     'Software engineer (Amazon, Microsoft) who helps businesses find and implement high-ROI AI workflows — from audit to production. Fixed-fee engagements.',
 } as const
@@ -161,14 +161,14 @@ export const editorialTestimonial = {
 } as const
 
 export const founderHome = {
-  name: 'Shiloh AI',
+  name: 'Shiloh',
   role: 'Engineering-led AI consulting',
   bio: 'Shiloh is built by engineers from Amazon and Microsoft who ship production ML in enterprise and client systems. We audit workflows, build production AI, train your team, and hand off — across nonprofits, real estate, education, and financial services. No strategy decks.',
   tags: ['AMAZON', 'MICROSOFT', '10+ SYSTEMS SHIPPED'] as const,
 } as const
 
 export const founderAbout = {
-  title: 'About Shiloh AI',
+  title: 'About Shiloh',
   lead: 'Engineering-led AI consulting from a team with Amazon and Microsoft backgrounds — we help businesses ship production AI, not slide decks.',
   story: [
     'Shiloh started from the same builder mindset that powers big-tech engineering: ship real systems, measure outcomes, and hand off something your team can run.',

@@ -53,7 +53,7 @@ export function MarketingFooter() {
               Get started
             </p>
             <Button
-              className="w-full rounded-full bg-brand-600 font-semibold text-white hover:bg-brand-700 sm:w-auto"
+              className="w-full rounded-md bg-brand-600 font-semibold text-background hover:bg-brand-700 sm:w-auto"
               asChild
             >
               <Link href="/audit" className="gap-2">
@@ -75,7 +75,7 @@ export function MarketingFooter() {
           </div>
         </div>
         <div className="mt-12 flex flex-col gap-4 border-t border-border pt-8 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-          <p>© {year} Shiloh AI. All rights reserved.</p>
+          <p>© {year} Shiloh. All rights reserved.</p>
           <div className="flex flex-wrap items-center gap-3">
             <Link href="/terms" className="hover:text-foreground">
               Terms

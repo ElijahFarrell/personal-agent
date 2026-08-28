@@ -7,7 +7,7 @@ import { ConvexClientProvider } from '@/components/ConvexClientProvider'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Shiloh AI',
+  title: 'Shiloh',
   description: 'AI-powered automation platform',
   icons: { icon: '/icon.svg' },
 }

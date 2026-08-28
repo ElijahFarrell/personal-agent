@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description:
     'Answer a few questions and get a personalized AI Audit Report for your business — automation opportunities, time savings, and an action plan.',
   openGraph: {
-    title: 'Free AI Audit · Shiloh AI',
+    title: 'Free AI Audit · Shiloh',
     description:
       'Guided questionnaire — personalized report in minutes. No credit card.',
     url: `${getMarketingSiteUrl()}/audit`,

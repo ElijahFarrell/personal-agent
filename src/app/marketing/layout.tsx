@@ -1,11 +1,11 @@
-import { Newsreader, Figtree } from 'next/font/google'
+import { Space_Grotesk, Figtree } from 'next/font/google'
 import { GeistMono } from 'geist/font/mono'
 import { MarketingBackground } from '@/components/marketing/MarketingBackground'
 import { MarketingFooter } from '@/components/marketing/MarketingFooter'
 import { MarketingNavbar } from '@/components/marketing/MarketingNavbar'
 import '@/styles/marketing-theme.css'
 
-const newsreader = Newsreader({
+const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
   variable: '--font-display',
   display: 'swap',
@@ -24,14 +24,14 @@ export default function MarketingLayout({
 }) {
   return (
     <div
-      className={`marketing-site ${newsreader.variable} ${figtree.variable} ${GeistMono.variable} font-sans antialiased`}
+      className={`marketing-site ${spaceGrotesk.variable} ${figtree.variable} ${GeistMono.variable} font-sans antialiased`}
       style={{
         fontFamily: 'var(--font-marketing-sans), ui-sans-serif, sans-serif',
       }}
     >
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-brand-600 focus:px-4 focus:py-2 focus:text-white"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-brand-600 focus:px-4 focus:py-2 focus:text-background"
       >
         Skip to main content
       </a>

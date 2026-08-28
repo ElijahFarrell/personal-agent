@@ -69,7 +69,7 @@ export function StageToolStack({
                   className={cn(
                     'mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border transition-colors',
                     checked
-                      ? 'border-brand-600 bg-brand-600 text-white'
+                      ? 'border-brand-600 bg-brand-600 text-background'
                       : 'border-border bg-transparent'
                   )}
                   aria-hidden

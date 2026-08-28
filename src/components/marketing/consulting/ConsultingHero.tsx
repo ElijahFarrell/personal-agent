@@ -8,7 +8,7 @@ export function ConsultingHero() {
   const { primaryCta, secondaryCta } = heroCtas()
 
   return (
-    <section className="relative px-4 pb-20 pt-10 sm:px-6 sm:pb-28 sm:pt-16">
+    <section className="relative px-4 pb-24 pt-16 sm:px-6 sm:pb-32 sm:pt-24">
       <div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-2 lg:gap-16">
         <div className="animate-fade-up">
           <p className="font-mono-accent text-muted-foreground">{heroCopy.eyebrow}</p>
@@ -21,7 +21,7 @@ export function ConsultingHero() {
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
             <Button
               size="lg"
-              className="h-12 rounded-full bg-brand-600 px-7 text-base font-semibold text-white hover:bg-brand-700"
+              className="h-12 rounded-md bg-brand-600 px-7 text-base font-semibold text-background hover:bg-brand-700"
               asChild
             >
               <Link href={primaryCta.href} className="gap-2">
@@ -32,7 +32,7 @@ export function ConsultingHero() {
             <Button
               size="lg"
               variant="outline"
-              className="h-12 rounded-full border-border bg-card px-7 text-base hover:bg-secondary"
+              className="h-12 rounded-md border-border bg-transparent px-7 text-base hover:bg-secondary"
               asChild
             >
               <a href={secondaryCta.href} target="_blank" rel="noopener noreferrer">

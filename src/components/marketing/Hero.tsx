@@ -34,7 +34,7 @@ export function Hero({
         <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row sm:gap-4">
           <Button
             size="lg"
-            className="h-12 rounded-full bg-brand-600 px-8 text-base font-semibold text-white shadow-md shadow-brand-600/20 hover:bg-brand-700"
+            className="h-12 rounded-full bg-brand-600 px-8 text-base font-semibold text-background shadow-md shadow-brand-600/20 hover:bg-brand-700"
             asChild
           >
             <a href={primaryCta.href} className="gap-2">

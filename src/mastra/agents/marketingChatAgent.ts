@@ -32,9 +32,9 @@ function buildTools(captureCtx: MarketingChatCaptureContext) {
   const searchKnowledgeTool = createTool({
     id: 'search_knowledge',
     description:
-      'Search the Shiloh AI knowledge base for specific product information, features, pricing, use cases, or company details. Use when the initial context does not cover what the visitor is asking about.',
+      'Search the Shiloh knowledge base for specific product information, features, pricing, use cases, or company details. Use when the initial context does not cover what the visitor is asking about.',
     inputSchema: z.object({
-      query: z.string().describe('Search query about Shiloh AI products or services'),
+      query: z.string().describe('Search query about Shiloh products or services'),
     }),
     execute: async ({ query }) => {
       const results = await retrieveMarketingContext(query)
@@ -90,7 +90,7 @@ function buildTools(captureCtx: MarketingChatCaptureContext) {
       const displayName = name || email || phone
       return {
         captured: true,
-        message: `Thanks${name ? `, ${name}` : ''}! Someone from the Shiloh AI team will follow up${email ? ` at ${email}` : ''} shortly.`,
+        message: `Thanks${name ? `, ${name}` : ''}! Someone from the Shiloh team will follow up${email ? ` at ${email}` : ''} shortly.`,
         displayName,
       }
     },

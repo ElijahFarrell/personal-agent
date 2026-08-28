@@ -170,7 +170,7 @@ export function CaseStudyDetail({ study }: CaseStudyDetailProps) {
           </h2>
           <Button
             size="lg"
-            className="mt-6 h-12 rounded-full bg-brand-600 px-8 font-semibold text-white hover:bg-brand-700"
+            className="mt-6 h-12 rounded-full bg-brand-600 px-8 font-semibold text-background hover:bg-brand-700"
             asChild
           >
             <Link href="/audit" className="gap-2">

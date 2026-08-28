@@ -152,7 +152,7 @@ export function SampleCallPlayer() {
             type="button"
             size="lg"
             onClick={() => void togglePlay()}
-            className="h-12 w-12 shrink-0 rounded-full bg-brand-600 p-0 text-white hover:bg-brand-700"
+            className="h-12 w-12 shrink-0 rounded-full bg-brand-600 p-0 text-background hover:bg-brand-700"
             aria-label={isPlaying ? 'Pause sample call' : 'Play sample call'}
           >
             {isPlaying ? (

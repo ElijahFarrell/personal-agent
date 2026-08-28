@@ -36,7 +36,7 @@ export function AscHero() {
           <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center">
             <Button
               size="lg"
-              className="h-12 rounded-full bg-brand-600 px-8 text-base font-semibold text-white shadow-lg shadow-brand-600/25 transition-colors hover:bg-brand-700"
+              className="h-12 rounded-full bg-brand-600 px-8 text-base font-semibold text-background shadow-lg shadow-brand-600/25 transition-colors hover:bg-brand-700"
               asChild
             >
               <a

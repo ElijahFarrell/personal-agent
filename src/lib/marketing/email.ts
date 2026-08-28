@@ -24,7 +24,7 @@ function buildAuditEmailHtml(opts: {
 <body style="margin:0;background:#0a0a0c;color:#e5e5e5;font-family:system-ui,-apple-system,sans-serif;line-height:1.5;padding:24px;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:32px;">
     <tr><td>
-      <p style="margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:0.08em;color:#a78bfa;">Shiloh AI</p>
+      <p style="margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:0.08em;color:#a78bfa;">Shiloh</p>
       <h1 style="margin:0 0 16px;font-size:22px;color:#fafafa;">Your AI Audit is ready</h1>
       <p style="margin:0 0 16px;color:#a3a3a3;">Hi ${name},</p>
       <p style="margin:0 0 16px;color:#a3a3a3;">Thanks for completing the questionnaire. Your personalized AI Audit Report is ready — open the link below to view or download it.</p>
@@ -68,7 +68,7 @@ function buildLeadNotificationHtml(opts: {
 <body style="margin:0;background:#0a0a0c;color:#e5e5e5;font-family:system-ui,-apple-system,sans-serif;line-height:1.5;padding:24px;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;margin:0 auto;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:28px;">
     <tr><td>
-      <p style="margin:0 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:#a78bfa;">Shiloh AI</p>
+      <p style="margin:0 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:#a78bfa;">Shiloh</p>
       <h1 style="margin:0 0 16px;font-size:18px;color:#fafafa;">New website lead</h1>
       <p style="margin:0 0 16px;color:#a3a3a3;font-size:14px;">Someone reached out via the chat widget on example.com.</p>
       <table cellpadding="0" cellspacing="0" style="width:100%;font-size:14px;border-top:1px solid rgba(255,255,255,0.08);padding-top:12px;margin-top:4px;">
@@ -91,7 +91,7 @@ export async function sendLeadNotificationEmail(opts: {
   if (!key) return
 
   const from =
-    process.env.RESEND_FROM_EMAIL ?? 'Shiloh AI <onboarding@resend.dev>'
+    process.env.RESEND_FROM_EMAIL ?? 'Shiloh <onboarding@resend.dev>'
   const resend = new Resend(key)
 
   const displayName = opts.name || opts.email || opts.phone || 'Someone'
@@ -124,7 +124,7 @@ export async function sendAuditReportEmail(opts: {
   const from =
     process.env.RESEND_AUDIT_FROM_EMAIL ??
     process.env.RESEND_FROM_EMAIL ??
-    'Shiloh AI <onboarding@resend.dev>'
+    'Shiloh <onboarding@resend.dev>'
   const resend = new Resend(key)
   const bookUrl = bookCallUrl()
   const html = buildAuditEmailHtml({
