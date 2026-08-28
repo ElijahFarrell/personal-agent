@@ -342,7 +342,7 @@ export function AuditWizard() {
             {stage < STAGES ? (
               <Button
                 type="button"
-                className="rounded-full bg-brand-600 text-white hover:bg-brand-700"
+                className="rounded-full bg-brand-600 text-background hover:bg-brand-700"
                 onClick={next}
               >
                 Next
@@ -351,7 +351,7 @@ export function AuditWizard() {
             ) : (
               <Button
                 type="button"
-                className="rounded-full bg-brand-600 text-white hover:bg-brand-700"
+                className="rounded-full bg-brand-600 text-background hover:bg-brand-700"
                 onClick={handleFinalSubmit}
                 disabled={submitting}
               >

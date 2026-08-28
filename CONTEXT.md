@@ -26,7 +26,7 @@ Terms used on the marketing site and in client conversations. Implementation liv
 
 ## Marketing presentation
 
-**Visual direction (marketing site)** — Light, warm editorial: off-white / cream surfaces, charcoal typography, **terracotta** as the primary accent (CTAs, key links, badges — not purple). Approachable and advisor-like for founder visitors; platform detail sits below the fold, not in the hero aesthetic.
+**Visual direction (marketing site)** — Dark, minimal studio (heyfabrika-inspired): near-black purple-cast surfaces, grotesk display type, **purple** as the primary accent (CTAs, key links, badges). Brand renders as a plain "Shiloh" wordmark — no logo mark. Approachable and advisor-like for founder visitors; platform detail sits below the fold, not in the hero aesthetic.
 
 **Homepage structure** — Medium-length conversion page: hero (audit-led) → outcomes proof → how engagements run (short) → testimonials → compact founder credibility → final CTA. Platform catalog, agent showcase, and deep industry proof live primarily on secondary routes (e.g. Services), not as a long scroll on home.
 
@@ -34,4 +34,4 @@ Terms used on the marketing site and in client conversations. Implementation liv
 
 **Founder credibility (homepage)** — Ex-Microsoft / Fortune 10 background appears in the compact founder section, not in the hero or the outcomes metrics strip. Home proof emphasizes client results (hours, revenue, projects); personal résumé supports trust after interest, without enterprise-only signaling above the fold.
 
-**Chat widget & audit (marketing)** — Same behavior as today; visual reskin only for the light editorial theme (terracotta accents, light surfaces). No new audit-promotion prompts or funnel changes in chat.
+**Chat widget & audit (marketing)** — Same behavior as today; visual reskin only for the dark theme (purple accents, dark surfaces). No new audit-promotion prompts or funnel changes in chat.

@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   title: pricingPage.title,
   description: pricingPage.subheading,
   openGraph: {
-    title: `${pricingPage.title} · Shiloh AI`,
+    title: `${pricingPage.title} · Shiloh`,
     url: `${getMarketingSiteUrl()}/pricing`,
   },
 }

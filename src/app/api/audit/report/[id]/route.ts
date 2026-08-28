@@ -78,7 +78,7 @@ export async function GET(
 </head>
 <body>
   <div class="wrap">
-    <p class="meta">Prepared for ${email} · Shiloh AI</p>
+    <p class="meta">Prepared for ${email} · Shiloh</p>
     <article class="report-md">
         ${bodyHtml}
     </article>

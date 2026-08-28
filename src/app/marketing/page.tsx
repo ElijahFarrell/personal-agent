@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     title: siteMeta.title,
     description: siteMeta.description,
     url: getMarketingSiteUrl(),
-    siteName: 'Shiloh AI',
+    siteName: 'Shiloh',
     locale: 'en_US',
     type: 'website',
   },

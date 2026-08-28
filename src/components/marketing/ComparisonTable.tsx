@@ -36,7 +36,7 @@ export function ComparisonTable({
         <TableHeader>
           <TableRow className="border-white/10 hover:bg-transparent">
             <TableHead className="text-foreground">Capability</TableHead>
-            <TableHead className="text-brand-200">Shiloh AI</TableHead>
+            <TableHead className="text-brand-700">Shiloh</TableHead>
             <TableHead className="text-muted-foreground">
               Traditional stack
             </TableHead>
