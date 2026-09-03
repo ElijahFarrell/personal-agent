@@ -120,6 +120,17 @@ export const getById = query({
   },
 })
 
+export const getByProspect = query({
+  args: { prospectId: v.id(TABLES.PROSPECTS) },
+  returns: v.union(propertyDocValidator, v.null()),
+  handler: async (ctx, { prospectId }) => {
+    return await ctx.db
+      .query(TABLES.PROPERTIES)
+      .withIndex(INDEXES.BY_PROSPECT_ID, (q) => q.eq('prospectId', prospectId))
+      .first()
+  },
+})
+
 export const listForTenant = query({
   args: {
     tenantId: v.id(TABLES.TENANTS),

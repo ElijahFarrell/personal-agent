@@ -42,6 +42,28 @@ export const ToolErrorSchema = z.object({
   details: z.record(z.string(), z.unknown()).optional(),
 })
 
+export const ReplyTagSchema = z.enum(['ignore', 'later', 'human_now', 'deal'])
+
+export const SellerReplyExtractedSchema = z.object({
+  askingPrice: z.number().optional(),
+  timeline: z.string().optional(),
+  motivation: z.string().optional(),
+  wantsCall: z.boolean().optional(),
+  acreageConfirmed: z.boolean().optional(),
+  notes: z.string().optional(),
+})
+
+export const SellerReplyClassificationSchema = z.object({
+  tag: ReplyTagSchema,
+  confidence: z.number().min(0).max(1),
+  reason: z.string(),
+  extracted: SellerReplyExtractedSchema,
+})
+
+export const SellerReplyDraftSchema = z.object({
+  body: z.string().min(1),
+})
+
 /**
  * Universal envelope every sub-agent is expected to return when producing a
  * structured response. Matches the `ToolResult<T>` type in `src/types/index.ts`.
