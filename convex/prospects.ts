@@ -290,6 +290,41 @@ export const getProspect = query({
   },
 })
 
+export const findByPhone = query({
+  args: {
+    tenantId: v.id(TABLES.TENANTS),
+    phone: v.string(),
+  },
+  returns: v.union(
+    v.null(),
+    v.object({
+      _id: v.id(TABLES.PROSPECTS),
+      tenantId: v.id(TABLES.TENANTS),
+      name: v.string(),
+      phone: v.optional(v.string()),
+      customFields: v.optional(v.any()),
+      leadScore: v.optional(v.number()),
+    })
+  ),
+  handler: async (ctx, { tenantId, phone }) => {
+    const row = await ctx.db
+      .query(TABLES.PROSPECTS)
+      .withIndex(INDEXES.BY_TENANT_PHONE, (q) =>
+        q.eq('tenantId', tenantId).eq('phone', phone)
+      )
+      .first()
+    if (!row) return null
+    return {
+      _id: row._id,
+      tenantId: row.tenantId,
+      name: row.name,
+      phone: row.phone,
+      customFields: row.customFields,
+      leadScore: row.leadScore,
+    }
+  },
+})
+
 export const getProspectsByStage = query({
   args: {
     tenantId: v.id(TABLES.TENANTS),

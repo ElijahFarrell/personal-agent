@@ -94,6 +94,7 @@ export async function PUT(
         unifiedInbox: !!features.unifiedInbox,
         eventTriggers: !!features.eventTriggers,
         leadScoring: !!features.leadScoring,
+        sellerReplyOs: !!features.sellerReplyOs,
       },
       limits: {
         maxMembers: Number(limits.maxMembers) ?? 1,

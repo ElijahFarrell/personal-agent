@@ -7,7 +7,8 @@ const inboxProviderValidator = v.union(
   v.literal(INBOX_PROVIDER.OUTLOOK),
   v.literal(INBOX_PROVIDER.LINKEDIN),
   v.literal(INBOX_PROVIDER.WHATSAPP),
-  v.literal(INBOX_PROVIDER.SMS)
+  v.literal(INBOX_PROVIDER.SMS),
+  v.literal(INBOX_PROVIDER.SMARTER_CONTACT)
 )
 
 export const listThreadsForUser = query({

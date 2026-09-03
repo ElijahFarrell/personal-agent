@@ -25,6 +25,7 @@ export interface TenantConfigFeatures {
   unifiedInbox: boolean
   eventTriggers: boolean
   leadScoring: boolean
+  sellerReplyOs: boolean
 }
 
 export interface TenantConfigLimits {
@@ -95,6 +96,7 @@ export const DEFAULT_CONFIG: TenantConfig = {
     unifiedInbox: false,
     eventTriggers: false,
     leadScoring: false,
+    sellerReplyOs: false,
   },
   limits: {
     maxMembers: 1,

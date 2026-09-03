@@ -36,6 +36,7 @@ const DEFAULT_CONFIG_SHAPE = {
     unifiedInbox: false,
     eventTriggers: false,
     leadScoring: false,
+    sellerReplyOs: false,
   },
   limits: {
     maxMembers: 1,
@@ -65,6 +66,7 @@ const featuresValidator = v.object({
   unifiedInbox: v.boolean(),
   eventTriggers: v.boolean(),
   leadScoring: v.boolean(),
+  sellerReplyOs: v.optional(v.boolean()),
 })
 
 const limitsValidator = v.object({

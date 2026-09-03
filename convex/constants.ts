@@ -68,6 +68,14 @@ export const TABLES = {
   WEBSET_ITEMS: 'websetItems',
   /** Pending/resolved human-approval requests for destructive tool calls (MCP elicitation). */
   APPROVALS: 'approvals',
+  /** Seller Reply OS — properties linked to prospects / inbound threads. */
+  PROPERTIES: 'properties',
+  /** Seller Reply OS — per-thread classification and queue state. */
+  REPLY_TRIAGE: 'replyTriage',
+  /** Seller Reply OS — SMS/reply drafts awaiting operator approval. */
+  REPLY_DRAFTS: 'replyDrafts',
+  /** Seller Reply OS — inbound adapter poll runs (SMS webhook / Smarter Contact). */
+  REPLY_ADAPTER_RUNS: 'replyAdapterRuns',
 } as const
 
 // ─── Index Names ─────────────────────────────────────────────────────────────
@@ -154,6 +162,12 @@ export const INDEXES = {
   /** approvals: lookup by opaque token and by tenant + status. */
   BY_APPROVAL_TOKEN: 'by_approvalToken',
   BY_TENANT_STATUS_CREATED: 'by_tenantId_status_createdAt',
+  /** replyTriage: queue by tenant + status + tag. */
+  BY_TENANT_STATUS_TAG: 'by_tenantId_status_tag',
+  /** replyTriage: recency by tenant. */
+  BY_TENANT_CLASSIFIED_AT: 'by_tenantId_classifiedAt',
+  /** replyAdapterRuns: recency by tenant. */
+  BY_TENANT_STARTED_AT: 'by_tenantId_startedAt',
 } as const
 
 /**
@@ -504,6 +518,7 @@ export const FEATURE_FLAGS = {
   VIDEO_STUDIO: 'videoStudio',
   UNIFIED_INBOX: 'unifiedInbox',
   EVENT_TRIGGERS: 'eventTriggers',
+  SELLER_REPLY_OS: 'sellerReplyOs',
 } as const
 
 export const INBOX_PROVIDER = {
@@ -512,6 +527,37 @@ export const INBOX_PROVIDER = {
   LINKEDIN: 'linkedin',
   WHATSAPP: 'whatsapp',
   SMS: 'sms',
+  /** Browser-imported Smarter Contact Messenger threads — never sendable. */
+  SMARTER_CONTACT: 'smarter_contact',
+} as const
+
+export const REPLY_TAG = {
+  IGNORE: 'ignore',
+  LATER: 'later',
+  HUMAN_NOW: 'human_now',
+  DEAL: 'deal',
+} as const
+
+export const TRIAGE_STATUS = {
+  OPEN: 'open',
+  HANDLED: 'handled',
+  SNOOZED: 'snoozed',
+} as const
+
+export const PROPERTY_KIND = {
+  LAND: 'land',
+  HOUSE: 'house',
+} as const
+
+export const REPLY_ADAPTER = {
+  SMS_WEBHOOK: 'sms_webhook',
+  SMARTER_CONTACT_BROWSER: 'smarter_contact_browser',
+} as const
+
+export const REPLY_ADAPTER_RUN_STATUS = {
+  RUNNING: 'running',
+  SUCCEEDED: 'succeeded',
+  FAILED: 'failed',
 } as const
 
 export const ADS_PIPELINE_RUN_STATUS = {

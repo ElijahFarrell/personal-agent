@@ -47,6 +47,11 @@ import {
   CONSENT_KIND,
   SUPPRESSION_REASON,
   APPROVAL_STATUS,
+  REPLY_TAG,
+  TRIAGE_STATUS,
+  PROPERTY_KIND,
+  REPLY_ADAPTER,
+  REPLY_ADAPTER_RUN_STATUS,
 } from './constants'
 
 export default defineSchema({
@@ -81,6 +86,7 @@ export default defineSchema({
       unifiedInbox: v.optional(v.boolean()),
       eventTriggers: v.optional(v.boolean()),
       leadScoring: v.optional(v.boolean()),
+      sellerReplyOs: v.optional(v.boolean()),
     }),
     limits: v.object({
       maxMembers: v.number(),
@@ -457,7 +463,8 @@ export default defineSchema({
     .index(INDEXES.BY_TENANT_ID, ['tenantId'])
     .index(INDEXES.BY_TENANT_STATUS, ['tenantId', 'status'])
     .index(INDEXES.BY_TENANT_STAGE, ['tenantId', 'stage'])
-    .index(INDEXES.BY_OWNER_ID, ['ownerId']),
+    .index(INDEXES.BY_OWNER_ID, ['ownerId'])
+    .index(INDEXES.BY_TENANT_PHONE, ['tenantId', 'phone']),
 
   [TABLES.PROSPECT_FIELD_DEFINITIONS]: defineTable({
     tenantId: v.id(TABLES.TENANTS),
@@ -786,7 +793,8 @@ export default defineSchema({
       v.literal(INBOX_PROVIDER.OUTLOOK),
       v.literal(INBOX_PROVIDER.LINKEDIN),
       v.literal(INBOX_PROVIDER.WHATSAPP),
-      v.literal(INBOX_PROVIDER.SMS)
+      v.literal(INBOX_PROVIDER.SMS),
+      v.literal(INBOX_PROVIDER.SMARTER_CONTACT)
     ),
     externalThreadId: v.string(),
     subject: v.optional(v.string()),
@@ -1422,4 +1430,108 @@ export default defineSchema({
   })
     .index(INDEXES.BY_MARKETING_LEAD_EMAIL, ['email'])
     .index(INDEXES.BY_MARKETING_LEAD_SESSION, ['sessionId']),
+
+  [TABLES.PROPERTIES]: defineTable({
+    tenantId: v.id(TABLES.TENANTS),
+    prospectId: v.optional(v.id(TABLES.PROSPECTS)),
+    kind: v.union(
+      v.literal(PROPERTY_KIND.LAND),
+      v.literal(PROPERTY_KIND.HOUSE)
+    ),
+    addressLine: v.optional(v.string()),
+    city: v.optional(v.string()),
+    state: v.optional(v.string()),
+    zip: v.optional(v.string()),
+    county: v.optional(v.string()),
+    apn: v.optional(v.string()),
+    acres: v.optional(v.number()),
+    beds: v.optional(v.number()),
+    baths: v.optional(v.number()),
+    lastOfferAmount: v.optional(v.number()),
+    lastOfferAt: v.optional(v.number()),
+    lastMailerAt: v.optional(v.number()),
+    notes: v.optional(v.string()),
+    customFields: v.optional(v.any()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index(INDEXES.BY_TENANT_ID, ['tenantId'])
+    .index(INDEXES.BY_PROSPECT_ID, ['prospectId']),
+
+  [TABLES.REPLY_TRIAGE]: defineTable({
+    tenantId: v.id(TABLES.TENANTS),
+    threadId: v.id(TABLES.INBOX_THREADS),
+    prospectId: v.optional(v.id(TABLES.PROSPECTS)),
+    propertyId: v.optional(v.id(TABLES.PROPERTIES)),
+    tag: v.union(
+      v.literal(REPLY_TAG.IGNORE),
+      v.literal(REPLY_TAG.LATER),
+      v.literal(REPLY_TAG.HUMAN_NOW),
+      v.literal(REPLY_TAG.DEAL)
+    ),
+    confidence: v.number(),
+    reason: v.string(),
+    extracted: v.object({
+      askingPrice: v.optional(v.number()),
+      timeline: v.optional(v.string()),
+      motivation: v.optional(v.string()),
+      wantsCall: v.optional(v.boolean()),
+      acreageConfirmed: v.optional(v.boolean()),
+      notes: v.optional(v.string()),
+    }),
+    status: v.union(
+      v.literal(TRIAGE_STATUS.OPEN),
+      v.literal(TRIAGE_STATUS.HANDLED),
+      v.literal(TRIAGE_STATUS.SNOOZED)
+    ),
+    snoozedUntil: v.optional(v.number()),
+    lastInboundMessageId: v.string(),
+    classifiedAt: v.number(),
+    model: v.string(),
+    updatedAt: v.number(),
+  })
+    .index(INDEXES.BY_THREAD_ID, ['threadId'])
+    .index(INDEXES.BY_TENANT_STATUS_TAG, ['tenantId', 'status', 'tag'])
+    .index(INDEXES.BY_TENANT_CLASSIFIED_AT, ['tenantId', 'classifiedAt']),
+
+  [TABLES.REPLY_DRAFTS]: defineTable({
+    tenantId: v.id(TABLES.TENANTS),
+    threadId: v.id(TABLES.INBOX_THREADS),
+    triageId: v.optional(v.id(TABLES.REPLY_TRIAGE)),
+    propertyId: v.optional(v.id(TABLES.PROPERTIES)),
+    body: v.string(),
+    status: v.union(
+      v.literal(DRAFT_STATUS.PENDING_REVIEW),
+      v.literal(DRAFT_STATUS.APPROVED),
+      v.literal(DRAFT_STATUS.REJECTED),
+      v.literal(DRAFT_STATUS.SENT),
+      v.literal(DRAFT_STATUS.FAILED)
+    ),
+    model: v.string(),
+    editedBody: v.optional(v.string()),
+    sentAt: v.optional(v.number()),
+    sendError: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index(INDEXES.BY_THREAD_ID, ['threadId'])
+    .index(INDEXES.BY_TENANT_STATUS, ['tenantId', 'status']),
+
+  [TABLES.REPLY_ADAPTER_RUNS]: defineTable({
+    tenantId: v.id(TABLES.TENANTS),
+    adapter: v.union(
+      v.literal(REPLY_ADAPTER.SMS_WEBHOOK),
+      v.literal(REPLY_ADAPTER.SMARTER_CONTACT_BROWSER)
+    ),
+    status: v.union(
+      v.literal(REPLY_ADAPTER_RUN_STATUS.RUNNING),
+      v.literal(REPLY_ADAPTER_RUN_STATUS.SUCCEEDED),
+      v.literal(REPLY_ADAPTER_RUN_STATUS.FAILED)
+    ),
+    startedAt: v.number(),
+    finishedAt: v.optional(v.number()),
+    threadsSeen: v.number(),
+    newMessages: v.number(),
+    error: v.optional(v.string()),
+  }).index(INDEXES.BY_TENANT_STARTED_AT, ['tenantId', 'startedAt']),
 })
