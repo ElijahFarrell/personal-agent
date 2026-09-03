@@ -48,6 +48,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Thread not found' }, { status: 404 })
     }
 
+    if (thread.provider === INBOX_PROVIDER.SMARTER_CONTACT) {
+      return NextResponse.json(
+        { error: 'Smarter Contact threads are copy-only and cannot be sent.' },
+        { status: 400 }
+      )
+    }
+
     const userEmailLower = dbUser.email.toLowerCase().trim()
 
     let outboundBody = text

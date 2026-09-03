@@ -41,7 +41,8 @@ export async function GET(req: NextRequest) {
 
     if (
       thread.provider === INBOX_PROVIDER.WHATSAPP ||
-      thread.provider === INBOX_PROVIDER.SMS
+      thread.provider === INBOX_PROVIDER.SMS ||
+      thread.provider === INBOX_PROVIDER.SMARTER_CONTACT
     ) {
       const rows = await convex.query(api.inbox.listMessagesForThread, {
         threadId,

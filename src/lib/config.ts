@@ -61,6 +61,13 @@ export const config = {
   cron: {
     secret: optionalEnv('CRON_SECRET'),
   },
+  smarterContact: {
+    pollerEnabled: optionalEnv('SMARTER_CONTACT_POLLER_ENABLED'),
+    pollTenants: optionalEnv('SMARTER_CONTACT_POLL_TENANTS'),
+    storageStateDir: optionalEnv('SMARTER_CONTACT_STORAGE_STATE_DIR', '/tmp/smarter-contact'),
+    browserbaseApiKey: optionalEnv('BROWSERBASE_API_KEY'),
+    browserbaseProjectId: optionalEnv('BROWSERBASE_PROJECT_ID'),
+  },
   openai: {
     apiKey: optionalEnv('OPENAI_API_KEY'),
   },

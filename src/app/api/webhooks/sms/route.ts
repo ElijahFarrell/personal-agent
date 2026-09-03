@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { ConvexHttpClient } from 'convex/browser'
 import { api } from '@convex/_generated/api'
 import type { Id } from '@convex/_generated/dataModel'
@@ -10,6 +10,10 @@ import {
   SMS_LOG_STATUS,
 } from '@convex/constants'
 import { registerSuppressionFromOptOut } from '@/services/compliance/policyEngine'
+import { isFeatureEnabled } from '@/constants/featureGating'
+import { tenantConfigFromConvexRow } from '@/lib/convexTenantConfig'
+import { toInboundReplyEvent } from '@/services/replyOs/adapters/smsWebhookAdapter'
+import { ingestInboundReply } from '@/services/replyOs/ingest'
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
 
@@ -135,6 +139,28 @@ export async function POST(req: NextRequest) {
         })
       } catch (e) {
         console.warn('[webhooks/sms] inbox bridge failed:', e)
+      }
+
+      if (direction === CALL_DIRECTION.INBOUND) {
+        try {
+          const cfgRow = await convex.query(api.tenantConfigs.getByTenantId, {
+            tenantId: tenantId as Id<'tenants'>,
+          })
+          const orgConfig = tenantConfigFromConvexRow(cfgRow)
+          const event = toInboundReplyEvent(raw, {
+            tenantId: tenantId as Id<'tenants'>,
+            userId: userId as Id<'users'>,
+          })
+          if (event && isFeatureEnabled(orgConfig, 'sellerReplyOs')) {
+            after(() =>
+              ingestInboundReply(event).catch((err) => {
+                console.warn('[webhooks/sms] seller reply ingest failed:', err)
+              })
+            )
+          }
+        } catch (e) {
+          console.warn('[webhooks/sms] seller reply os skipped:', e)
+        }
       }
     }
 
