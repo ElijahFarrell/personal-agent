@@ -45,14 +45,24 @@ export function ServiceSection({ service }: { service: ServiceDetail }) {
 
         <ArchitectureDiagram steps={service.architecture} className="mt-8" />
 
-        {service.proofSlug ? (
-          <Link
-            href={`/work/${service.proofSlug}`}
-            className="mt-6 inline-block text-sm font-semibold text-brand-600 hover:text-brand-700"
-          >
-            See related case study →
-          </Link>
-        ) : null}
+        <div className="mt-6 flex flex-col gap-2">
+          {service.proofSlug ? (
+            <Link
+              href={`/work/${service.proofSlug}`}
+              className="text-sm font-semibold text-brand-600 hover:text-brand-700"
+            >
+              See related case study →
+            </Link>
+          ) : null}
+          {service.guideHref && service.guideLabel ? (
+            <Link
+              href={service.guideHref}
+              className="text-sm font-semibold text-brand-600 hover:text-brand-700"
+            >
+              {service.guideLabel} →
+            </Link>
+          ) : null}
+        </div>
 
         <div className="mt-10">
           <Button

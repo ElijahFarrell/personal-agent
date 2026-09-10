@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { EvidenceBadge } from '@/components/marketing/consulting/EvidenceBadge'
 import { outcomeMetrics, outcomesCaption } from '@/lib/marketing/consulting-copy'
 
 export function OutcomesProofStrip() {
@@ -21,7 +22,10 @@ export function OutcomesProofStrip() {
               <p className="font-display text-4xl tabular-nums text-foreground transition-colors group-hover:text-brand-600 sm:text-5xl">
                 {metric.value}
               </p>
-              <p className="font-mono-accent mt-2 text-muted-foreground group-hover:text-foreground">
+              <p className="mt-2">
+                <EvidenceBadge status={metric.status} />
+              </p>
+              <p className="font-mono-accent mt-1 text-muted-foreground group-hover:text-foreground">
                 {metric.label}
               </p>
             </Link>

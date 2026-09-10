@@ -4,6 +4,7 @@ import { CTASection } from '@/components/marketing/CTASection'
 import { FAQSection } from '@/components/marketing/FAQSection'
 import { PricingCards } from '@/components/marketing/PricingCards'
 import {
+  breadcrumbSchema,
   faqPageSchema,
   StructuredData,
 } from '@/components/marketing/StructuredData'
@@ -12,21 +13,27 @@ import {
   pricingPage,
   pricingTiers,
 } from '@/lib/marketing/consulting-copy'
-import { getMarketingSiteUrl } from '@/lib/marketing/site'
+import { marketingMetadata } from '@/lib/marketing/seo'
 
-export const metadata: Metadata = {
+export const metadata: Metadata = marketingMetadata({
   title: pricingPage.title,
   description: pricingPage.subheading,
-  openGraph: {
-    title: `${pricingPage.title} · Shiloh`,
-    url: `${getMarketingSiteUrl()}/pricing`,
-  },
-}
+  path: '/pricing',
+  ogTitle: `${pricingPage.title} · Shiloh`,
+})
 
 export default function PricingPage() {
   return (
     <>
-      <StructuredData data={faqPageSchema(pricingFaq)} />
+      <StructuredData
+        data={[
+          faqPageSchema(pricingFaq),
+          breadcrumbSchema([
+            { name: 'Home', path: '/' },
+            { name: 'Pricing', path: '/pricing' },
+          ]),
+        ]}
+      />
       <article className="px-4 pb-16 pt-12 sm:px-6 sm:pt-16">
         <header className="mx-auto max-w-3xl text-center">
           <h1 className="font-display text-4xl font-normal tracking-tight text-foreground md:text-5xl">

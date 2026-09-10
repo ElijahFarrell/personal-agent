@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import { track } from '@vercel/analytics'
 import { AnimatePresence, motion } from 'motion/react'
 import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -176,6 +177,7 @@ export function AuditWizard() {
         hoursSavedPerWeekMin: json.hoursSavedPerWeekMin ?? null,
         hoursSavedPerWeekMax: json.hoursSavedPerWeekMax ?? null,
       })
+      track('audit_completed', { source: 'marketing_audit' })
       setStage(6)
     } catch (e) {
       setSubmitError(e instanceof Error ? e.message : 'Submission failed.')
@@ -227,12 +229,17 @@ export function AuditWizard() {
           {stage === 0 ? (
             <motion.div
               key="landing"
-              initial={{ opacity: 0, x: 16 }}
+              initial={false}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -16 }}
               transition={{ duration: 0.2 }}
             >
-              <AuditLanding onStart={() => setStage(1)} />
+              <AuditLanding
+                onStart={() => {
+                  track('audit_started', { source: 'marketing_audit' })
+                  setStage(1)
+                }}
+              />
             </motion.div>
           ) : null}
 

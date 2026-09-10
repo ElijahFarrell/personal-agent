@@ -3,24 +3,36 @@ import Link from 'next/link'
 import { ArrowUpRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { CTASection } from '@/components/marketing/CTASection'
+import {
+  aboutPageSchema,
+  breadcrumbSchema,
+  StructuredData,
+} from '@/components/marketing/StructuredData'
 import { founderAbout } from '@/lib/marketing/consulting-copy'
-import { getMarketingSiteUrl } from '@/lib/marketing/site'
+import { marketingMetadata } from '@/lib/marketing/seo'
 
-export const metadata: Metadata = {
+export const metadata: Metadata = marketingMetadata({
   title: 'About',
   description:
     'About Shiloh — engineering-led AI consulting from Amazon and Microsoft backgrounds. Audit, build, train, and hand off production systems.',
-  openGraph: {
-    title: 'About · Shiloh',
-    url: `${getMarketingSiteUrl()}/about`,
-  },
-}
+  path: '/about',
+  ogTitle: 'About · Shiloh',
+})
 
 export default function AboutPage() {
   const { title, lead, story, philosophy, values } = founderAbout
 
   return (
     <article className="px-4 pb-8 pt-12 sm:px-6 sm:pt-16">
+      <StructuredData
+        data={[
+          aboutPageSchema(),
+          breadcrumbSchema([
+            { name: 'Home', path: '/' },
+            { name: 'About', path: '/about' },
+          ]),
+        ]}
+      />
       <header className="mx-auto max-w-3xl">
         <p className="font-mono-accent text-brand-600">About</p>
         <h1 className="font-display mt-4 text-4xl font-normal tracking-tight text-foreground md:text-5xl">

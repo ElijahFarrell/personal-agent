@@ -2,21 +2,29 @@ import type { Metadata } from 'next'
 import { CaseStudyCard } from '@/components/marketing/consulting/CaseStudyCard'
 import { CTASection } from '@/components/marketing/CTASection'
 import { CASE_STUDIES } from '@/lib/marketing/case-studies'
+import {
+  breadcrumbSchema,
+  StructuredData,
+} from '@/components/marketing/StructuredData'
 import { workPage } from '@/lib/marketing/consulting-copy'
-import { getMarketingSiteUrl } from '@/lib/marketing/site'
+import { marketingMetadata } from '@/lib/marketing/seo'
 
-export const metadata: Metadata = {
+export const metadata: Metadata = marketingMetadata({
   title: workPage.title,
   description: workPage.subheading,
-  openGraph: {
-    title: `${workPage.title} · Shiloh`,
-    url: `${getMarketingSiteUrl()}/work`,
-  },
-}
+  path: '/work',
+  ogTitle: `${workPage.title} · Shiloh`,
+})
 
 export default function WorkPage() {
   return (
     <article className="px-4 pb-8 pt-12 sm:px-6 sm:pt-16">
+      <StructuredData
+        data={breadcrumbSchema([
+          { name: 'Home', path: '/' },
+          { name: 'Work', path: '/work' },
+        ])}
+      />
       <header className="mx-auto max-w-3xl">
         <h1 className="font-display text-4xl font-normal tracking-tight text-foreground md:text-5xl">
           {workPage.heading}

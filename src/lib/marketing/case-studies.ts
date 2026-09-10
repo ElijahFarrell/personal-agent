@@ -2,9 +2,20 @@
  * Case study content for /work and /work/[slug].
  */
 
+export type EvidenceStatus = 'measured' | 'projected' | 'observed'
+
 export type CaseStudyMetric = {
   value: string
   label: string
+  status: EvidenceStatus
+}
+
+export type CaseStudyEvidence = {
+  status: EvidenceStatus
+  window: string
+  baseline: string
+  method: string
+  attribution?: string
 }
 
 export type CaseStudy = {
@@ -14,6 +25,7 @@ export type CaseStudy = {
   summary: string
   tags: readonly string[]
   metrics: readonly CaseStudyMetric[]
+  evidence: CaseStudyEvidence
   problem: string
   solution: string
   architecture: readonly string[]
@@ -34,10 +46,18 @@ export const CASE_STUDIES: readonly CaseStudy[] = [
       'Agentic RAG pipeline for 50+ page grant documents — automated drafting, Q&A, and knowledge base updates.',
     tags: ['AGENTS', 'RAG'],
     metrics: [
-      { value: '10+ hrs', label: 'saved per submission' },
-      { value: '25%', label: 'more submissions' },
-      { value: '~$13K/mo', label: 'revenue lift' },
+      { value: '10+ hrs', label: 'saved per submission', status: 'measured' },
+      { value: '25%', label: 'more submissions', status: 'measured' },
+      { value: '~$13K/mo', label: 'revenue lift', status: 'measured' },
     ],
+    evidence: {
+      status: 'measured',
+      window: 'Shipped production system; outcomes reported after handoff',
+      baseline: '10+ hours of manual research and drafting per grant submission',
+      method:
+        'Before/after time on the same grant workflow after the RAG pipeline shipped; monthly revenue change reported by the client partner',
+      attribution: 'Cyborg Mobile team',
+    },
     problem:
       'Grant writers spent 10+ hours per submission processing long documents (50+ pages), researching requirements, and drafting narratives from scratch. The team could only submit a limited number of grants each month.',
     solution:
@@ -64,9 +84,16 @@ export const CASE_STUDIES: readonly CaseStudy[] = [
       'Knowledge base chatbots for a university course and an internship program — 24/7 student self-service.',
     tags: ['RAG'],
     metrics: [
-      { value: '24/7', label: 'student self-service' },
-      { value: '2', label: 'programs served' },
+      { value: '24/7', label: 'student self-service', status: 'observed' },
+      { value: '2', label: 'programs served', status: 'measured' },
     ],
+    evidence: {
+      status: 'observed',
+      window: 'Two programs live after deployment',
+      baseline: 'Repetitive office-hours and email questions to faculty and staff',
+      method:
+        'System status is production (two knowledge bases). Load reduction is qualitative from operators, not a timed study',
+    },
     problem:
       'Students needed answers about course content and internship program details, but professors and admins were overwhelmed with repetitive questions. Office hours and email weren\u2019t scaling.',
     solution:
@@ -87,9 +114,16 @@ export const CASE_STUDIES: readonly CaseStudy[] = [
       'Custom CRM saving $500+/mo plus an AI voice agent to reactivate dormant seller leads.',
     tags: ['VOICE', 'AGENTS'],
     metrics: [
-      { value: '$500+/mo', label: 'CRM savings' },
-      { value: '$8K–$50K', label: 'revenue potential' },
+      { value: '$500+/mo', label: 'CRM savings', status: 'measured' },
+      { value: '$8K–$50K', label: 'revenue potential', status: 'projected' },
     ],
+    evidence: {
+      status: 'projected',
+      window: 'CRM savings observed after migration; voice revenue is modeled',
+      baseline: 'Monthly spend on the prior CRM; dormant seller leads with no outbound follow-up',
+      method:
+        'CRM savings compare old subscription cost to the custom system. Voice “$8K–$50K” and $1,600/mo outreach savings are projections, not closed revenue',
+    },
     problem:
       'The client was paying thousands for a bloated CRM that didn\u2019t fit their workflow. Worse, they had sellers in their CRM they never followed up with — potential deals slipping through the cracks.',
     solution:
@@ -110,9 +144,16 @@ export const CASE_STUDIES: readonly CaseStudy[] = [
       'Front-door qualification bot that answers inquiries and captures leads directly into CRM forms.',
     tags: ['RAG'],
     metrics: [
-      { value: '24/7', label: 'inquiry handling' },
-      { value: 'CRM', label: 'integrated capture' },
+      { value: '24/7', label: 'inquiry handling', status: 'observed' },
+      { value: 'CRM', label: 'integrated capture', status: 'observed' },
     ],
+    evidence: {
+      status: 'observed',
+      window: 'Production chatbot on the client site after launch',
+      baseline: 'Website inquiries without immediate answers or structured intake',
+      method:
+        'Capability is shipped (qualify, opt-in, CRM form). Volume and conversion lift were not published as a measured study',
+    },
     problem:
       'Website inquiries were falling through — visitors had questions but no immediate way to get answers or opt in for contact. Manual intake was slow and leads were lost.',
     solution:
@@ -133,9 +174,16 @@ export const CASE_STUDIES: readonly CaseStudy[] = [
       'HIPAA-compliant calling agent that confirms patients, verifies prep, and follows up after surgery.',
     tags: ['VOICE'],
     metrics: [
-      { value: 'HIPAA', label: 'compliant + BAA' },
-      { value: 'Pre + post', label: 'op calling' },
+      { value: 'HIPAA', label: 'compliant + BAA', status: 'observed' },
+      { value: 'Pre + post', label: 'op calling', status: 'observed' },
     ],
+    evidence: {
+      status: 'observed',
+      window: 'Voice agent live for pre-op and post-op outreach',
+      baseline: 'Nurses making manual instruction and follow-up calls',
+      method:
+        'HIPAA posture and BAA are contractual facts. Preparedness and completion-rate claims are operational observations, not a published timed study',
+    },
     problem:
       'Overwhelmed nurses at surgery centers spent hours calling patients before surgery with instructions. Patients who weren\u2019t properly prepped led to cancelled or incomplete cases — lost revenue for the center.',
     solution:
@@ -157,9 +205,16 @@ export const CASE_STUDIES: readonly CaseStudy[] = [
       'Stakeholder interviews, prioritized roadmap, and proof-of-concept for the highest-value AI use case.',
     tags: ['AUDIT'],
     metrics: [
-      { value: '3', label: 'PM interviews' },
-      { value: '1', label: 'POC delivered' },
+      { value: '3', label: 'PM interviews', status: 'measured' },
+      { value: '1', label: 'POC delivered', status: 'measured' },
     ],
+    evidence: {
+      status: 'measured',
+      window: 'Internal audit engagement through POC delivery',
+      baseline: 'Competing AI ideas with no ranked ROI or implementation plan',
+      method:
+        'Count of stakeholder interviews and delivery of one working POC plus a written roadmap',
+    },
     problem:
       'The team knew AI could help but didn\u2019t know where to start. Multiple potential use cases competed for attention without a clear ROI ranking or implementation plan.',
     solution:

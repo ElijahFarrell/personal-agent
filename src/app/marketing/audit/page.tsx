@@ -1,24 +1,46 @@
 import type { Metadata } from 'next'
 import { AuditWizard } from '@/components/marketing/audit/AuditWizard'
-import { getMarketingSiteUrl } from '@/lib/marketing/site'
+import { ConversionPath } from '@/components/marketing/consulting/ConversionPath'
+import { FreeVsPaid } from '@/components/marketing/consulting/FreeVsPaid'
+import { FAQSection } from '@/components/marketing/FAQSection'
+import {
+  breadcrumbSchema,
+  faqPageSchema,
+  StructuredData,
+} from '@/components/marketing/StructuredData'
+import { auditFaq } from '@/lib/marketing/consulting-copy'
+import { marketingMetadata } from '@/lib/marketing/seo'
 
-export const metadata: Metadata = {
+export const metadata: Metadata = marketingMetadata({
   title: 'Free AI Audit',
   description:
-    'Answer a few questions and get a personalized AI Audit Report for your business — automation opportunities, time savings, and an action plan.',
-  openGraph: {
-    title: 'Free AI Audit · Shiloh',
-    description:
-      'Guided questionnaire — personalized report in minutes. No credit card.',
-    url: `${getMarketingSiteUrl()}/audit`,
-    type: 'website',
-  },
-}
+    'Five-minute diagnostic report of AI opportunities. Then choose no build, a 15-minute fit call, or a paid AI Readiness Audit.',
+  path: '/audit',
+  ogTitle: 'Free AI Audit · Shiloh',
+})
 
 export default function AuditPage() {
   return (
-    <article>
-      <AuditWizard />
-    </article>
+    <>
+      <StructuredData
+        data={[
+          faqPageSchema(auditFaq),
+          breadcrumbSchema([
+            { name: 'Home', path: '/' },
+            { name: 'Free AI Audit', path: '/audit' },
+          ]),
+        ]}
+      />
+      <article>
+        <AuditWizard />
+        <ConversionPath />
+        <FreeVsPaid />
+        <FAQSection
+          id="audit-faq-heading"
+          title="Before you start"
+          items={auditFaq}
+        />
+      </article>
+    </>
   )
 }

@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { EvidenceBadge } from '@/components/marketing/consulting/EvidenceBadge'
 import type { CaseStudy } from '@/lib/marketing/case-studies'
 
 export function CaseStudyCard({
@@ -56,6 +57,9 @@ export function CaseStudyCard({
             <div key={m.label}>
               <p className="font-display text-3xl tabular-nums text-foreground">
                 {m.value}
+              </p>
+              <p className="mt-1">
+                <EvidenceBadge status={m.status} />
               </p>
               <p className="mt-1 text-xs text-muted-foreground">{m.label}</p>
             </div>

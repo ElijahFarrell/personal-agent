@@ -69,7 +69,7 @@ export function MarketingFooter() {
                 rel="noopener noreferrer"
                 className="font-medium text-brand-600 hover:text-brand-700"
               >
-                book a strategy call
+                book a 15-minute fit call
               </a>
             </p>
           </div>

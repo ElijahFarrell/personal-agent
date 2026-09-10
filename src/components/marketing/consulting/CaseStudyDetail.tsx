@@ -3,6 +3,7 @@ import { ArrowUpRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ArchitectureDiagram } from '@/components/marketing/consulting/WorkflowDiagram'
 import { WorkflowDiagram } from '@/components/marketing/consulting/WorkflowDiagram'
+import { EvidenceBadge } from '@/components/marketing/consulting/EvidenceBadge'
 import type { CaseStudy } from '@/lib/marketing/case-studies'
 import { serviceDetails } from '@/lib/marketing/consulting-copy'
 
@@ -83,6 +84,9 @@ export function CaseStudyDetail({ study }: CaseStudyDetailProps) {
                 <p className="font-display text-3xl tabular-nums text-foreground">
                   {m.value}
                 </p>
+                <p className="mt-1">
+                  <EvidenceBadge status={m.status} />
+                </p>
                 <p className="mt-1 text-xs text-muted-foreground">{m.label}</p>
               </div>
             ))}
@@ -113,6 +117,38 @@ export function CaseStudyDetail({ study }: CaseStudyDetailProps) {
               after={after}
               className="mt-6"
             />
+          </div>
+
+          <div>
+            <h2 className="font-display text-2xl text-foreground">Evidence</h2>
+            <dl className="mt-4 space-y-3 text-sm">
+              <div>
+                <dt className="text-foreground">Status</dt>
+                <dd className="mt-1 text-muted-foreground">
+                  <EvidenceBadge status={study.evidence.status} />
+                </dd>
+              </div>
+              <div>
+                <dt className="text-foreground">Window</dt>
+                <dd className="mt-1 text-muted-foreground">{study.evidence.window}</dd>
+              </div>
+              <div>
+                <dt className="text-foreground">Baseline</dt>
+                <dd className="mt-1 text-muted-foreground">{study.evidence.baseline}</dd>
+              </div>
+              <div>
+                <dt className="text-foreground">Method</dt>
+                <dd className="mt-1 text-muted-foreground">{study.evidence.method}</dd>
+              </div>
+              {study.evidence.attribution ? (
+                <div>
+                  <dt className="text-foreground">Attribution</dt>
+                  <dd className="mt-1 text-muted-foreground">
+                    {study.evidence.attribution}
+                  </dd>
+                </div>
+              ) : null}
+            </dl>
           </div>
 
           <div>

@@ -121,3 +121,112 @@ export function faqPageSchema(
     })),
   }
 }
+
+export function breadcrumbSchema(
+  items: ReadonlyArray<{ name: string; path: string }>
+): JsonLd {
+  const url = getMarketingSiteUrl()
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: items.map((item, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: item.name,
+      item: item.path === '/' ? `${url}/` : `${url}${item.path}`,
+    })),
+  }
+}
+
+export function aboutPageSchema(): JsonLd {
+  const url = getMarketingSiteUrl()
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'AboutPage',
+    name: 'About Shiloh',
+    url: `${url}/about`,
+    description:
+      'Engineering-led AI consulting from Amazon and Microsoft backgrounds — audit, build, train, and hand off production systems.',
+    mainEntity: {
+      '@type': 'Organization',
+      name: 'Shiloh',
+      url,
+    },
+  }
+}
+
+export function serviceCatalogSchema(): JsonLd {
+  const url = getMarketingSiteUrl()
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Service',
+    name: 'AI consulting and implementation',
+    url: `${url}/services`,
+    provider: {
+      '@type': 'Organization',
+      name: 'Shiloh',
+      url,
+    },
+    serviceType: 'AI readiness audits, RAG systems, workflow automation, voice agents, fractional advisory',
+    areaServed: 'US',
+    offers: {
+      '@type': 'AggregateOffer',
+      priceCurrency: 'USD',
+      lowPrice: '2500',
+      highPrice: '30000',
+      description: 'Fixed-fee engagements scoped before kickoff',
+    },
+  }
+}
+
+export function articleSchema(opts: {
+  title: string
+  description: string
+  path: string
+  datePublished: string
+}): JsonLd {
+  const url = getMarketingSiteUrl()
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: opts.title,
+    description: opts.description,
+    datePublished: opts.datePublished,
+    author: {
+      '@type': 'Organization',
+      name: 'Shiloh',
+      url,
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Shiloh',
+      url,
+    },
+    mainEntityOfPage: `${url}${opts.path}`,
+  }
+}
+
+export function caseStudySchema(opts: {
+  headline: string
+  summary: string
+  slug: string
+}): JsonLd {
+  const url = getMarketingSiteUrl()
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: opts.headline,
+    description: opts.summary,
+    author: {
+      '@type': 'Organization',
+      name: 'Shiloh',
+      url,
+    },
+    mainEntityOfPage: `${url}/work/${opts.slug}`,
+    about: {
+      '@type': 'ProfessionalService',
+      name: 'Shiloh — AI Consulting',
+      url,
+    },
+  }
+}

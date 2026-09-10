@@ -101,10 +101,22 @@ export function AuditReportDashboard({
         <li>A prioritized action plan you can start immediately</li>
       </ul>
 
+      <div className="mx-auto max-w-xl space-y-3 text-left text-sm text-muted-foreground">
+        <p className="font-medium text-foreground">What happens next</p>
+        <ol className="list-decimal space-y-2 pl-5">
+          <li>Read the report. If nothing is worth building, stop here.</li>
+          <li>Book a 15-minute fit call if you want a human read on the findings.</li>
+          <li>
+            If the economics justify it, we scope a paid AI Readiness Audit
+            ($2,500–$5,000) — not a build yet.
+          </li>
+        </ol>
+      </div>
+
       <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
         <Button
           size="lg"
-          className="h-12 rounded-full bg-brand-600 px-8 text-background hover:bg-brand-700"
+          className="h-12 rounded-md bg-brand-600 px-8 text-background hover:bg-brand-700"
           asChild
         >
           <a href={reportUrl} target="_blank" rel="noopener noreferrer">
@@ -114,11 +126,11 @@ export function AuditReportDashboard({
         <Button
           size="lg"
           variant="outline"
-          className="h-12 rounded-full border-border px-8"
+          className="h-12 rounded-md border-border px-8"
           asChild
         >
           <a href={book} target="_blank" rel="noopener noreferrer">
-            Book a call
+            Book a 15-minute fit call
             <ExternalLink className="h-4 w-4" />
           </a>
         </Button>

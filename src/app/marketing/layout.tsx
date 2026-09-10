@@ -1,9 +1,16 @@
+import type { Metadata } from 'next'
 import { Space_Grotesk, Figtree } from 'next/font/google'
 import { GeistMono } from 'geist/font/mono'
+import { CampaignCapture } from '@/components/marketing/CampaignCapture'
 import { MarketingBackground } from '@/components/marketing/MarketingBackground'
 import { MarketingFooter } from '@/components/marketing/MarketingFooter'
 import { MarketingNavbar } from '@/components/marketing/MarketingNavbar'
+import { getMarketingSiteUrl } from '@/lib/marketing/site'
 import '@/styles/marketing-theme.css'
+
+export const metadata: Metadata = {
+  metadataBase: new URL(getMarketingSiteUrl()),
+}
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
@@ -35,6 +42,7 @@ export default function MarketingLayout({
       >
         Skip to main content
       </a>
+      <CampaignCapture />
       <MarketingBackground />
       <MarketingNavbar />
       <main id="main-content" className="relative z-10">

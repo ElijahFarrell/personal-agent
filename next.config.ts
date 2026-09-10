@@ -35,6 +35,16 @@ const nextConfig: NextConfig = {
         destination: '/work/real-estate-crm-and-voice',
         permanent: true,
       },
+      {
+        source: '/blog/geo-for-b2b-ai-products',
+        destination: '/blog/ai-readiness-audit-process-cost',
+        permanent: true,
+      },
+      {
+        source: '/blog/ai-lead-qualification-real-estate',
+        destination: '/blog/grant-writing-ai-workflow',
+        permanent: true,
+      },
     ]
   },
   serverExternalPackages: [

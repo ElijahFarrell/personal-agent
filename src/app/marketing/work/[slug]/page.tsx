@@ -3,10 +3,12 @@ import { notFound } from 'next/navigation'
 import { CaseStudyDetail } from '@/components/marketing/consulting/CaseStudyDetail'
 import {
   ascHealthcareServiceSchema,
+  breadcrumbSchema,
+  caseStudySchema,
   StructuredData,
 } from '@/components/marketing/StructuredData'
 import { getAllCaseStudySlugs, getCaseStudy } from '@/lib/marketing/case-studies'
-import { getMarketingSiteUrl } from '@/lib/marketing/site'
+import { marketingMetadata } from '@/lib/marketing/seo'
 
 type PageProps = {
   params: Promise<{ slug: string }>
@@ -23,15 +25,12 @@ export async function generateMetadata({
   const study = getCaseStudy(slug)
   if (!study) return { title: 'Case study not found' }
 
-  return {
+  return marketingMetadata({
     title: study.headline,
     description: study.summary,
-    openGraph: {
-      title: `${study.headline} · Shiloh`,
-      description: study.summary,
-      url: `${getMarketingSiteUrl()}/work/${slug}`,
-    },
-  }
+    path: `/work/${slug}`,
+    ogTitle: `${study.headline} · Shiloh`,
+  })
 }
 
 export default async function CaseStudyPage({ params }: PageProps) {
@@ -40,12 +39,23 @@ export default async function CaseStudyPage({ params }: PageProps) {
   if (!study) notFound()
 
   const isHealthcare = slug === 'surgery-center-voice-agent'
+  const schemas = [
+    caseStudySchema({
+      headline: study.headline,
+      summary: study.summary,
+      slug,
+    }),
+    breadcrumbSchema([
+      { name: 'Home', path: '/' },
+      { name: 'Work', path: '/work' },
+      { name: study.headline, path: `/work/${slug}` },
+    ]),
+    ...(isHealthcare ? [ascHealthcareServiceSchema()] : []),
+  ]
 
   return (
     <>
-      {isHealthcare ? (
-        <StructuredData data={ascHealthcareServiceSchema()} />
-      ) : null}
+      <StructuredData data={schemas} />
       <CaseStudyDetail study={study} />
     </>
   )

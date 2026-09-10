@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { ConversionPath } from '@/components/marketing/consulting/ConversionPath'
 import { ConsultingHero } from '@/components/marketing/consulting/ConsultingHero'
 import { EditorialTestimonial } from '@/components/marketing/consulting/EditorialTestimonial'
 import { EngagementProcess } from '@/components/marketing/consulting/EngagementProcess'
@@ -15,19 +16,14 @@ import {
   StructuredData,
 } from '@/components/marketing/StructuredData'
 import { homeFaq, siteMeta } from '@/lib/marketing/consulting-copy'
-import { getMarketingSiteUrl } from '@/lib/marketing/site'
+import { marketingMetadata } from '@/lib/marketing/seo'
 
 export const metadata: Metadata = {
-  title: siteMeta.title,
-  description: siteMeta.description,
-  openGraph: {
+  ...marketingMetadata({
     title: siteMeta.title,
     description: siteMeta.description,
-    url: getMarketingSiteUrl(),
-    siteName: 'Shiloh',
-    locale: 'en_US',
-    type: 'website',
-  },
+    path: '/',
+  }),
   twitter: {
     card: 'summary_large_image',
     title: siteMeta.title,
@@ -47,6 +43,7 @@ export default function MarketingHomePage() {
       />
       <article>
         <ConsultingHero />
+        <ConversionPath compact />
         <OutcomesProofStrip />
         <EngagementProcess />
         <ServicesTeaser />

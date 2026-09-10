@@ -14,10 +14,11 @@ export const heroCopy = {
   eyebrow: 'AI CONSULTING — AUDIT → BUILD → TRAIN',
   title: 'Find out where AI actually saves your business time and money.',
   subtitle:
-    'Take the free AI audit: answer a few questions about how your team works, get a personalized report of your highest-ROI automation opportunities — then, if it makes sense, Shiloh builds it with you.',
+    'Take the free diagnostic: answer a few questions about how your team works, get a personalized report of your highest-ROI automation opportunities — then choose no build, a paid readiness audit, or a scoped implementation.',
   trustLine:
     'Software engineer at Amazon, ex-Microsoft · systems shipped across nonprofits, real estate, education & finance',
-  footnote: '~5 minutes · No credit card · Report in your inbox',
+  footnote:
+    'Free diagnostic → optional 15-min fit call → paid readiness audit → fixed-fee build. ~5 minutes · No credit card.',
 } as const
 
 export function heroCtas(): {
@@ -26,7 +27,7 @@ export function heroCtas(): {
 } {
   return {
     primaryCta: { label: 'Start the free AI audit', href: '/audit' },
-    secondaryCta: { label: 'Book a strategy call', href: bookCallUrl() },
+    secondaryCta: { label: 'Book a 15-minute fit call', href: bookCallUrl() },
   }
 }
 
@@ -34,6 +35,7 @@ export type OutcomeMetric = {
   value: string
   label: string
   href: string
+  status: 'measured' | 'projected' | 'observed'
 }
 
 export const outcomeMetrics: readonly OutcomeMetric[] = [
@@ -41,26 +43,30 @@ export const outcomeMetrics: readonly OutcomeMetric[] = [
     value: '10+ hrs',
     label: 'saved per grant submission',
     href: '/work/grant-writing-automation',
+    status: 'measured',
   },
   {
     value: '~$13K/mo',
     label: 'added client revenue',
     href: '/work/grant-writing-automation',
+    status: 'measured',
   },
   {
     value: '25%',
     label: 'more grant submissions per month',
     href: '/work/grant-writing-automation',
+    status: 'measured',
   },
   {
     value: '$500+/mo',
     label: 'cut from a client\u2019s CRM spend',
     href: '/work/real-estate-crm-and-voice',
+    status: 'measured',
   },
 ] as const
 
 export const outcomesCaption =
-  'Real numbers from shipped client systems — details in the case studies.'
+  'Grant figures are measured from a shipped system. CRM savings are measured; voice revenue is projected. Method notes live on each case study.'
 
 export const engagementSteps = {
   heading: 'How engagements run',
@@ -69,8 +75,8 @@ export const engagementSteps = {
     {
       step: '01',
       title: 'Audit',
-      duration: '1–2 weeks',
-      body: 'We map your workflows and find the highest-ROI opportunity. You get a prioritized roadmap with honest build-vs-buy calls — even if the answer is \u201cdon\u2019t build anything yet.\u201d',
+      duration: 'Free diagnostic, then optional paid readiness audit',
+      body: 'Start with a five-minute automated report. If the opportunity is real, a paid AI Readiness Audit maps workflows, ranks ROI, and makes an honest build-versus-buy call — including “don’t build anything yet.”',
     },
     {
       step: '02',
@@ -189,6 +195,16 @@ export type FaqItem = { question: string; answer: string }
 
 export const homeFaq: readonly FaqItem[] = [
   {
+    question: 'What happens after the free audit report?',
+    answer:
+      'You get a personalized diagnostic in your inbox. From there you can stop, book a 15-minute fit call, or move into a paid AI Readiness Audit ($2,500–$5,000) if the economics justify a deeper roadmap. A build is optional and scoped as a separate fixed-fee engagement.',
+  },
+  {
+    question: 'How is the free audit different from the paid AI Readiness Audit?',
+    answer:
+      'The free audit is a five-minute questionnaire that produces an automated report of likely opportunities. The paid readiness audit is a 1–2 week engagement: stakeholder interviews, workflow mapping, build-versus-buy calls, and a written roadmap with cost and timeline. The free report is a diagnostic, not a substitute for that work.',
+  },
+  {
     question: 'What does the audit actually include?',
     answer:
       'A guided questionnaire about your workflows, tools, and pain points — followed by a personalized report with your top automation opportunities, estimated time savings, and a prioritized action plan. It takes about 5 minutes and costs nothing.',
@@ -223,10 +239,120 @@ export const homeFaq: readonly FaqItem[] = [
 export const ctaCopy = {
   heading: 'Find your highest-ROI AI opportunity.',
   subheading:
-    'Take the free audit — personalized opportunities, estimated time savings, and a clear action plan in your inbox.',
+    'Start with the free diagnostic. Use the report to choose no build, a paid readiness audit, or a scoped implementation.',
   primaryLabel: 'Start the free AI audit',
-  secondaryLabel: 'Book a 15-minute strategy call',
+  secondaryLabel: 'Book a 15-minute fit call',
 } as const
+
+export const conversionPath = {
+  eyebrow: 'The path',
+  heading: 'From free diagnostic to a shipped system',
+  subheading:
+    'The free audit is a report, not a paid engagement. Here is the full progression so you know what you are starting.',
+  steps: [
+    {
+      step: '01',
+      title: 'Free diagnostic',
+      detail: '~5 minutes · automated report in your inbox',
+    },
+    {
+      step: '02',
+      title: 'Optional 15-minute fit call',
+      detail: 'No hard sell — confirm whether a deeper audit is worth it',
+    },
+    {
+      step: '03',
+      title: 'Paid AI Readiness Audit',
+      detail: '$2,500–$5,000 · 1–2 weeks · interviews, ROI ranking, written roadmap',
+    },
+    {
+      step: '04',
+      title: 'Fixed-fee build',
+      detail: 'Only if the audit says ship — weekly working software',
+    },
+    {
+      step: '05',
+      title: 'Train and hand off',
+      detail: 'Your team runs it. Advisory retainer is optional.',
+    },
+  ] as const,
+} as const
+
+export const freeVsPaid = {
+  heading: 'Free diagnostic vs paid readiness audit',
+  rows: [
+    {
+      label: 'What you get',
+      free: 'Automated report of likely opportunities, time-savings ranges, and a first action plan',
+      paid: 'Stakeholder interviews, workflow map, top-3 ROI ranking, build-versus-buy calls, written roadmap with cost and timeline',
+    },
+    {
+      label: 'Time',
+      free: 'About 5 minutes',
+      paid: '1–2 weeks',
+    },
+    {
+      label: 'Price',
+      free: '$0 · no credit card',
+      paid: '$2,500–$5,000, scoped before kickoff',
+    },
+    {
+      label: 'Who it is for',
+      free: 'Operators who want a first pass before spending time or budget',
+      paid: 'Teams ready to pick a workflow and decide whether to build',
+    },
+    {
+      label: 'What it is not',
+      free: 'Not interviews, not a custom architecture, not a commitment to build',
+      paid: 'Not an implementation. A build is a separate fixed-fee engagement.',
+    },
+  ] as const,
+} as const
+
+export const auditFit = {
+  heading: 'A fit if',
+  items: [
+    'You own or can change a repetitive, costly workflow',
+    'You can describe how the work happens today — tools, handoffs, and pain',
+    'You want an honest build-versus-buy call, including “do not build yet”',
+  ] as const,
+  notHeading: 'Not a fit if',
+  notItems: [
+    'You need a same-week custom build with no discovery',
+    'You want a generic chatbot with no workflow ownership',
+    'You cannot share how the process actually runs',
+  ] as const,
+} as const
+
+export const auditInputs = {
+  heading: 'What we need from you',
+  items: [
+    'Name, email, role, team size, and industry',
+    'The work that eats the most hours each week',
+    'The tools you already use — and what happens outside them',
+    'The one outcome you would hand to AI in the next 30 days',
+  ] as const,
+  privacy:
+    'We use your answers to generate the report and follow up if you ask us to. See the privacy policy for how that data is handled.',
+} as const
+
+export const auditFaq: readonly FaqItem[] = [
+  {
+    question: 'Is the free audit really free?',
+    answer:
+      'Yes. The automated report costs nothing and takes about five minutes. The paid AI Readiness Audit is a separate 1–2 week engagement.',
+  },
+  {
+    question: 'Will you sell me a build no matter what the report says?',
+    answer:
+      'No. The diagnostic exists to find the one workflow where AI pays off — or to tell you not to build yet. A paid audit and a build are optional next steps.',
+  },
+  {
+    question: 'What if I already know I want a build?',
+    answer:
+      'Start with the free report anyway so we share the same picture. If the economics are obvious, book a fit call and we can scope a readiness audit or a fixed-fee build from there.',
+  },
+] as const
 
 export const servicesPage = {
   title: 'Services',
@@ -244,6 +370,8 @@ export type ServiceDetail = {
   priceRange: string
   timeline: string
   proofSlug?: string
+  guideHref?: string
+  guideLabel?: string
 }
 
 export const serviceDetails: readonly ServiceDetail[] = [
@@ -262,6 +390,8 @@ export const serviceDetails: readonly ServiceDetail[] = [
     priceRange: '$2,500–$5,000',
     timeline: '1–2 weeks',
     proofSlug: 'amazon-ai-audit',
+    guideHref: '/blog/ai-readiness-audit-process-cost',
+    guideLabel: 'Process, deliverables, and cost',
   },
   {
     id: 'rag',
@@ -294,6 +424,8 @@ export const serviceDetails: readonly ServiceDetail[] = [
     priceRange: '$8,000–$25,000',
     timeline: '6–8 weeks',
     proofSlug: 'grant-writing-automation',
+    guideHref: '/blog/grant-writing-ai-workflow',
+    guideLabel: 'Grant writing workflow (measured)',
   },
   {
     id: 'voice',

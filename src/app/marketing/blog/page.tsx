@@ -1,22 +1,30 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { getMarketingSiteUrl } from '@/lib/marketing/site'
+import {
+  breadcrumbSchema,
+  StructuredData,
+} from '@/components/marketing/StructuredData'
+import { marketingMetadata } from '@/lib/marketing/seo'
 import { BLOG_POSTS } from './posts'
 
-export const metadata: Metadata = {
+export const metadata: Metadata = marketingMetadata({
   title: 'Blog',
   description:
-    'Guides and updates from Shiloh — AI consulting, production systems, GEO, and automation.',
-  openGraph: {
-    title: 'Blog · Shiloh',
-    url: `${getMarketingSiteUrl()}/blog`,
-  },
-}
+    'Decision-grade notes on AI audits, production workflows, and how Shiloh scopes fixed-fee work.',
+  path: '/blog',
+  ogTitle: 'Blog · Shiloh',
+})
 
 export default function BlogIndexPage() {
   return (
     <article className="mx-auto max-w-4xl px-4 pb-20 pt-12 sm:px-6 sm:pt-16">
+      <StructuredData
+        data={breadcrumbSchema([
+          { name: 'Home', path: '/' },
+          { name: 'Blog', path: '/blog' },
+        ])}
+      />
       <header className="text-center">
         <p className="font-mono-accent text-brand-600">
           Insights on AI consulting and production systems
@@ -25,7 +33,7 @@ export default function BlogIndexPage() {
           Blog
         </h1>
         <p className="mt-4 text-muted-foreground">
-          Architecture decisions, before/after stories, and honest consulting notes.
+          Decision-grade answers on the audit, cost, and workflows we have actually shipped.
         </p>
       </header>
       <ul className="mt-12 grid gap-4 sm:grid-cols-2">
