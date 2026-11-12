@@ -45,7 +45,7 @@ function buildAuditEmailHtml(opts: {
 // ─── Lead notification ────────────────────────────────────────────────────────
 
 const LEAD_NOTIFY_TO =
-  process.env.LEAD_NOTIFY_EMAIL ?? 'elijah@shiloh.sh'
+  process.env.LEAD_NOTIFY_EMAIL ?? 'you@example.com'
 
 function buildLeadNotificationHtml(opts: {
   name?: string

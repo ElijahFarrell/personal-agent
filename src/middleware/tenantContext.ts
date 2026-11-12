@@ -13,6 +13,39 @@ import {
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
 
+/** Thrown when Clerk is configured and the request has no signed-in user. */
+export class UnauthenticatedError extends Error {
+  readonly status = 401
+
+  constructor() {
+    super('Unauthorized')
+    this.name = 'UnauthenticatedError'
+  }
+}
+
+export function httpStatusForError(error: unknown, fallback = 500): number {
+  return error instanceof UnauthenticatedError ? 401 : fallback
+}
+
+/**
+ * Read the Clerk session.
+ * Returns null when Clerk is not configured (local personal mode).
+ * Throws {@link UnauthenticatedError} when Clerk is configured and nobody is signed in.
+ */
+export async function readClerkSession(): Promise<{
+  userId: string
+  orgId: string | null
+} | null> {
+  try {
+    const { userId, orgId } = await auth()
+    if (!userId) throw new UnauthenticatedError()
+    return { userId, orgId: orgId ?? null }
+  } catch (error) {
+    if (error instanceof UnauthenticatedError) throw error
+    return null
+  }
+}
+
 /** Default personal-use context (no Clerk required for Telegram personal mode). */
 export const PERSONAL_CONTEXT: TenantContext = {
   tenantId: 'personal',
@@ -75,15 +108,18 @@ async function resolveConfig(
 
 /**
  * Extract tenant context from an authenticated Clerk session.
- * Falls back to personal context if Clerk is not configured.
+ * Falls back to personal context only when Clerk itself is not configured.
+ * A configured Clerk app with no session throws {@link UnauthenticatedError}
+ * so API routes do not run tools as TELEGRAM_OWNER_ID.
  */
 export async function getTenantContext(): Promise<TenantContext> {
+  const session = await readClerkSession()
+  if (!session) return PERSONAL_CONTEXT
+
+  const { userId, orgId } = session
+  const tenantKey = orgId ?? userId
+
   try {
-    const { userId, orgId } = await auth()
-
-    if (!userId) return PERSONAL_CONTEXT
-
-    const tenantKey = orgId ?? userId
     const tenant = await convex.query(api.tenants.getTenantByClerkOrgId, {
       clerkOrgId: tenantKey,
     })
@@ -109,7 +145,15 @@ export async function getTenantContext(): Promise<TenantContext> {
       config,
     }
   } catch {
-    return PERSONAL_CONTEXT
+    const resolved = resolvePlatformConfig(
+      accessContextFromTenantRow(userId, tenantKey, DEFAULT_CONFIG)
+    )
+    return {
+      tenantId: tenantKey,
+      userId,
+      tier: 'free',
+      config: tenantConfigForResolvedGates(DEFAULT_CONFIG, resolved),
+    }
   }
 }
 

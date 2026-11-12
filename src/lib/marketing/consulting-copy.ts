@@ -148,7 +148,7 @@ export const featuredCaseStudy = {
   testimonial: {
     quote:
       'From day one, the engineering lead brought genuine passion and focus to our project. They quickly picked up the technical requirements and took full ownership of the project\u2019s development — standing out for quality of work and thoughtful customer interactions.',
-    attribution: 'Cyborg Mobile team',
+    attribution: 'Nonprofit client',
   },
   slug: 'grant-writing-automation',
 } as const
@@ -156,7 +156,7 @@ export const featuredCaseStudy = {
 export const editorialTestimonial = {
   quote:
     'From day one, the engineering lead brought genuine passion and focus to our project. They quickly picked up the technical requirements and took full ownership of the project\u2019s development — standing out for quality of work, thoughtful customer interactions, and real impact on our client\u2019s outcomes.',
-  attribution: 'Cyborg Mobile team',
+  attribution: 'Nonprofit client',
   project: 'AI-powered grant writing system for nonprofits',
 } as const
 
@@ -172,7 +172,7 @@ export const founderAbout = {
   lead: 'Engineering-led AI consulting from a team with Amazon and Microsoft backgrounds — we help businesses ship production AI, not slide decks.',
   story: [
     'Shiloh started from the same builder mindset that powers big-tech engineering: ship real systems, measure outcomes, and hand off something your team can run.',
-    'Our team has shipped AI into Microsoft Teams — real-time audio quality monitoring at production scale — and run internal AI audits at a Fortune 10 company: stakeholder interviews, prioritized roadmaps, and working POCs.',
+    'Our team has shipped AI into Microsoft Teams — real-time audio quality monitoring at production scale — and uses the same audit method with clients: stakeholder interviews, prioritized roadmaps, and working POCs.',
     'On client engagements, Shiloh has built grant automation that cut 10+ hours per submission, CRM migrations that saved $500+/month, voice agents that reactivate dormant leads, and RAG tutors that give students 24/7 access to course material.',
   ],
   philosophy:
@@ -261,7 +261,7 @@ export const serviceDetails: readonly ServiceDetail[] = [
     architecture: ['Interviews', 'Workflow map', 'ROI model', 'Roadmap doc'],
     priceRange: '$2,500–$5,000',
     timeline: '1–2 weeks',
-    proofSlug: 'amazon-ai-audit',
+    proofSlug: 'enterprise-ai-audit',
   },
   {
     id: 'rag',

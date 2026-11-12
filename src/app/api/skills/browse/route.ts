@@ -1,4 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
+import {
+  readClerkSession,
+  UnauthenticatedError,
+} from '@/middleware/tenantContext'
 
 interface SkillsShEntry {
   name: string
@@ -18,6 +22,15 @@ interface SkillsShEntry {
  */
 export async function GET(request: NextRequest) {
   try {
+    try {
+      await readClerkSession()
+    } catch (error) {
+      if (error instanceof UnauthenticatedError) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+      throw error
+    }
+
     const { searchParams } = new URL(request.url)
     const query = searchParams.get('q') || ''
     const page = parseInt(searchParams.get('page') || '1', 10)

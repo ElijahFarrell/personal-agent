@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { ConvexHttpClient } from 'convex/browser'
-import { getTenantContext } from '@/middleware/tenantContext'
+import { getTenantContext, httpStatusForError } from '@/middleware/tenantContext'
 import { api } from '@convex/_generated/api'
 import type { Id } from '@convex/_generated/dataModel'
 import { sendDM as sendLinkedInDM } from '@/services/linkedinService'
@@ -33,6 +33,16 @@ export async function POST(req: NextRequest) {
         { error: `Draft must be approved before sending (current: ${draft.status})` },
         { status: 400 }
       )
+    }
+
+    const dbUser = await convex.query(api.users.getUserByClerkUserId, {
+      clerkUserId: tenantCtx.userId,
+    })
+    if (!dbUser) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    if (draft.tenantId !== dbUser.tenantId) {
+      return NextResponse.json({ error: 'Draft not found' }, { status: 404 })
     }
 
     const prospect = await convex.query(api.prospects.getProspect, {
@@ -105,6 +115,6 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error('[Draft Send] Error:', error)
     const message = error instanceof Error ? error.message : 'Internal server error'
-    return NextResponse.json({ error: message }, { status: 500 })
+    return NextResponse.json({ error: message }, { status: httpStatusForError(error) })
   }
 }

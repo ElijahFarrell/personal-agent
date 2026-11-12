@@ -232,17 +232,17 @@ const chunks: MarketingChunk[] = [
 
   {
     id: 'testimonial-cyborg',
-    title: 'Testimonial: Cyborg Mobile',
+    title: 'Testimonial: Nonprofit client',
     content:
-      'Cyborg Mobile: "From day one, the engineering lead brought genuine passion and focus to our project. They quickly picked up the technical requirements and took full ownership of the project\'s development." Project: AI-powered grant writing system for nonprofits. Results: 10+ hours saved per submission, 25%+ increase in grant submission velocity, expanded capacity without adding staff.',
+      'Nonprofit client: "From day one, the engineering lead brought genuine passion and focus to our project. They quickly picked up the technical requirements and took full ownership of the project\'s development." Project: AI-powered grant writing system for nonprofits. Results: 10+ hours saved per submission, 25%+ increase in grant submission velocity, expanded capacity without adding staff.',
     category: 'social-proof',
     sourceFile: 'copy.ts',
   },
   {
     id: 'testimonial-223',
-    title: 'Testimonial: 223 HomeBuyers LLC',
+    title: 'Testimonial: Wholesale real estate client',
     content:
-      '223 HomeBuyers LLC: "We went from a bloated CRM costing us thousands to a custom system that actually fits how we work — and now AI handles our lead follow-up automatically." Results: $500+/mo saved on CRM costs, AI Lead Manager projected to save $1,600/mo and unlock $8K–$50K in additional revenue.',
+      'Wholesale real estate client: "We went from a bloated CRM costing us thousands to a custom system that actually fits how we work — and now AI handles our lead follow-up automatically." Results: $500+/mo saved on CRM costs, AI Lead Manager projected to save $1,600/mo and unlock $8K–$50K in additional revenue.',
     category: 'social-proof',
     sourceFile: 'copy.ts',
   },

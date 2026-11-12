@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { ConvexHttpClient } from 'convex/browser'
-import { getTenantContext } from '@/middleware/tenantContext'
+import { getTenantContext, httpStatusForError } from '@/middleware/tenantContext'
 import { api } from '@convex/_generated/api'
 import type { Id } from '@convex/_generated/dataModel'
 
@@ -12,7 +12,7 @@ const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
  */
 export async function POST(req: NextRequest) {
   try {
-    await getTenantContext()
+    const { userId } = await getTenantContext()
 
     const { draftId } = (await req.json()) as { draftId?: string }
     if (!draftId) {
@@ -23,6 +23,16 @@ export async function POST(req: NextRequest) {
       draftId: draftId as Id<'outreachDrafts'>,
     })
     if (!draft) {
+      return NextResponse.json({ error: 'Draft not found' }, { status: 404 })
+    }
+
+    const dbUser = await convex.query(api.users.getUserByClerkUserId, {
+      clerkUserId: userId,
+    })
+    if (!dbUser) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    if (draft.tenantId !== dbUser.tenantId) {
       return NextResponse.json({ error: 'Draft not found' }, { status: 404 })
     }
 
@@ -40,6 +50,6 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error('[Draft Approve] Error:', error)
     const message = error instanceof Error ? error.message : 'Internal server error'
-    return NextResponse.json({ error: message }, { status: 500 })
+    return NextResponse.json({ error: message }, { status: httpStatusForError(error) })
   }
 }

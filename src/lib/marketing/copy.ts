@@ -26,10 +26,10 @@ export const testimonialsSubhead =
 
 export const testimonials: readonly TestimonialItem[] = [
   {
-    id: 'cyborg-mobile',
+    id: 'nonprofit-client',
     quote:
       'From day one, the engineering lead brought genuine passion and focus to our project. They quickly picked up the technical requirements and took full ownership of the project\u2019s development — standing out for quality of work, thoughtful customer interactions, and real impact.',
-    attribution: 'Cyborg Mobile team',
+    attribution: 'Nonprofit client',
     project: 'AI-powered grant writing system for nonprofits',
     results: [
       '10+ hours saved per submission',
@@ -37,19 +37,19 @@ export const testimonials: readonly TestimonialItem[] = [
       'Expanded capacity without adding staff',
     ],
     isParaphrase: false,
-    reviewAuthorOrg: 'Cyborg Mobile',
+    reviewAuthorOrg: 'Nonprofit client',
   },
   {
-    id: '223-homebuyers',
+    id: 'wholesale-real-estate-client',
     quote:
       'We went from a bloated CRM costing us thousands to a custom system that actually fits how we work — and now AI handles our lead follow-up automatically.',
-    attribution: '223 HomeBuyers LLC',
+    attribution: 'Wholesale real estate client',
     results: [
       '$500+/mo saved on CRM costs',
       'AI Lead Manager projected to save $1,600/mo and unlock $8K–$50K in additional revenue',
     ],
     isParaphrase: true,
-    reviewAuthorOrg: '223 HomeBuyers LLC',
+    reviewAuthorOrg: 'Wholesale real estate client',
   },
   {
     id: 'surgery-center',
@@ -123,7 +123,7 @@ export const founderAbout = {
   microsoft:
     'The Shiloh team includes engineers who implemented AI into Microsoft Teams — building real-time audio quality monitoring features used at scale.',
   fortune10:
-    'At a Fortune 10 technology company, our team ran an internal AI audit: interviewed product managers, compiled research, presented to senior engineers, and built the POC and roadmap for AI implementation.',
+    'Former software engineer at a Fortune 10 technology company, shipping production systems for real customers.',
   sideProjectsIntro:
     'On the side, he started building AI systems for businesses — and the results spoke for themselves:',
   bullets: [

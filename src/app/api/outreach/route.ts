@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getTenantContext } from '@/middleware/tenantContext'
+import { getTenantContext, httpStatusForError } from '@/middleware/tenantContext'
 import { executeOutreachCampaign } from '@/mastra/workflows/outreachCampaign'
 import type { OutreachTarget } from '@/mastra/workflows/outreachCampaign'
 
@@ -49,6 +49,6 @@ export async function POST(req: NextRequest) {
     console.error('[Outreach API] Error:', error)
     const message =
       error instanceof Error ? error.message : 'Internal server error'
-    return NextResponse.json({ error: message }, { status: 500 })
+    return NextResponse.json({ error: message }, { status: httpStatusForError(error) })
   }
 }

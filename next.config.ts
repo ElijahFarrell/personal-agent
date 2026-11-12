@@ -35,6 +35,11 @@ const nextConfig: NextConfig = {
         destination: '/work/real-estate-crm-and-voice',
         permanent: true,
       },
+      {
+        source: '/work/amazon-ai-audit',
+        destination: '/work/enterprise-ai-audit',
+        permanent: true,
+      },
     ]
   },
   serverExternalPackages: [
