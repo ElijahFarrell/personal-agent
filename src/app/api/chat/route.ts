@@ -3,7 +3,7 @@ import { after } from 'next/server'
 import { toAISdkStream } from '@mastra/ai-sdk'
 import { createUIMessageStream, createUIMessageStreamResponse } from 'ai'
 import { ConvexHttpClient } from 'convex/browser'
-import { getTenantContext } from '@/middleware/tenantContext'
+import { getTenantContext, httpStatusForError } from '@/middleware/tenantContext'
 import { api } from '@convex/_generated/api'
 import type { Id } from '@convex/_generated/dataModel'
 import { CHAT_ROLES, CHAT_SOURCES } from '@/constants/chat'
@@ -370,7 +370,7 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error('[Chat API] Error:', error)
     const msg = error instanceof Error ? error.message : 'Internal server error'
-    return NextResponse.json({ error: msg }, { status: 500 })
+    return NextResponse.json({ error: msg }, { status: httpStatusForError(error) })
   }
 }
 
@@ -416,6 +416,6 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     console.error('[Chat API] Observe error:', error)
     const msg = error instanceof Error ? error.message : 'Internal server error'
-    return NextResponse.json({ error: msg }, { status: 500 })
+    return NextResponse.json({ error: msg }, { status: httpStatusForError(error) })
   }
 }

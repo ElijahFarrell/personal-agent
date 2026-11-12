@@ -29,7 +29,7 @@ export const testimonials: readonly TestimonialItem[] = [
     id: 'nonprofit-client',
     quote:
       'From day one, the engineering lead brought genuine passion and focus to our project. They quickly picked up the technical requirements and took full ownership of the project\u2019s development — standing out for quality of work, thoughtful customer interactions, and real impact.',
-    attribution: 'Nonprofit client team',
+    attribution: 'Nonprofit client',
     project: 'AI-powered grant writing system for nonprofits',
     results: [
       '10+ hours saved per submission',
@@ -123,7 +123,7 @@ export const founderAbout = {
   microsoft:
     'The Shiloh team includes engineers who implemented AI into Microsoft Teams — building real-time audio quality monitoring features used at scale.',
   fortune10:
-    'At a Fortune 10 technology company, our team ran an internal AI audit: interviewed product managers, compiled research, presented to senior engineers, and built the POC and roadmap for AI implementation.',
+    'Former software engineer at a Fortune 10 technology company, shipping production systems for real customers.',
   sideProjectsIntro:
     'On the side, he started building AI systems for businesses — and the results spoke for themselves:',
   bullets: [

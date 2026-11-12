@@ -13,9 +13,22 @@ function escapeHtml(s: string): string {
     .replace(/"/g, '&quot;')
 }
 
+/** Drop raw HTML from model markdown before it is interpolated into the page. */
+function stripRawHtml(markdown: string): string {
+  return markdown.replace(/<\/?[a-zA-Z!][^>\n]*>/g, '')
+}
+
+function neutralizeScriptableUrls(html: string): string {
+  return html.replace(
+    /\s(href|src)\s*=\s*(['"])\s*(?:javascript|data):[^'"]*\2/gi,
+    ' $1="#"'
+  )
+}
+
 async function markdownToHtml(md: string): Promise<string> {
-  const result = marked(md)
-  return typeof result === 'string' ? result : await result
+  const result = marked(stripRawHtml(md))
+  const html = typeof result === 'string' ? result : await result
+  return neutralizeScriptableUrls(html)
 }
 
 export async function GET(
@@ -93,6 +106,9 @@ export async function GET(
         'Content-Type': 'text/html; charset=utf-8',
         'Content-Disposition': `inline; filename="shiloh-ai-audit-${id.slice(0, 8)}.html"`,
         'Cache-Control': 'private, no-store',
+        'Content-Security-Policy':
+          "default-src 'none'; style-src 'unsafe-inline'; img-src https: data:; base-uri 'none'; form-action 'none'",
+        'X-Content-Type-Options': 'nosniff',
       },
     })
   }
@@ -134,6 +150,9 @@ export async function GET(
       'Content-Type': 'text/html; charset=utf-8',
       'Content-Disposition': `inline; filename="shiloh-ai-audit-${id.slice(0, 8)}.html"`,
       'Cache-Control': 'private, no-store',
+      'Content-Security-Policy':
+        "default-src 'none'; style-src 'unsafe-inline'; img-src https: data:; base-uri 'none'; form-action 'none'",
+      'X-Content-Type-Options': 'nosniff',
     },
   })
 }

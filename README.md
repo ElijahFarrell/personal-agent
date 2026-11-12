@@ -80,6 +80,15 @@ pnpm db:migrate   # Run DB migrations
 
 - **Production cutover and copying dev data into prod:** [docs/convex-production-migration.md](docs/convex-production-migration.md)
 
+## Security notes
+
+This repo is a personal multi-agent system, not a public multi-tenant service. Browser automation (Playwright), Composio actions (email, calendar, CRM), LinkedIn/Instagram messaging, voice calls, and cron jobs can act on real accounts once their API keys and OAuth connections are set.
+
+- Copy `.env.example` to `.env`. The example file has placeholders only. `.env` and `.env.*` are gitignored (except `.env.example`).
+- Do not deploy a fork with an open configuration. Clerk must be configured before the app is reachable on the internet. Scheduled routes (`/api/cron/execute`, `/api/cron/morning`) expect `Authorization: Bearer` with `CRON_SECRET` or `INNGEST_SIGNING_KEY`. Webhook routes should have their provider secrets set; several of them skip verification when the secret env var is empty.
+- Tool routes that call `getTenantContext()` resolve the caller with Clerk. When Clerk is configured and there is no session, those routes reject the request instead of falling back to `TELEGRAM_OWNER_ID`. Local runs without Clerk keys still use that personal fallback.
+- Convex functions in this repo do not check `ctx.auth`. The deployment URL is public by design (`NEXT_PUBLIC_CONVEX_URL`). Treat a live deployment as sensitive until authorization is added there. See the pull request notes for the rest of the review list.
+
 ## Adding a New Skill
 
 Create a `SKILL.md` file in `skills/<skillName>/`:

@@ -205,12 +205,12 @@ every AI-agency template): the nonprofit grant-writing automation.
 
 - Left: narrative — problem ("50+ page grant documents, 10+ hours per submission"),
   what was built (agentic RAG drafting pipeline), before/after workflow diagram.
-- Right: outcome card — the three big numbers + the Nonprofit client testimonial pull quote (serif, large).
+- Right: outcome card — the three big numbers + the nonprofit client testimonial pull quote (serif, large).
 - CTA link: "Read the full case study →" and "See all work →"
 
 ### 4.6 Testimonials
 
-The Nonprofit client testimonial (named, attributable) as the anchor quote; add others as they land.
+The nonprofit client testimonial as the anchor quote; add others as they land. Keep client names out of the public repo.
 One large editorial quote beats a 3-card testimonial wall — don't fake volume we don't have.
 
 ### 4.7 Founder section (compact)
@@ -245,7 +245,7 @@ case study, and an audit CTA.
 
 | Offer | Price on page | Proof link |
 |---|---|---|
-| AI Readiness Audit | $2,500–$5,000 · 1–2 weeks | Amazon audit pattern |
+| AI Readiness Audit | $2,500–$5,000 · 1–2 weeks | Enterprise audit case study |
 | Knowledge Base / RAG systems | $5,000–$15,000 | Education RAG tutor |
 | Workflow automation / agentic systems | $8,000–$25,000 | Grant automation |
 | Voice AI agents | $5,000–$15,000 + optional $500–$1,500/mo | RE lead reactivation, ASC |
@@ -264,7 +264,7 @@ Case study entries (from Notion "Past Experiences" — verify numbers with the f
 3. `real-estate-crm-and-voice` — CRM migration ($500+/mo saved) + voice lead-reactivation agent ($8K–$50K revenue potential)
 4. `financial-services-lead-bot` — Wealth group website chatbot · lead capture + CRM form integration
 5. `surgery-center-voice-agent` — Pre/post-op calling agent · voice + compliance proof (compressed from current homepage; keep HIPAA/BAA content)
-6. `enterprise-ai-audit` — internal, anonymized · the audit framework story (stakeholder interviews → prioritized roadmap → POC)
+6. `enterprise-ai-audit` — anonymized enterprise example · the audit framework story (stakeholder interviews → prioritized roadmap → POC). Do not describe an employer's internal systems.
 
 Case study page template: hero (client type + outcome headline + metric strip) → "The problem" →
 "What we built" (workflow diagram + architecture card) → "The results" (numbers + quote) →

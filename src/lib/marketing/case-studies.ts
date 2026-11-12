@@ -52,7 +52,7 @@ export const CASE_STUDIES: readonly CaseStudy[] = [
     testimonial: {
       quote:
         'From day one, the engineering lead brought genuine passion and focus to our project. They quickly picked up the technical requirements and took full ownership of the project\u2019s development — standing out for quality of work and thoughtful customer interactions.',
-      attribution: 'Nonprofit client team',
+      attribution: 'Nonprofit client',
     },
     relatedServiceId: 'agents',
   },
@@ -151,19 +151,19 @@ export const CASE_STUDIES: readonly CaseStudy[] = [
   },
   {
     slug: 'enterprise-ai-audit',
-    clientType: 'Enterprise · Fortune 10',
-    headline: 'Internal AI audit — from interviews to POC',
+    clientType: 'Enterprise',
+    headline: 'AI audit — from interviews to a working POC',
     summary:
       'Stakeholder interviews, prioritized roadmap, and proof-of-concept for the highest-value AI use case.',
     tags: ['AUDIT'],
     metrics: [
-      { value: '3', label: 'PM interviews' },
+      { value: 'Interviews', label: 'stakeholders' },
       { value: '1', label: 'POC delivered' },
     ],
     problem:
       'The team knew AI could help but didn\u2019t know where to start. Multiple potential use cases competed for attention without a clear ROI ranking or implementation plan.',
     solution:
-      'Interviewed 3 product managers who work directly with customers, compiled research and findings into a structured document, presented to senior software developers, and decided on the best problem to tackle based on value. Built a POC and roadmap for implementation.',
+      'Ran stakeholder interviews, compiled the findings into a structured brief, ranked use cases by value, and built a POC plus an implementation roadmap for the top problem.',
     architecture: ['Interviews', 'Research', 'Prioritize', 'POC', 'Roadmap'],
     results: [
       'Clear prioritization of AI opportunities by business value',

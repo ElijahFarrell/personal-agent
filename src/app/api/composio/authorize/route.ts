@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getTenantContext } from '@/middleware/tenantContext'
+import { getTenantContext, httpStatusForError } from '@/middleware/tenantContext'
 import { getAuthorizeUrl } from '@/lib/composio'
 import { isIntegrationAllowed } from '@/constants/featureGating'
 import { getToolkitForProvider } from '@/lib/composioMappings'
@@ -50,6 +50,6 @@ export async function POST(req: NextRequest) {
     console.error('[Composio Authorize] Error:', error)
     const message =
       error instanceof Error ? error.message : 'Internal server error'
-    return NextResponse.json({ error: message }, { status: 500 })
+    return NextResponse.json({ error: message }, { status: httpStatusForError(error) })
   }
 }
